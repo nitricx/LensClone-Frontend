@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 
-import { CameraService } from './camera.service';
+import { CameraService } from '../services/camera.service';
 
 @Component({
   selector: 'app-camera',
@@ -16,5 +16,9 @@ export class CameraComponent implements AfterViewInit {
 
   async ngAfterViewInit(): Promise<void> {
     await this.cameraService.start(this.video.nativeElement);
+  }
+
+  getVideoElement(): HTMLVideoElement {
+    return this.video.nativeElement;
   }
 }
