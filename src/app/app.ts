@@ -2,7 +2,7 @@ import { CameraComponent } from './camera/camera.component';
 import { AfterViewInit, Component, ElementRef, signal, ViewChild } from '@angular/core';
 
 import { CameraService } from './services/camera.service';
-import { DetectorService } from './services/detector.service';
+import { DetectorService } from './services/text-detection/detector.service';
 import { RendererService } from './services/renderer.service';
 import { OCRService } from './services/ocr.service';
 
