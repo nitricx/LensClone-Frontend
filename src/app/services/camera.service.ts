@@ -4,19 +4,24 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class CameraService {
-  async start(video: HTMLVideoElement): Promise<void> {
+  async start(video: HTMLVideoElement): Promise<{
+    width: number;
+    height: number;
+  }> {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
       },
       audio: false,
     });
-    const track = stream.getVideoTracks()[0];
-    const settings = track.getSettings();
 
-    console.log(settings.width, settings.height);
     video.srcObject = stream;
 
     await video.play();
+
+    return {
+      width: video.videoWidth,
+      height: video.videoHeight,
+    };
   }
 }
