@@ -13,9 +13,6 @@ import { RendererService } from './services/renderer.service';
   styleUrl: './app.css',
 })
 export class App implements AfterViewInit {
-  @ViewChild('debugCanvas')
-  debugCanvas!: ElementRef<HTMLCanvasElement>;
-
   @ViewChild(CameraComponent)
   cameraComponent!: CameraComponent;
 
