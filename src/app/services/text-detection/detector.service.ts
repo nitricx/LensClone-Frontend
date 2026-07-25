@@ -53,33 +53,12 @@ export class DetectorService {
     const output = await this.session.run({
       x: tensor,
     });
-    const outputName = this.session.outputNames[0];
 
-    const maps = output[outputName] as ort.Tensor;
-    this.minMaxTest(maps);
+    const maps = output[this.session.outputNames[0]] as ort.Tensor;
+    this.debug.showMinMax(maps);
     this.debug.showProbabilityMap(maps);
     const detections = this.postprocessor.process(maps, scaleX, scaleY);
     console.log(`Detector found ${detections.length} detections`);
     return detections;
-  }
-
-  private minMaxTest(maps: ort.Tensor) {
-    const data = maps.data as Float32Array;
-
-    let min = Number.POSITIVE_INFINITY;
-    let max = Number.NEGATIVE_INFINITY;
-    let sum = 0;
-
-    for (const v of data) {
-      min = Math.min(min, v);
-      max = Math.max(max, v);
-      sum += v;
-    }
-
-    console.log({
-      min,
-      max,
-      avg: sum / data.length,
-    });
   }
 }

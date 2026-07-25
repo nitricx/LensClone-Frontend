@@ -43,4 +43,24 @@ export class DebugCanvasService {
 
     this.ctx.putImageData(image, 0, 0);
   }
+
+  showMinMax(maps: ort.Tensor) {
+    const data = maps.data as Float32Array;
+
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    let sum = 0;
+
+    for (const v of data) {
+      min = Math.min(min, v);
+      max = Math.max(max, v);
+      sum += v;
+    }
+
+    console.log({
+      min,
+      max,
+      avg: sum / data.length,
+    });
+  }
 }
