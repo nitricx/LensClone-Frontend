@@ -9,7 +9,6 @@ import { DebugCanvasService } from '../debug/debug-canvas.service';
   providedIn: 'root',
 })
 export class DetectorService {
-  constructor(private debug: DebugCanvasService) {}
   private session!: ort.InferenceSession;
   private preprocessor!: DetectorPreprocessorService;
   private postprocessor!: DetectorPostprocessorService;
@@ -42,8 +41,6 @@ export class DetectorService {
           `Likely a dev-server fallback or a Git LFS pointer file instead of the real model.`,
       );
     }
-
-    console.log(`Detector Model OK: ${buffer.byteLength} bytes, type: ${contentType}`);
     return buffer;
   }
 
@@ -55,9 +52,6 @@ export class DetectorService {
     });
 
     const maps = output[this.session.outputNames[0]] as ort.Tensor;
-
-    this.debug.showMinMax(maps);
-    this.debug.showProbabilityMap(maps);
 
     const detections = this.postprocessor.process(maps, image.width, image.height);
     return detections;

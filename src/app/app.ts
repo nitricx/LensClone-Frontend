@@ -4,7 +4,6 @@ import { AfterViewInit, Component, ElementRef, signal, ViewChild } from '@angula
 import { CameraService } from './services/camera.service';
 import { DetectorService } from './services/text-detection/detector.service';
 import { RendererService } from './services/renderer.service';
-import { DebugCanvasService } from './services/debug/debug-canvas.service';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +37,6 @@ export class App implements AfterViewInit {
   constructor(
     private detector: DetectorService,
     private renderer: RendererService,
-    private debug: DebugCanvasService,
   ) {}
 
   async ngAfterViewInit() {
@@ -50,7 +48,6 @@ export class App implements AfterViewInit {
 
     this.status.set('Running OCR');
 
-    this.debug.initialize(this.debugCanvas.nativeElement);
     this.resizeCanvas();
     this.processingLoop();
   }

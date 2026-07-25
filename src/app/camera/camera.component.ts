@@ -15,9 +15,7 @@ export class CameraComponent implements AfterViewInit {
   constructor(private cameraService: CameraService) {}
 
   async ngAfterViewInit(): Promise<void> {
-    const resolution = await this.cameraService.start(this.getVideoElement());
-
-    console.log(resolution);
+    await this.cameraService.start(this.getVideoElement());
   }
 
   getVideoElement(): HTMLVideoElement {
