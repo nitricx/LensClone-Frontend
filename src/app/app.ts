@@ -4,7 +4,6 @@ import { AfterViewInit, Component, ElementRef, signal, ViewChild } from '@angula
 import { CameraService } from './services/camera.service';
 import { DetectorService } from './services/text-detection/detector.service';
 import { RendererService } from './services/renderer.service';
-import { OCRService } from './services/ocr.service';
 import { DebugCanvasService } from './services/debug/debug-canvas.service';
 
 @Component({
@@ -39,7 +38,6 @@ export class App implements AfterViewInit {
   constructor(
     private detector: DetectorService,
     private renderer: RendererService,
-    private ocr: OCRService,
     private debug: DebugCanvasService,
   ) {}
 
@@ -49,9 +47,6 @@ export class App implements AfterViewInit {
 
     this.status.set('Initializing detector...');
     await this.detector.initialize();
-
-    this.status.set('Starting OCR...');
-    await this.ocr.initialize();
 
     this.status.set('Running OCR');
 
