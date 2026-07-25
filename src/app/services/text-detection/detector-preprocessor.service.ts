@@ -1,17 +1,11 @@
 import * as ort from 'onnxruntime-web';
-import { PreprocessResult } from './types';
 
 export class DetectorPreprocessorService {
-  constructor(private readonly inputScaling: number) {}
+  private tensor?: ort.Tensor;
   private floatData?: Float32Array;
-  process(image: ImageData): PreprocessResult {
-    const tensor = this.imageDataToTensor(image);
 
-    return {
-      tensor,
-      scaleX: this.inputScaling,
-      scaleY: this.inputScaling,
-    };
+  toTensor(image: ImageData): ort.Tensor {
+    return this.imageDataToTensor(image);
   }
 
   private imageDataToTensor(image: ImageData): ort.Tensor {
@@ -36,7 +30,13 @@ export class DetectorPreprocessorService {
       this.floatData[area + i] = (g - 0.456) / 0.224;
       this.floatData[2 * area + i] = (b - 0.406) / 0.225;
     }
-
-    return new ort.Tensor('float32', this.floatData, [1, 3, image.height, image.width]);
+    if (
+      !this.tensor ||
+      this.tensor.dims[2] !== image.height ||
+      this.tensor.dims[3] !== image.width
+    ) {
+      this.tensor = new ort.Tensor('float32', this.floatData, [1, 3, image.height, image.width]);
+    }
+    return this.tensor;
   }
 }

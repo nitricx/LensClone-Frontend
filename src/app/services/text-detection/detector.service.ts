@@ -17,7 +17,7 @@ export class DetectorService {
     ort.env.wasm.proxy = false;
     ort.env.wasm.numThreads = 16;
     ort.env.wasm.wasmPaths = '/assets/ort/';
-    this.preprocessor = new DetectorPreprocessorService(0.5);
+    this.preprocessor = new DetectorPreprocessorService();
     this.postprocessor = new DetectorPostprocessorService(0.3, 10);
     const buffer = await this.pullModel('/models/det.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
@@ -48,7 +48,7 @@ export class DetectorService {
   }
 
   async detect(image: ImageData): Promise<Detection[]> {
-    const { tensor, scaleX, scaleY } = this.preprocessor.process(image);
+    const tensor = this.preprocessor.toTensor(image);
 
     const output = await this.session.run({
       x: tensor,
