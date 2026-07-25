@@ -19,7 +19,7 @@ export class DetectorService {
     ort.env.wasm.wasmPaths = '/assets/ort/';
     this.preprocessor = new DetectorPreprocessorService();
     this.postprocessor = new DetectorPostprocessorService(0.3, 10);
-    const buffer = await this.pullModel('/models/det.onnx');
+    const buffer = await this.pullModel('/models/PP-OCRv5_mobile_det.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['wasm'],
     });
@@ -55,10 +55,11 @@ export class DetectorService {
     });
 
     const maps = output[this.session.outputNames[0]] as ort.Tensor;
+
     this.debug.showMinMax(maps);
     this.debug.showProbabilityMap(maps);
+
     const detections = this.postprocessor.process(maps, image.width, image.height);
-    console.log(`Detector found ${detections.length} detections`);
     return detections;
   }
 }
