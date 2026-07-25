@@ -7,10 +7,12 @@ export class DetectorPostprocessorService {
     private readonly minArea: number,
   ) {}
 
+  private readonly floodFillQueue: Point[] = [];
+
   process(output: ort.Tensor, scaleX: number, scaleY: number): Detection[] {
     const binary = this.threshold(output);
 
-    const components = this.connectedComponents(binary);
+    const components = this.connectedComponents(binary, output.dims[3], output.dims[2]);
 
     const detections: Detection[] = [];
 
@@ -22,19 +24,16 @@ export class DetectorPostprocessorService {
 
     return detections;
   }
-  private connectedComponents(binary: boolean[][]): Point[][] {
-    const height = binary.length;
-    const width = binary[0].length;
 
-    const visited = Array.from({ length: height }, () => Array(width).fill(false));
-
+  private connectedComponents(binary: Uint8Array, width: number, height: number): Point[][] {
+    const visited = new Uint8Array(width * height);
     const components: Point[][] = [];
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (!binary[y][x]) continue;
-
-        if (visited[y][x]) continue;
+        if (!binary[y * width + x]) continue;
+        const index = y * width + x;
+        if (visited[index]) continue;
 
         components.push(this.floodFill(binary, visited, x, y));
       }
@@ -42,6 +41,7 @@ export class DetectorPostprocessorService {
 
     return components;
   }
+
   private buildDetection(
     component: Point[],
     output: ort.Tensor,
@@ -73,6 +73,7 @@ export class DetectorPostprocessorService {
       score: this.computeScore(component, output),
     };
   }
+
   private computeScore(component: Point[], output: ort.Tensor): number {
     const [, , , width] = output.dims;
 
@@ -86,31 +87,32 @@ export class DetectorPostprocessorService {
 
     return sum / component.length;
   }
+
   private floodFill(
-    binary: boolean[][],
-    visited: boolean[][],
+    binary: Uint8Array,
+    visited: Uint8Array,
     startX: number,
     startY: number,
   ): Point[] {
     const component: Point[] = [];
+    this.floodFillQueue.length = 0;
+    this.floodFillQueue.push({ x: startX, y: startY });
 
-    const queue: Point[] = [{ x: startX, y: startY }];
+    while (this.floodFillQueue.length) {
+      const point = this.floodFillQueue.pop()!;
 
-    while (queue.length) {
-      const point = queue.pop()!;
+      if (point.x < 0 || point.y < 0 || point.y >= binary.length || point.x >= binary[0]) continue;
 
-      if (point.x < 0 || point.y < 0 || point.y >= binary.length || point.x >= binary[0].length)
-        continue;
+      const index = point.y * binary[0] + point.x;
+      if (visited[index]) continue;
 
-      if (visited[point.y][point.x]) continue;
+      visited[index] = 1;
 
-      visited[point.y][point.x] = true;
-
-      if (!binary[point.y][point.x]) continue;
+      if (!binary[index]) continue;
 
       component.push(point);
 
-      queue.push(
+      this.floodFillQueue.push(
         { x: point.x + 1, y: point.y },
         { x: point.x - 1, y: point.y },
         { x: point.x, y: point.y + 1 },
@@ -120,26 +122,25 @@ export class DetectorPostprocessorService {
 
     return component;
   }
-  private threshold(output: ort.Tensor): boolean[][] {
+
+  private threshold(output: ort.Tensor): Uint8Array {
     const [, , height, width] = output.dims;
 
     const data = output.data as Float32Array;
 
-    const result: boolean[][] = [];
+    const binary = new Uint8Array(width * height);
+
     let count = 0;
-    for (let y = 0; y < height; y++) {
-      const row: boolean[] = [];
 
-      for (let x = 0; x < width; x++) {
-        if (data[y * width + x] >= this.thresholdValue) {
-          count++;
-        }
-        row.push(data[y * width + x] >= this.thresholdValue);
+    for (let i = 0; i < binary.length; i++) {
+      if (data[i] >= this.thresholdValue) {
+        binary[i] = 1;
+        count++;
       }
-
-      result.push(row);
     }
+
     console.log('Pixels above threshold:', count);
-    return result;
+
+    return binary;
   }
 }

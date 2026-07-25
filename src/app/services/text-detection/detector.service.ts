@@ -57,7 +57,7 @@ export class DetectorService {
     const maps = output[this.session.outputNames[0]] as ort.Tensor;
     this.debug.showMinMax(maps);
     this.debug.showProbabilityMap(maps);
-    const detections = this.postprocessor.process(maps, scaleX, scaleY);
+    const detections = this.postprocessor.process(maps, image.width, image.height);
     console.log(`Detector found ${detections.length} detections`);
     return detections;
   }

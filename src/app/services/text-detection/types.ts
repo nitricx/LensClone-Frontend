@@ -5,12 +5,6 @@ export interface Detection {
   score: number;
 }
 
-export interface PreprocessResult {
-  tensor: ort.Tensor;
-  scaleX: number;
-  scaleY: number;
-}
-
 export interface Point {
   x: number;
   y: number;
