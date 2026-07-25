@@ -8,12 +8,13 @@ export class CameraService {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
       },
       audio: false,
     });
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
 
+    console.log(settings.width, settings.height);
     video.srcObject = stream;
 
     await video.play();

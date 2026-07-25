@@ -7,7 +7,7 @@ export class DetectorPostprocessorService {
     private readonly minArea: number,
   ) {}
 
-  postprocess(output: ort.Tensor, scaleX: number, scaleY: number): Detection[] {
+  process(output: ort.Tensor, scaleX: number, scaleY: number): Detection[] {
     const binary = this.threshold(output);
 
     const components = this.connectedComponents(binary);

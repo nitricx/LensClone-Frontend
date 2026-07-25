@@ -5,6 +5,7 @@ import { CameraService } from './services/camera.service';
 import { DetectorService } from './services/text-detection/detector.service';
 import { RendererService } from './services/renderer.service';
 import { OCRService } from './services/ocr.service';
+import { DebugCanvasService } from './services/debug/debug-canvas.service';
 
 @Component({
   selector: 'app-root',
@@ -14,20 +15,38 @@ import { OCRService } from './services/ocr.service';
   styleUrl: './app.css',
 })
 export class App implements AfterViewInit {
+  @ViewChild('debugCanvas')
+  debugCanvas!: ElementRef<HTMLCanvasElement>;
+
   @ViewChild(CameraComponent)
   cameraComponent!: CameraComponent;
 
   @ViewChild('overlay')
   overlay!: ElementRef<HTMLCanvasElement>;
+
   status = signal('Initializing...');
   detections = signal<any[]>([]);
+
+  private readonly processingCanvas: HTMLCanvasElement = document.createElement('canvas');
+  private readonly processingContext: CanvasRenderingContext2D = this.processingCanvas.getContext(
+    '2d',
+    {
+      willReadFrequently: true,
+    },
+  )!;
+  private processing: boolean = false;
+
   constructor(
     private detector: DetectorService,
     private renderer: RendererService,
     private ocr: OCRService,
+    private debug: DebugCanvasService,
   ) {}
 
   async ngAfterViewInit() {
+    this.processingCanvas.width = 640;
+    this.processingCanvas.height = 480;
+
     this.status.set('Initializing detector...');
     await this.detector.initialize();
 
@@ -36,6 +55,7 @@ export class App implements AfterViewInit {
 
     this.status.set('Running OCR');
 
+    this.debug.initialize(this.debugCanvas.nativeElement);
     this.resizeCanvas();
     this.processingLoop();
   }
@@ -50,19 +70,36 @@ export class App implements AfterViewInit {
     canvas.height = window.innerHeight;
   }
 
-  async processingLoop() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 480;
-    const ctx = canvas.getContext('2d')!;
+  private processingLoop = async () => {
+    requestAnimationFrame(this.processingLoop);
 
-    while (true) {
-      ctx.drawImage(this.videoElement, 0, 0, canvas.width, canvas.height);
-      const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    if (this.processing) return;
+
+    this.processing = true;
+
+    try {
+      this.processingContext.drawImage(
+        this.videoElement,
+        0,
+        0,
+        this.processingCanvas.width,
+        this.processingCanvas.height,
+      );
+
+      const image = this.processingContext.getImageData(
+        0,
+        0,
+        this.processingCanvas.width,
+        this.processingCanvas.height,
+      );
+
       const detections = await this.detector.detect(image);
+
       this.detections.set(detections);
+
       this.renderer.render(this.overlay.nativeElement, detections);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    } finally {
+      this.processing = false;
     }
-  }
+  };
 }

@@ -3,18 +3,22 @@ import * as ort from 'onnxruntime-web';
 import { Detection } from '../../models/detection';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
+import { DebugCanvasService } from '../debug/debug-canvas.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DetectorService {
-  constructor() {}
+  constructor(private debug: DebugCanvasService) {}
   private session!: ort.InferenceSession;
+  private preprocessor!: DetectorPreprocessorService;
+  private postprocessor!: DetectorPostprocessorService;
   async initialize() {
     ort.env.wasm.proxy = false;
-    ort.env.wasm.numThreads = 4;
+    ort.env.wasm.numThreads = 16;
     ort.env.wasm.wasmPaths = '/assets/ort/';
-
+    this.preprocessor = new DetectorPreprocessorService(0.5);
+    this.postprocessor = new DetectorPostprocessorService(0.3, 10);
     const buffer = await this.pullModel('/models/det.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['wasm'],
@@ -44,8 +48,7 @@ export class DetectorService {
   }
 
   async detect(image: ImageData): Promise<Detection[]> {
-    const preprocessor = new DetectorPreprocessorService(640, 960);
-    const { tensor, scaleX, scaleY } = preprocessor.process(image);
+    const { tensor, scaleX, scaleY } = this.preprocessor.process(image);
 
     const output = await this.session.run({
       x: tensor,
@@ -54,8 +57,8 @@ export class DetectorService {
 
     const maps = output[outputName] as ort.Tensor;
     this.minMaxTest(maps);
-    const postprocessor = new DetectorPostprocessorService(0.3, 10);
-    const detections = postprocessor.postprocess(maps, scaleX, scaleY);
+    this.debug.showProbabilityMap(maps);
+    const detections = this.postprocessor.process(maps, scaleX, scaleY);
     console.log(`Detector found ${detections.length} detections`);
     return detections;
   }
