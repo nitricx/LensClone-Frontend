@@ -3,7 +3,6 @@ import * as ort from 'onnxruntime-web';
 import { Detection } from '../../models/detection';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
-import { DebugCanvasService } from '../debug/debug-canvas.service';
 
 @Injectable({
   providedIn: 'root',
