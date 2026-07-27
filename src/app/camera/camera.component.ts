@@ -9,16 +9,12 @@ import { CameraService } from '../services/camera.service';
   styleUrls: ['./camera.component.css'],
 })
 export class CameraComponent implements AfterViewInit {
-  @ViewChild('video')
-  video!: ElementRef<HTMLVideoElement>;
+  @ViewChild('video', { static: true })
+  private video!: ElementRef<HTMLVideoElement>;
 
-  constructor(private cameraService: CameraService) {}
+  constructor(public readonly cameraService: CameraService) {}
 
   async ngAfterViewInit(): Promise<void> {
-    await this.cameraService.start(this.getVideoElement());
-  }
-
-  getVideoElement(): HTMLVideoElement {
-    return this.video.nativeElement;
+    await this.cameraService.start(this.video.nativeElement);
   }
 }

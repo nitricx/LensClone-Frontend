@@ -9,8 +9,11 @@ export class DetectorPostprocessorService {
 
   private readonly floodFillQueue: Point[] = [];
 
-  process(output: ort.Tensor, scaleX: number, scaleY: number): Detection[] {
+  process(output: ort.Tensor, imageWidth: number, imageHeight: number): Detection[] {
     const [, , height, width] = output.dims;
+
+    const scaleX = imageWidth / width;
+    const scaleY = imageHeight / height;
 
     const binary = this.threshold(output);
     const components = this.connectedComponents(binary, width, height);

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
-import { Detection } from '../../models/detection';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
+import { Detection } from './types';
 
 @Injectable({
   providedIn: 'root',

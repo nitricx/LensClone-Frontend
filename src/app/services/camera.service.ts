@@ -4,10 +4,9 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class CameraService {
-  async start(video: HTMLVideoElement): Promise<{
-    width: number;
-    height: number;
-  }> {
+  private video!: HTMLVideoElement;
+  async start(video: HTMLVideoElement): Promise<void> {
+    this.video = video;
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
@@ -17,11 +16,30 @@ export class CameraService {
 
     video.srcObject = stream;
 
-    await video.play();
+    if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
+      await new Promise<void>((resolve) => {
+        video.addEventListener('loadedmetadata', () => resolve(), {
+          once: true,
+        });
+      });
+    }
 
-    return {
-      width: video.videoWidth,
-      height: video.videoHeight,
-    };
+    await video.play();
+  }
+
+  getVideo(): HTMLVideoElement {
+    const video = document.querySelector('video');
+    if (!video) {
+      throw new Error('Video element not found');
+    }
+    return video;
+  }
+
+  getWidth(): number {
+    return this.video.videoWidth;
+  }
+
+  getHeight(): number {
+    return this.video.videoHeight;
   }
 }
