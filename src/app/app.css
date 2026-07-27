@@ -1,57 +1,41 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
 
   width: 100vw;
   height: 100vh;
-
-  overflow: hidden;
-}
-.container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
 }
 
-canvas {
-  position: absolute;
-  inset: 0;
+.tabs {
+  display: flex;
 
-  width: 100vw;
-  height: 100vh;
+  height: 48px;
 
-  z-index: 2;
+  border-bottom: 1px solid #444;
+
+  background: #1f1f1f;
 }
 
-.status {
-  position: absolute;
-  top: 20px;
-  left: 20px;
+.tabs button {
+  flex: 1;
 
-  background: black;
+  border: none;
+
+  background: transparent;
+
   color: white;
 
-  padding: 8px 12px;
+  font-size: 16px;
 
-  border-radius: 8px;
-  z-index: 3;
-}
-.detections {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-
-  background: black;
-  color: white;
-
-  padding: 8px 12px;
-
-  border-radius: 8px;
-  z-index: 3;
+  cursor: pointer;
 }
 
-app-camera {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+.tabs button.active {
+  background: #333;
+}
+
+.content {
+  flex: 1;
+
+  overflow: hidden;
 }

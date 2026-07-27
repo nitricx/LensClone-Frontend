@@ -1,5 +1,9 @@
+import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class DetectorPreprocessorService {
   private tensor?: ort.Tensor;
   private floatData?: Float32Array;

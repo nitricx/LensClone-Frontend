@@ -1,0 +1,11 @@
+<div class="container">
+  <app-camera></app-camera>
+  <canvas #overlay></canvas>
+
+  <div class="status">
+    {{ status() }}
+  </div>
+  <div class="detections">
+    {{ detections().length }}
+  </div>
+</div>

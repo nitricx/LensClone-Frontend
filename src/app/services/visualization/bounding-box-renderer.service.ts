@@ -49,19 +49,4 @@ export class BoundingBoxRendererService {
     ctx.fill();
     ctx.stroke();
   }
-
-  testRender(canvas: HTMLCanvasElement, detections: Detection[]): void {
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      return;
-    }
-    console.log('Overlay canvas:', canvas.width, canvas.height);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 5;
-
-    ctx.strokeRect(50, 50, 200, 200);
-  }
 }

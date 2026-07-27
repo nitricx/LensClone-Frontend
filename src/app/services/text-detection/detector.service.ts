@@ -2,21 +2,25 @@ import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
-import { Detection } from './types';
+import { CroppedRegion, Detection } from './types';
+import { DetectorCropperService } from './cropper.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DetectorService {
+  constructor(
+    private readonly cropper: DetectorCropperService,
+    private readonly preprocessor: DetectorPreprocessorService,
+    private readonly postprocessor: DetectorPostprocessorService,
+  ) {}
+  public lastCrops: CroppedRegion[] = [];
   private session!: ort.InferenceSession;
-  private preprocessor!: DetectorPreprocessorService;
-  private postprocessor!: DetectorPostprocessorService;
   async initialize() {
     ort.env.wasm.proxy = false;
     ort.env.wasm.numThreads = 16;
     ort.env.wasm.wasmPaths = '/assets/ort/';
-    this.preprocessor = new DetectorPreprocessorService();
-    this.postprocessor = new DetectorPostprocessorService(0.3, 10);
+
     const buffer = await this.pullModel('/models/PP-OCRv5_mobile_det.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['wasm'],
@@ -53,6 +57,7 @@ export class DetectorService {
     const maps = output[this.session.outputNames[0]] as ort.Tensor;
 
     const detections = this.postprocessor.process(maps, image.width, image.height);
+    this.lastCrops = this.cropper.crop(image, detections);
     return detections;
   }
 }

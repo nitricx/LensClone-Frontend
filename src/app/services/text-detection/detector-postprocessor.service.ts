@@ -1,13 +1,14 @@
 import * as ort from 'onnxruntime-web';
 import { Detection, Point } from './types';
+import { Injectable } from '@angular/core';
 
+@Injectable({
+  providedIn: 'root',
+})
 export class DetectorPostprocessorService {
-  constructor(
-    private readonly thresholdValue: number,
-    private readonly minArea: number,
-  ) {}
-
   private readonly floodFillQueue: Point[] = [];
+  private readonly thresholdValue: number = 0.3;
+  private readonly minArea: number = 10;
 
   process(output: ort.Tensor, imageWidth: number, imageHeight: number): Detection[] {
     const [, , height, width] = output.dims;
@@ -76,6 +77,12 @@ export class DetectorPostprocessorService {
         [minX * scaleX, maxY * scaleY],
       ],
       score: this.computeScore(component, output),
+      boundingBox: {
+        x: minX * scaleX,
+        y: minY * scaleY,
+        width: (maxX - minX) * scaleX,
+        height: (maxY - minY) * scaleY,
+      },
     };
   }
 

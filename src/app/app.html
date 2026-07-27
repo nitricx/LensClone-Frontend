@@ -1,11 +1,13 @@
-<div class="container">
-  <app-camera></app-camera>
-  <canvas #overlay></canvas>
+<div class="tabs">
+  <button [class.active]="tab() === 'lens'" (click)="showLens()">Lens</button>
 
-  <div class="status">
-    {{ status() }}
-  </div>
-  <div class="detections">
-    {{ detections().length }}
-  </div>
+  <button [class.active]="tab() === 'debug'" (click)="showDebug()">Debug</button>
+</div>
+
+<div class="content">
+  @if (tab() === 'lens') {
+    <app-lens />
+  } @else {
+    <app-debug />
+  }
 </div>

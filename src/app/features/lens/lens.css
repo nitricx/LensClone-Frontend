@@ -1,0 +1,57 @@
+:host {
+  display: block;
+
+  width: 100vw;
+  height: 100vh;
+
+  overflow: hidden;
+}
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  z-index: 2;
+}
+
+.status {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+
+  background: black;
+  color: white;
+
+  padding: 8px 12px;
+
+  border-radius: 8px;
+  z-index: 3;
+}
+.detections {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+
+  background: black;
+  color: white;
+
+  padding: 8px 12px;
+
+  border-radius: 8px;
+  z-index: 3;
+}
+
+app-camera {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
