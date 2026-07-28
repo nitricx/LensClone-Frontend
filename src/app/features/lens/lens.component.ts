@@ -40,21 +40,12 @@ export class LensComponent implements AfterViewInit {
       await new Promise<void>((resolve) => {
         this.cameraVideo.onloadedmetadata = () => resolve();
       });
-
-      this.captureCanvas.width = this.cameraVideo.videoWidth;
-      this.captureCanvas.height = this.cameraVideo.videoHeight;
-
       await this.detector.initialize();
     }
 
-    this.resizeCanvas();
-    this.runDetectionLoop();
-  }
+    this.resizeCanvases(this.cameraVideo);
 
-  private resizeCanvas(): void {
-    const canvas = this.detectionOverlay.nativeElement;
-    canvas.width = this.captureCanvas.width;
-    canvas.height = this.captureCanvas.height;
+    this.runDetectionLoop();
   }
 
   private runDetectionLoop = async () => {
@@ -88,4 +79,12 @@ export class LensComponent implements AfterViewInit {
       requestAnimationFrame(this.runDetectionLoop);
     }
   };
+
+  private resizeCanvases(HTMLVideoElement: HTMLVideoElement): void {
+    this.captureCanvas.width = HTMLVideoElement.videoWidth;
+    this.captureCanvas.height = HTMLVideoElement.videoHeight;
+    const canvas = this.detectionOverlay.nativeElement;
+    canvas.width = HTMLVideoElement.videoWidth;
+    canvas.height = HTMLVideoElement.videoHeight;
+  }
 }
