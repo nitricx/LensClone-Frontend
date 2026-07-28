@@ -1,1 +1,30 @@
-<p>debug works!</p>
+<section>
+  <h2>Pipeline</h2>
+
+  <p>
+    Detector FPS:
+    {{ pipeline.state().detector.fps }}
+  </p>
+
+  <p>
+    Recognizer FPS:
+    {{ pipeline.state().recognizer.fps }}
+  </p>
+
+  <p>
+    Detector Time:
+    {{ pipeline.state().detector.processingTimeMs.toFixed(1) }}
+    ms
+  </p>
+
+  <p>
+    Recognizer Time:
+    {{ pipeline.state().recognizer.processingTimeMs.toFixed(1) }}
+    ms
+  </p>
+
+  <p>
+    Boxes:
+    {{ pipeline.state().detector.detections.length }}
+  </p>
+</section>

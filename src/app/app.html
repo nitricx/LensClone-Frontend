@@ -4,10 +4,10 @@
   <button [class.active]="tab() === 'debug'" (click)="showDebug()">Debug</button>
 </div>
 
-<div class="content">
-  @if (tab() === 'lens') {
-    <app-lens />
-  } @else {
-    <app-debug />
-  }
+<div [hidden]="tab() !== 'lens'">
+  <app-lens />
+</div>
+
+<div [hidden]="tab() !== 'debug'">
+  <app-debug />
 </div>

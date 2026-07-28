@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { PipelineService } from '../../services/pipeline/pipeline.service';
 
 @Component({
   selector: 'app-debug',
@@ -6,4 +7,6 @@ import { Component } from '@angular/core';
   templateUrl: './debug.html',
   styleUrl: './debug.css',
 })
-export class Debug {}
+export class Debug {
+  constructor(readonly pipeline: PipelineService) {}
+}
