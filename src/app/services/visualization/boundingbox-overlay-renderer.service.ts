@@ -5,7 +5,7 @@ import { BoundingBoxStyle } from './types';
 @Injectable({
   providedIn: 'root',
 })
-export class BoundingBoxRendererService {
+export class BoundingBoxOverlayRendererService {
   private readonly style: BoundingBoxStyle = {
     strokeColor: '#00ff66',
     fillColor: 'rgba(0,255,100,0.10)',

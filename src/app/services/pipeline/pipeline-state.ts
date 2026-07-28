@@ -1,4 +1,5 @@
 import { CroppedRegion, Detection } from '../text-detection/types';
+import * as ort from 'onnxruntime-web';
 
 export interface PipelineState {
   detector: DetectorState;
@@ -11,6 +12,8 @@ export interface DetectorState {
 
   detections: Detection[];
   crops: CroppedRegion[];
+
+  probabilityMap: ort.Tensor | null;
 }
 
 export interface RecognizerState {

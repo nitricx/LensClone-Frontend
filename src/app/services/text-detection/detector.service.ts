@@ -75,6 +75,7 @@ export class DetectorService {
         fps: fps,
         detections: detections,
         crops: this.lastCrops,
+        probabilityMap: maps,
       },
     }));
 

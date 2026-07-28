@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
-import { Lens } from './features/lens/lens';
-import { Debug } from './features/debug/debug';
+import { LensComponent } from './features/lens/lens.component';
+import { DebugComponent } from './features/debug/debug.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [Lens, Debug],
+  imports: [LensComponent, DebugComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

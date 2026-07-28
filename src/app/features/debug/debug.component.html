@@ -1,0 +1,45 @@
+<div class="debug">
+  <section class="stats">
+    <h2>Pipeline</h2>
+
+    <div>Detector FPS: {{ pipeline.state().detector.fps | number: '1.0-0' }}</div>
+    <div>Recognizer FPS: {{ pipeline.state().recognizer.fps | number: '1.0-0' }}</div>
+
+    <div>Detector Time: {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms</div>
+    <div>
+      Recognizer Time: {{ pipeline.state().recognizer.processingTimeMs | number: '1.0-1' }} ms
+    </div>
+
+    <div>Boxes: {{ pipeline.state().detector.detections.length }}</div>
+  </section>
+
+  <section class="controls">
+    <h2>Overlays</h2>
+
+    <label>
+      <input
+        type="checkbox"
+        [checked]="pipeline.debugSettings().boundingBoxes"
+        (change)="toggleBoundingBoxes()"
+      />
+
+      Bounding Boxes
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        [checked]="pipeline.debugSettings().probabilityMap"
+        (change)="toggleProbabilityMap()"
+      />
+
+      Probability Map
+    </label>
+  </section>
+
+  <section class="viewer">
+    <app-lens />
+
+    <canvas #overlay></canvas>
+  </section>
+</div>
