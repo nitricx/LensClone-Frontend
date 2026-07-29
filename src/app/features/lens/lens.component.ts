@@ -68,8 +68,7 @@ export class LensComponent implements AfterViewInit {
         this.captureCanvas.width,
         this.captureCanvas.height,
       );
-
-      await this.pipelineService.recognizeText(image);
+      this.pipelineService.execute(image);
     } finally {
       this.detectionInProgress = false;
       requestAnimationFrame(this.runDetectionLoop);
