@@ -6,8 +6,8 @@
     <div>
       Recognizer Time: {{ pipeline.state().recognizer.processingTimeMs | number: '1.0-1' }} ms
     </div>
-
-    <div>Boxes: {{ pipeline.state().detector.detections.length }}</div>
+    <div>Detections: {{ pipeline.state().detector.detections.length }}</div>
+    <div>Crops: {{ pipeline.state().cropper.crops.length }}</div>
   </section>
 
   <section class="controls">
