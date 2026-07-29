@@ -70,6 +70,7 @@ export class LensComponent implements AfterViewInit {
       );
 
       await this.pipelineService.recognizeText(image);
+      this.pipelineService.cropDetections(image);
     } finally {
       this.detectionInProgress = false;
       requestAnimationFrame(this.runDetectionLoop);

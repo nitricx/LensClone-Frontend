@@ -3,32 +3,36 @@ import { PipelineState } from './pipeline-state';
 import { DebugSettings } from '../../features/debug/debug-settings';
 import { DetectorService } from '../text-detection/detector.service';
 import { BoundingBoxRendererService } from '../visualization/boundingbox-renderer.service';
+import { DetectorCropperService } from '../text-detection/cropper.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PipelineService {
   readonly debugSettings = signal<DebugSettings>({
-    probabilityMap: false,
+    croppedRegions: true,
     boundingBoxes: true,
   });
 
   readonly state = signal<PipelineState>({
     detector: {
-      fps: 0,
       processingTimeMs: 0,
       detections: [],
+    },
+    cropper: {
+      processingTimeMs: 0,
       crops: [],
-      probabilityMap: null,
     },
     recognizer: {
-      fps: 0,
       processingTimeMs: 0,
       recognizedText: 0,
     },
   });
 
-  constructor(private readonly detector: DetectorService) {}
+  constructor(
+    private readonly detector: DetectorService,
+    private readonly cropper: DetectorCropperService,
+  ) {}
 
   async initialize() {
     await this.detector.initialize();
@@ -44,6 +48,20 @@ export class PipelineService {
       detector: {
         ...state.detector,
         detections,
+        processingTimeMs: performance.now() - start,
+      },
+    }));
+  }
+
+  cropDetections(image: ImageData): void {
+    const start = performance.now();
+
+    const crops = this.cropper.crop(image, this.state().detector.detections);
+    this.state.update((state) => ({
+      ...state,
+      cropper: {
+        ...state.cropper,
+        crops,
         processingTimeMs: performance.now() - start,
       },
     }));

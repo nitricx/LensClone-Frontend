@@ -1,24 +1,22 @@
 import { CroppedRegion, Detection } from '../text-detection/types';
-import * as ort from 'onnxruntime-web';
 
 export interface PipelineState {
   detector: DetectorState;
+  cropper: CropperState;
   recognizer: RecognizerState;
 }
 
-export interface DetectorState {
-  fps: number;
-  processingTimeMs: number;
-
+interface DetectorState extends Timings {
   detections: Detection[];
-  crops: CroppedRegion[];
-
-  probabilityMap: ort.Tensor | null;
 }
 
-export interface RecognizerState {
-  fps: number;
-  processingTimeMs: number;
-
+interface CropperState extends Timings {
+  crops: CroppedRegion[];
+}
+interface RecognizerState extends Timings {
   recognizedText: number;
+}
+
+interface Timings {
+  processingTimeMs: number;
 }

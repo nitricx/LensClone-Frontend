@@ -6,6 +6,7 @@ import { CroppedRegion, Detection } from './types';
 })
 export class DetectorCropperService {
   private readonly padding: number = 4;
+
   crop(source: ImageData, detections: Detection[]): CroppedRegion[] {
     if (detections.length === 0) {
       return [];
