@@ -1,0 +1,41 @@
+:host {
+  display: flex;
+  flex-direction: column;
+
+  width: 100vw;
+  height: 100vh;
+}
+
+.tabs {
+  display: flex;
+
+  height: 48px;
+
+  border-bottom: 1px solid #444;
+
+  background: #1f1f1f;
+}
+
+.tabs button {
+  flex: 1;
+
+  border: none;
+
+  background: transparent;
+
+  color: white;
+
+  font-size: 16px;
+
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #333;
+}
+
+.content {
+  flex: 1;
+
+  overflow: hidden;
+}

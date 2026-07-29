@@ -1,0 +1,11 @@
+<div class="tabs">
+  <button [class.active]="tab() === 'lens'" (click)="showLens()">Lens</button>
+
+  <button [class.active]="tab() === 'debug'" (click)="showDebug()">Debug</button>
+</div>
+
+@if (tab() === 'lens') {
+  <app-lens />
+} @else {
+  <app-debug />
+}
