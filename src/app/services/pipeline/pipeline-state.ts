@@ -14,7 +14,7 @@ interface CropperState extends Timings {
   crops: CroppedRegion[];
 }
 interface RecognizerState extends Timings {
-  recognizedText: number;
+  recognizedText: string[];
 }
 
 interface Timings {

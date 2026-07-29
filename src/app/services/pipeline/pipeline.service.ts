@@ -1,9 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 import { PipelineState } from './pipeline-state';
 import { DebugSettings } from '../../features/debug/debug-settings';
-import { DetectorService } from '../text-detection/detector.service';
+
 import { DetectorCropperService } from '../text-detection/cropper.service';
-import { DetectorFilterService } from '../text-detection/detector-filter.service';
+import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
+import { RecognitionService } from '../text-detection/recognition/recognition.service';
+import { DetectorService } from '../text-detection/detector/detector.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +14,7 @@ export class PipelineService {
   readonly debugSettings = signal<DebugSettings>({
     croppedRegions: true,
     boundingBoxes: true,
+    recognizedText: true,
   });
 
   readonly state = signal<PipelineState>({
@@ -25,7 +28,7 @@ export class PipelineService {
     },
     recognizer: {
       processingTimeMs: 0,
-      recognizedText: 0,
+      recognizedText: [],
     },
   });
 
@@ -33,19 +36,22 @@ export class PipelineService {
     private readonly detector: DetectorService,
     private readonly detectorFilter: DetectorFilterService,
     private readonly cropper: DetectorCropperService,
+    private readonly recognizer: RecognitionService,
   ) {}
 
   async initialize() {
     await this.detector.initialize();
+    await this.recognizer.initialize();
   }
 
   async execute(image: ImageData) {
-    this.recognizeText(image);
+    await this.detectText(image);
     this.filterDetections();
     this.cropDetections(image);
+    await this.recognizeText();
   }
 
-  private async recognizeText(image: ImageData): Promise<void> {
+  private async detectText(image: ImageData): Promise<void> {
     const start = performance.now();
 
     const detections = await this.detector.detect(image);
@@ -80,6 +86,19 @@ export class PipelineService {
       cropper: {
         ...state.cropper,
         crops,
+        processingTimeMs: performance.now() - start,
+      },
+    }));
+  }
+
+  private async recognizeText(): Promise<void> {
+    const start = performance.now();
+    const recognizedText = await this.recognizer.recognize(this.state().cropper.crops);
+    this.state.update((state) => ({
+      ...state,
+      recognizer: {
+        ...state.detector,
+        recognizedText,
         processingTimeMs: performance.now() - start,
       },
     }));
