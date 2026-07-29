@@ -5,7 +5,7 @@ import { BoundingBoxStyle } from './types';
 @Injectable({
   providedIn: 'root',
 })
-export class BoundingBoxOverlayRendererService {
+export class BoundingBoxRendererService {
   private readonly style: BoundingBoxStyle = {
     strokeColor: '#00ff66',
     fillColor: 'rgba(0,255,100,0.10)',
@@ -13,14 +13,12 @@ export class BoundingBoxOverlayRendererService {
     cornerRadius: 0,
   };
 
-  render(canvas: HTMLCanvasElement, detections: Detection[]): void {
-    const ctx = canvas.getContext('2d');
-
+  render(ctx: CanvasRenderingContext2D, detections: Detection[]): void {
     if (!ctx) {
       return;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     ctx.lineWidth = this.style.lineWidth;
     ctx.strokeStyle = this.style.strokeColor;

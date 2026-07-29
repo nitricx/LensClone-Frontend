@@ -1,4 +1,5 @@
 <div class="container">
   <video #video autoplay muted playsinline></video>
-  <canvas #detectionOverlay></canvas>
+
+  <app-overlay [width]="videoWidth()" [height]="videoHeight()"> </app-overlay>
 </div>

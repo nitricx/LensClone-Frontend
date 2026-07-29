@@ -11,6 +11,7 @@ import { LensComponent } from '../lens/lens.component';
 })
 export class DebugComponent {
   constructor(readonly pipeline: PipelineService) {}
+
   toggleBoundingBoxes(): void {
     this.pipeline.debugSettings.update((settings) => ({
       ...settings,

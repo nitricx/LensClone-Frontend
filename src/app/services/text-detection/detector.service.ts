@@ -3,22 +3,18 @@ import * as ort from 'onnxruntime-web';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
 import { CroppedRegion, Detection } from './types';
-import { DetectorCropperService } from './cropper.service';
-import { PipelineService } from '../pipeline/pipeline.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DetectorService {
+  private session!: ort.InferenceSession;
+
   constructor(
-    private readonly cropper: DetectorCropperService,
     private readonly preprocessor: DetectorPreprocessorService,
     private readonly postprocessor: DetectorPostprocessorService,
-    private readonly pipeline: PipelineService,
   ) {}
-  public lastCrops: CroppedRegion[] = [];
-  private session!: ort.InferenceSession;
-  private lastFrameTime = performance.now();
+
   async initialize() {
     ort.env.wasm.proxy = false;
     ort.env.wasm.numThreads = 16;
@@ -51,35 +47,12 @@ export class DetectorService {
   }
 
   async detect(image: ImageData): Promise<Detection[]> {
-    const start = performance.now();
-
     const tensor = this.preprocessor.toTensor(image);
-
     const output = await this.session.run({
       x: tensor,
     });
 
     const maps = output[this.session.outputNames[0]] as ort.Tensor;
-
-    const detections = this.postprocessor.process(maps, image.width, image.height);
-    this.lastCrops = this.cropper.crop(image, detections);
-    const elapsed = performance.now() - start;
-    const now = performance.now();
-    const fps = 1000 / (now - this.lastFrameTime);
-    this.pipeline.state.update((state) => ({
-      ...state,
-
-      detector: {
-        ...state.detector,
-        processingTimeMs: elapsed,
-        fps: fps,
-        detections: detections,
-        crops: this.lastCrops,
-        probabilityMap: maps,
-      },
-    }));
-
-    this.lastFrameTime = now;
-    return detections;
+    return this.postprocessor.process(maps, image.width, image.height);
   }
 }

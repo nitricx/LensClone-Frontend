@@ -16,7 +16,9 @@ export class DetectorCropperService {
     canvas.width = source.width;
     canvas.height = source.height;
 
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', {
+      willReadFrequently: true,
+    });
 
     if (!context) {
       throw new Error('Unable to create canvas context');

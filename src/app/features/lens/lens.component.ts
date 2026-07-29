@@ -1,22 +1,21 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, signal, ViewChild } from '@angular/core';
 import { CameraService } from '../../services/camera.service';
-import { DetectorService } from '../../services/text-detection/detector.service';
-import { BoundingBoxOverlayRendererService } from '../../services/visualization/boundingbox-overlay-renderer.service';
+import { PipelineService } from '../../services/pipeline/pipeline.service';
+import { OverlayComponent } from '../overlay/overlay.component';
 
 @Component({
   selector: 'app-lens',
   standalone: true,
-  imports: [],
+  imports: [OverlayComponent],
   templateUrl: './lens.component.html',
   styleUrl: './lens.component.css',
 })
 export class LensComponent implements AfterViewInit {
-  @ViewChild('detectionOverlay')
-  private detectionOverlay!: ElementRef<HTMLCanvasElement>;
-
   @ViewChild('video', { static: true })
   private videoElement!: ElementRef<HTMLVideoElement>;
 
+  readonly videoWidth = signal(0);
+  readonly videoHeight = signal(0);
   private readonly captureCanvas = document.createElement('canvas');
 
   private readonly captureContext = this.captureCanvas.getContext('2d', {
@@ -25,26 +24,25 @@ export class LensComponent implements AfterViewInit {
 
   private detectionInProgress = false;
 
-  private cameraVideo!: HTMLVideoElement;
-
   constructor(
     private readonly cameraService: CameraService,
-    private readonly detector: DetectorService,
-    private readonly boundingBoxRenderer: BoundingBoxOverlayRendererService,
+    private readonly pipelineService: PipelineService,
   ) {}
 
   async ngAfterViewInit(): Promise<void> {
     await this.cameraService.start(this.videoElement.nativeElement);
 
-    if (this.cameraVideo.readyState < HTMLMediaElement.HAVE_METADATA) {
+    if (this.videoElement.nativeElement.readyState < HTMLMediaElement.HAVE_METADATA) {
       await new Promise<void>((resolve) => {
-        this.cameraVideo.onloadedmetadata = () => resolve();
+        this.videoElement.nativeElement.onloadedmetadata = () => resolve();
       });
-      await this.detector.initialize();
     }
+    this.videoWidth.set(this.videoElement.nativeElement.videoWidth);
+    this.videoHeight.set(this.videoElement.nativeElement.videoHeight);
 
-    this.resizeCanvases(this.cameraVideo);
+    this.resizeCanvases(this.videoElement.nativeElement);
 
+    await this.pipelineService.initialize();
     this.runDetectionLoop();
   }
 
@@ -57,7 +55,7 @@ export class LensComponent implements AfterViewInit {
 
     try {
       this.captureContext.drawImage(
-        this.cameraVideo,
+        this.videoElement.nativeElement,
         0,
         0,
         this.captureCanvas.width,
@@ -71,9 +69,7 @@ export class LensComponent implements AfterViewInit {
         this.captureCanvas.height,
       );
 
-      const detections = await this.detector.detect(image);
-
-      this.boundingBoxRenderer.render(this.detectionOverlay.nativeElement, detections);
+      await this.pipelineService.recognizeText(image);
     } finally {
       this.detectionInProgress = false;
       requestAnimationFrame(this.runDetectionLoop);
@@ -83,8 +79,5 @@ export class LensComponent implements AfterViewInit {
   private resizeCanvases(HTMLVideoElement: HTMLVideoElement): void {
     this.captureCanvas.width = HTMLVideoElement.videoWidth;
     this.captureCanvas.height = HTMLVideoElement.videoHeight;
-    const canvas = this.detectionOverlay.nativeElement;
-    canvas.width = HTMLVideoElement.videoWidth;
-    canvas.height = HTMLVideoElement.videoHeight;
   }
 }
