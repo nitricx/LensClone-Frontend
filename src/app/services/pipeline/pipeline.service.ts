@@ -72,12 +72,7 @@ export class PipelineService {
   private cropDetections(image: ImageData): void {
     const start = performance.now();
 
-    const crops = this.cropper.crop(image, this.state().detector.detections);
-
-    const detections = crops.map((crop) => ({
-      ...crop.detection,
-      crop: crop.image,
-    }));
+    const detections = this.cropper.crop(image, this.state().detector.detections);
 
     this.state.update((state) => ({
       ...state,

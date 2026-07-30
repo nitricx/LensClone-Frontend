@@ -1,50 +1,46 @@
 import { Injectable } from '@angular/core';
 import { Detection } from '../text-detection/types';
-import { BoundingBoxStyle } from './types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BoundingBoxRendererService {
-  private readonly style: BoundingBoxStyle = {
-    strokeColor: '#00ff66',
-    fillColor: 'rgba(0,255,100,0.10)',
-    lineWidth: 3,
-    cornerRadius: 0,
-  };
-
   render(ctx: CanvasRenderingContext2D, detections: Detection[]): void {
-    if (!ctx) {
-      return;
-    }
+    ctx.save();
 
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#00ff00';
 
-    ctx.lineWidth = this.style.lineWidth;
-    ctx.strokeStyle = this.style.strokeColor;
-    ctx.fillStyle = this.style.fillColor;
+    ctx.font = '16px Arial';
+    ctx.textBaseline = 'top';
 
     for (const detection of detections) {
-      this.drawPolygon(ctx, detection.points);
+      const box = detection.boundingBox;
+
+      // Bounding box
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+      // Hardcoded label
+      const text = detection.text;
+      if (!text) {
+        continue;
+      }
+
+      const padding = 4;
+      const textWidth = ctx.measureText(text).width;
+      const labelWidth = textWidth + padding * 2;
+      const labelHeight = 22;
+
+      const labelX = box.x;
+      const labelY = Math.max(0, box.y - labelHeight);
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(text, labelX + padding, labelY + 3);
     }
-  }
 
-  private drawPolygon(ctx: CanvasRenderingContext2D, points: [number, number][]): void {
-    if (points.length < 4) {
-      return;
-    }
-
-    ctx.beginPath();
-
-    ctx.moveTo(points[0][0], points[0][1]);
-
-    for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i][0], points[i][1]);
-    }
-
-    ctx.closePath();
-
-    ctx.fill();
-    ctx.stroke();
+    ctx.restore();
   }
 }

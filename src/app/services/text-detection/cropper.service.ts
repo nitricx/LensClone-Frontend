@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CroppedRegion, Detection } from './types';
+import { Detection } from './types';
 
 @Injectable({
   providedIn: 'root',
@@ -7,7 +7,7 @@ import { CroppedRegion, Detection } from './types';
 export class DetectorCropperService {
   private readonly padding: number = 4;
 
-  crop(source: ImageData, detections: Detection[]): CroppedRegion[] {
+  crop(source: ImageData, detections: Detection[]): Detection[] {
     if (detections.length === 0) {
       return [];
     }
@@ -28,8 +28,8 @@ export class DetectorCropperService {
     context.putImageData(source, 0, 0);
 
     return detections.map((detection) => ({
-      image: this.cropRegion(canvas, detection),
-      detection,
+      ...detection,
+      crop: this.cropRegion(canvas, detection),
     }));
   }
 
