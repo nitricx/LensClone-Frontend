@@ -14,20 +14,28 @@ export class DebugComponent {
 
   constructor(readonly pipeline: PipelineService) {
     effect(() => {
-      const crops = this.pipeline.state().cropper.crops;
+      const detections = this.pipeline.state().detector.detections;
       const canvases = this.cropCanvases();
 
-      crops.forEach((crop, i) => {
-        const canvas = canvases[i]?.nativeElement;
-        if (!canvas) return;
+      detections.forEach((detection, i) => {
+        if (!detection.crop) {
+          return;
+        }
 
-        canvas.width = crop.image.width;
-        canvas.height = crop.image.height;
+        const canvas = canvases[i]?.nativeElement;
+        if (!canvas) {
+          return;
+        }
+
+        canvas.width = detection.crop.width;
+        canvas.height = detection.crop.height;
 
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) {
+          return;
+        }
 
-        ctx.putImageData(crop.image, 0, 0);
+        ctx.putImageData(detection.crop, 0, 0);
       });
     });
   }

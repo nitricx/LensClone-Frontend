@@ -22,14 +22,6 @@ export class PipelineService {
       processingTimeMs: 0,
       detections: [],
     },
-    cropper: {
-      processingTimeMs: 0,
-      crops: [],
-    },
-    recognizer: {
-      processingTimeMs: 0,
-      recognizedText: [],
-    },
   });
 
   constructor(
@@ -80,12 +72,13 @@ export class PipelineService {
   private cropDetections(image: ImageData): void {
     const start = performance.now();
 
-    const crops = this.cropper.crop(image, this.state().detector.detections);
+    const detections = this.cropper.crop(image, this.state().detector.detections);
+
     this.state.update((state) => ({
       ...state,
-      cropper: {
-        ...state.cropper,
-        crops,
+      detector: {
+        ...state.detector,
+        detections,
         processingTimeMs: performance.now() - start,
       },
     }));
@@ -93,12 +86,14 @@ export class PipelineService {
 
   private async recognizeText(): Promise<void> {
     const start = performance.now();
-    const recognizedText = await this.recognizer.recognize(this.state().cropper.crops);
+
+    const detections = await this.recognizer.recognize(this.state().detector.detections);
+
     this.state.update((state) => ({
       ...state,
-      recognizer: {
+      detector: {
         ...state.detector,
-        recognizedText,
+        detections,
         processingTimeMs: performance.now() - start,
       },
     }));
