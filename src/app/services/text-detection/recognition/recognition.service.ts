@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { RecognitionPreprocessorService } from '../recognition/recognition-preprocessor.service';
 import * as ort from 'onnxruntime-web';
-import { CroppedRegion } from '../types';
 import { RecognitionPostprocessorService } from './recognition-postprocessor.service';
+import { Detection } from '../types';
 
 @Injectable({
   providedIn: 'root',
@@ -31,20 +31,30 @@ export class RecognitionService {
       .filter(Boolean);
   }
 
-  async recognize(crops: CroppedRegion[]): Promise<string[]> {
-    const recognized: string[] = [];
+  async recognize(detections: Detection[]): Promise<Detection[]> {
+    const result: Detection[] = [];
 
-    for (const crop of crops) {
-      const tensor = this.preprocessor.toTensor(crop.image);
+    for (const detection of detections) {
+      if (!detection.crop) {
+        result.push(detection);
+        continue;
+      }
+
+      const tensor = this.preprocessor.toTensor(detection.crop);
+
       const output = await this.session.run({
         x: tensor,
       });
+
       const maps = output[this.session.outputNames[0]] as ort.Tensor;
-      const result = this.postprocessor.decode(maps, this.dictionary, 836);
-      recognized.push(result);
+
+      result.push({
+        ...detection,
+        text: this.postprocessor.decode(maps, this.dictionary, 836),
+      });
     }
 
-    return recognized;
+    return result;
   }
 
   private async pullModel(modelUrl: string): Promise<ArrayBuffer> {
