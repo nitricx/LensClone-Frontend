@@ -1,11 +1,15 @@
+import { Quantity } from './dictionary/dictionary-matcher.service';
+
 export interface Detection {
-  points: [number, number][];
-  score: number;
+  boundingBoxScore: number;
   boundingBox: BoundingBox;
 
   crop?: ImageData;
-  text?: string;
-  textScore?: number;
+  rawText?: string;
+  rawTextScore?: number;
+  canonicalText?: string;
+  price?: string;
+  quantity?: Quantity;
 }
 
 export interface Point {
