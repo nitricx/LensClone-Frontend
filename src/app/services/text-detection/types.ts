@@ -1,5 +1,4 @@
 export interface Detection {
-  points: [number, number][];
   score: number;
   boundingBox: BoundingBox;
 

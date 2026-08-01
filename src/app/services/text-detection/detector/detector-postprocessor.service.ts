@@ -70,12 +70,6 @@ export class DetectorPostprocessorService {
     }
 
     return {
-      points: [
-        [minX * scaleX, minY * scaleY],
-        [maxX * scaleX, minY * scaleY],
-        [maxX * scaleX, maxY * scaleY],
-        [minX * scaleX, maxY * scaleY],
-      ],
       score: this.computeScore(component, output),
       boundingBox: {
         x: minX * scaleX,
