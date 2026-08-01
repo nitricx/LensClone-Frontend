@@ -1,3 +1,5 @@
+import { Quantity } from './dictionary/dictionary-matcher.service';
+
 export interface Detection {
   boundingBoxScore: number;
   boundingBox: BoundingBox;
@@ -6,6 +8,8 @@ export interface Detection {
   rawText?: string;
   rawTextScore?: number;
   canonicalText?: string;
+  price?: string;
+  quantity?: Quantity;
 }
 
 export interface Point {

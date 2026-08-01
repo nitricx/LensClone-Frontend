@@ -1,0 +1,34 @@
+[
+  {
+    "quantity": 1,
+    "aliases": ["KG", "1KG", "1 KG", "KILO", "KILOS"]
+  },
+  {
+    "quantity": 0.5,
+    "aliases": [
+      "1/2",
+      "1/2KG",
+      "1/2 KG",
+      "500G",
+      "500 G",
+      "500GR",
+      "500 GR",
+      "MEDIO KG",
+      "MEDIO KILO"
+    ]
+  },
+  {
+    "quantity": 0.25,
+    "aliases": [
+      "1/4",
+      "1/4KG",
+      "1/4 KG",
+      "250G",
+      "250 G",
+      "250GR",
+      "250 GR",
+      "CUARTO KG",
+      "CUARTO KILO"
+    ]
+  }
+]
