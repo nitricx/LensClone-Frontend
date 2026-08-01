@@ -70,7 +70,7 @@ export class DetectorPostprocessorService {
     }
 
     return {
-      score: this.computeScore(component, output),
+      boundingBoxScore: this.computeScore(component, output),
       boundingBox: {
         x: minX * scaleX,
         y: minY * scaleY,

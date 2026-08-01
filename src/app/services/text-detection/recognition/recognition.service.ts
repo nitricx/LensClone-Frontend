@@ -50,7 +50,7 @@ export class RecognitionService {
 
       result.push({
         ...detection,
-        text: this.postprocessor.decode(maps, this.dictionary, 836),
+        rawText: this.postprocessor.decode(maps, this.dictionary, 836),
       });
     }
 

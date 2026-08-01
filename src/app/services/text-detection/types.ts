@@ -1,10 +1,11 @@
 export interface Detection {
-  score: number;
+  boundingBoxScore: number;
   boundingBox: BoundingBox;
 
   crop?: ImageData;
-  text?: string;
-  textScore?: number;
+  rawText?: string;
+  rawTextScore?: number;
+  canonicalText?: string;
 }
 
 export interface Point {

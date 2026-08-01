@@ -21,7 +21,7 @@ export class BoundingBoxRendererService {
       ctx.strokeRect(box.x, box.y, box.width, box.height);
 
       // Hardcoded label
-      const text = detection.text;
+      const text = detection.canonicalText || detection.rawText;
       if (!text) {
         continue;
       }

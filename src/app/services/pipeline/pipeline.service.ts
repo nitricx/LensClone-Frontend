@@ -6,6 +6,7 @@ import { DetectorCropperService } from '../text-detection/cropper.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
+import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +16,7 @@ export class PipelineService {
     croppedRegions: true,
     boundingBoxes: true,
     recognizedText: true,
+    canonicalText: true,
   });
 
   readonly state = signal<PipelineState>({
@@ -29,6 +31,7 @@ export class PipelineService {
     private readonly detectorFilter: DetectorFilterService,
     private readonly cropper: DetectorCropperService,
     private readonly recognizer: RecognitionService,
+    private readonly dictionary: DictionaryMatcherService,
   ) {}
 
   async initialize() {
@@ -41,6 +44,7 @@ export class PipelineService {
     this.filterDetections();
     this.cropDetections(image);
     await this.recognizeText();
+    this.interpretText();
   }
 
   private async detectText(image: ImageData): Promise<void> {
@@ -88,6 +92,21 @@ export class PipelineService {
     const start = performance.now();
 
     const detections = await this.recognizer.recognize(this.state().detector.detections);
+
+    this.state.update((state) => ({
+      ...state,
+      detector: {
+        ...state.detector,
+        detections,
+        processingTimeMs: performance.now() - start,
+      },
+    }));
+  }
+
+  private interpretText(): void {
+    const start = performance.now();
+
+    const detections = this.dictionary.match(this.state().detector.detections);
 
     this.state.update((state) => ({
       ...state,

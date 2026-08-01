@@ -54,7 +54,17 @@
       <h2>Recognized Text</h2>
 
       @for (detection of pipeline.state().detector.detections; track $index) {
-        <div>{{ detection.text }}</div>
+        <div>{{ detection.rawText }}</div>
+      }
+    </section>
+  }
+
+  @if (pipeline.debugSettings().canonicalText) {
+    <section class="recognized">
+      <h2>Canonical Text</h2>
+
+      @for (detection of pipeline.state().detector.detections; track $index) {
+        <div>{{ detection.canonicalText }}</div>
       }
     </section>
   }

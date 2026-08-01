@@ -1,12 +1,7 @@
 import { Injectable } from '@angular/core';
 import { WeightedLevenshteinService } from './weighted-levenshtein.service';
 import dictionary from './grocery-dictionary.json';
-
-export interface DictionaryMatch {
-  canonical: string;
-  matched: string;
-  score: number;
-}
+import { Detection } from '../types';
 
 @Injectable({
   providedIn: 'root',
@@ -14,26 +9,35 @@ export interface DictionaryMatch {
 export class DictionaryMatcherService {
   constructor(private readonly levenshtein: WeightedLevenshteinService) {}
 
-  match(text: string): DictionaryMatch | null {
-    const normalized = this.normalize(text);
+  match(detections: Detection[]): Detection[] {
+    return detections.map((detection) => {
+      if (!detection.rawText) {
+        return detection;
+      }
 
-    let best: DictionaryMatch | null = null;
+      const normalized = this.normalize(detection.rawText);
 
-    for (const [canonical, aliases] of Object.entries(dictionary)) {
-      for (const alias of aliases) {
-        const score = this.levenshtein.similarity(normalized, alias);
+      let bestCanonical: string | null = null;
+      let bestScore = 0;
 
-        if (!best || score > best.score) {
-          best = {
-            canonical,
-            matched: alias,
-            score,
-          };
+      for (const [canonical, aliases] of Object.entries(dictionary)) {
+        for (const alias of aliases) {
+          const score = this.levenshtein.similarity(normalized, alias);
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestCanonical = canonical;
+          }
         }
       }
-    }
 
-    return best && best.score >= 0.75 ? best : null;
+      return bestScore >= 0.75 && bestCanonical
+        ? {
+            ...detection,
+            canonicalText: bestCanonical,
+          }
+        : detection;
+    });
   }
 
   private normalize(text: string): string {
