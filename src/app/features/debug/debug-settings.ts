@@ -3,4 +3,5 @@ export interface DebugSettings {
   croppedRegions: boolean;
   recognizedText: boolean;
   canonicalText: boolean;
+  lineGrouping: boolean;
 }
