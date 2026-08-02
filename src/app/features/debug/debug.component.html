@@ -1,35 +1,36 @@
 <div class="debug">
-  <section class="stats">
+  <section class="panel stats">
     <h2>Pipeline</h2>
 
     <div>Detector Time: {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms</div>
+
     <div>
-      Recognizer Time: {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms
+      Recognizer Time:
+      {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms
     </div>
+
     <div>Detections: {{ pipeline.state().detector.detections.length }}</div>
-    <div>Crops: {{ pipeline.state().detector.detections.filter((d) => d.crop).length }}</div>
+
+    <div>
+      Crops:
+      {{ pipeline.state().detector.detections.filter((d) => d.crop).length }}
+    </div>
   </section>
 
-  <section class="controls">
+  <section class="panel controls">
     <h2>Overlays</h2>
 
-    <label>
-      <input
-        type="checkbox"
-        [checked]="pipeline.debugSettings().boundingBoxes"
-        (change)="toggleBoundingBoxes()"
-      />
-      Bounding Boxes
-    </label>
+    @for (control of controls; track control.key) {
+      <label>
+        <input
+          type="checkbox"
+          [checked]="pipeline.debugSettings()[control.key]"
+          (change)="toggle(control.key)"
+        />
 
-    <label>
-      <input
-        type="checkbox"
-        [checked]="pipeline.debugSettings().croppedRegions"
-        (change)="toggleCroppedRegions()"
-      />
-      Cropped Regions
-    </label>
+        {{ control.label }}
+      </label>
+    }
   </section>
 
   <section class="viewer">
@@ -37,7 +38,7 @@
   </section>
 
   @if (pipeline.debugSettings().croppedRegions) {
-    <section class="crops">
+    <section class="panel crops">
       <h2>Cropped Regions</h2>
 
       @for (detection of pipeline.state().detector.detections; track $index) {
@@ -50,7 +51,7 @@
   }
 
   @if (pipeline.debugSettings().recognizedText) {
-    <section class="recognized">
+    <section class="panel recognized">
       <h2>Recognized Text</h2>
 
       @for (detection of pipeline.state().detector.detections; track $index) {
@@ -60,11 +61,21 @@
   }
 
   @if (pipeline.debugSettings().canonicalText) {
-    <section class="recognized">
+    <section class="panel canonical">
       <h2>Canonical Text</h2>
 
       @for (detection of pipeline.state().detector.detections; track $index) {
         <div>{{ detection.canonicalText }}</div>
+      }
+    </section>
+  }
+
+  @if (pipeline.debugSettings().lineGrouping) {
+    <section class="panel line-grouping">
+      <h2>Line Grouping</h2>
+
+      @for (detection of pipeline.state().detector.detections; track $index) {
+        <div>Line {{ $index + 1 }} ({{ detection.line?.id }} line.id)</div>
       }
     </section>
   }

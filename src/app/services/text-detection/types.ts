@@ -10,6 +10,7 @@ export interface Detection {
   canonicalText?: string;
   price?: string;
   quantity?: Quantity;
+  line?: LineGrouping;
 }
 
 export interface Point {
@@ -22,4 +23,9 @@ export interface BoundingBox {
   y: number;
   width: number;
   height: number;
+}
+
+export interface LineGrouping {
+  id: number;
+  score: number;
 }
