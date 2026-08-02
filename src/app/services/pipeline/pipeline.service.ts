@@ -7,6 +7,7 @@ import { DetectorFilterService } from '../text-detection/detector/detector-filte
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
+import { LineGroupingService } from '../text-detection/line-grouping.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +18,7 @@ export class PipelineService {
     boundingBoxes: true,
     recognizedText: true,
     canonicalText: true,
+    lineGrouping: true,
   });
 
   readonly state = signal<PipelineState>({
@@ -32,6 +34,7 @@ export class PipelineService {
     private readonly cropper: DetectorCropperService,
     private readonly recognizer: RecognitionService,
     private readonly dictionary: DictionaryMatcherService,
+    private readonly lineGroupingService: LineGroupingService,
   ) {}
 
   async initialize() {
@@ -107,6 +110,21 @@ export class PipelineService {
     const start = performance.now();
 
     const detections = this.dictionary.match(this.state().detector.detections);
+
+    this.state.update((state) => ({
+      ...state,
+      detector: {
+        ...state.detector,
+        detections,
+        processingTimeMs: performance.now() - start,
+      },
+    }));
+  }
+
+  private lineGrouping(): void {
+    const start = performance.now();
+
+    const detections = this.lineGroupingService.group(this.state().detector.detections);
 
     this.state.update((state) => ({
       ...state,
