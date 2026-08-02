@@ -3,11 +3,12 @@ import * as ort from 'onnxruntime-web';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 import { DetectorPostprocessorService } from './detector-postprocessor.service';
 import { Detection } from '../types';
+import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 
 @Injectable({
   providedIn: 'root',
 })
-export class DetectorService {
+export class DetectorService implements PipelineStage {
   private session!: ort.InferenceSession;
 
   constructor(
@@ -15,7 +16,7 @@ export class DetectorService {
     private readonly postprocessor: DetectorPostprocessorService,
   ) {}
 
-  async initialize() {
+  async initialize?(): Promise<void> {
     ort.env.wasm.proxy = false;
     ort.env.wasm.numThreads = 16;
     ort.env.wasm.wasmPaths = '/assets/ort/';
@@ -26,14 +27,21 @@ export class DetectorService {
     });
   }
 
-  async detect(image: ImageData): Promise<Detection[]> {
-    const tensor = this.preprocessor.toTensor(image);
+  async execute(state: PipelineState): Promise<void> {
+    // Preprocess the image
+    const tensor = this.preprocessor.toTensor(state.fullImage!);
+    // Run the model
     const output = await this.session.run({
       x: tensor,
     });
-
-    const maps = output[this.session.outputNames[0]] as ort.Tensor;
-    return this.postprocessor.process(maps, image.width, image.height);
+    // Postprocess the output to get detections
+    const detections = this.postprocessor.process(
+      output[this.session.outputNames[0]] as ort.Tensor,
+      state.fullImage!.width,
+      state.fullImage!.height,
+    );
+    // Update the state with the new detections
+    state.detections = detections;
   }
 
   private async pullModel(modelUrl: string): Promise<ArrayBuffer> {

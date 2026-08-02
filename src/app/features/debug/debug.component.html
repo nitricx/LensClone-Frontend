@@ -2,18 +2,18 @@
   <section class="panel stats">
     <h2>Pipeline</h2>
 
-    <div>Detector Time: {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms</div>
+    <div>Detector Time: {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms</div>
 
     <div>
       Recognizer Time:
-      {{ pipeline.state().detector.processingTimeMs | number: '1.0-1' }} ms
+      {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms
     </div>
 
-    <div>Detections: {{ pipeline.state().detector.detections.length }}</div>
+    <div>Detections: {{ pipeline.state().detections.length }}</div>
 
     <div>
       Crops:
-      {{ pipeline.state().detector.detections.filter((d) => d.crop).length }}
+      {{ pipeline.state().detections.filter((d) => d.crop).length }}
     </div>
   </section>
 
@@ -41,7 +41,7 @@
     <section class="panel crops">
       <h2>Cropped Regions</h2>
 
-      @for (detection of pipeline.state().detector.detections; track $index) {
+      @for (detection of pipeline.state().detections; track $index) {
         @if (detection.crop) {
           <canvas #cropCanvas [width]="detection.crop.width" [height]="detection.crop.height">
           </canvas>
@@ -54,7 +54,7 @@
     <section class="panel recognized">
       <h2>Recognized Text</h2>
 
-      @for (detection of pipeline.state().detector.detections; track $index) {
+      @for (detection of pipeline.state().detections; track $index) {
         <div>{{ detection.rawText }}</div>
       }
     </section>
@@ -64,7 +64,7 @@
     <section class="panel canonical">
       <h2>Canonical Text</h2>
 
-      @for (detection of pipeline.state().detector.detections; track $index) {
+      @for (detection of pipeline.state().detections; track $index) {
         <div>{{ detection.canonicalText }}</div>
       }
     </section>
@@ -74,7 +74,7 @@
     <section class="panel line-grouping">
       <h2>Line Grouping</h2>
 
-      @for (detection of pipeline.state().detector.detections; track $index) {
+      @for (detection of pipeline.state().detections; track $index) {
         <div>Line {{ $index + 1 }} ({{ detection.line?.id }} line.id)</div>
       }
     </section>

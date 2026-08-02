@@ -1,23 +1,20 @@
 import { Injectable } from '@angular/core';
 import { BoundingBox, Detection } from './types';
+import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
 
 interface TextLine {
   id: number;
-
   detections: Detection[];
-
   boundingBox: BoundingBox;
-
   centerY: number;
   averageHeight: number;
-
   score: number;
 }
 
 @Injectable({
   providedIn: 'root',
 })
-export class LineGroupingService {
+export class LineGroupingService implements PipelineStage {
   private readonly scoring = {
     maxScore: 1.0,
 
@@ -34,11 +31,10 @@ export class LineGroupingService {
     },
   };
 
-  group(detections: Detection[]): Detection[] {
-    // Remove previous grouping information
-    detections.forEach((d) => (d.line = undefined));
+  execute(state: PipelineState): void | Promise<void> {
+    state.detections.forEach((d) => (d.line = undefined));
 
-    const remaining = [...detections];
+    const remaining = [...state.detections];
 
     remaining.sort((a, b) => {
       const dy = this.centerY(a) - this.centerY(b);
@@ -105,8 +101,6 @@ export class LineGroupingService {
         };
       }
     }
-
-    return detections;
   }
 
   private scoreCandidate(detection: Detection, line: TextLine): number {

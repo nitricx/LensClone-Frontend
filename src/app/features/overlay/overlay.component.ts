@@ -35,7 +35,7 @@ export class OverlayComponent {
       ctx.clearRect(0, 0, width, height);
 
       if (settings.boundingBoxes) {
-        this.renderer.render(ctx, state.detector.detections);
+        this.renderer.render(ctx, state.detections);
       }
     });
   }

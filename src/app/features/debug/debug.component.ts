@@ -30,7 +30,7 @@ export class DebugComponent {
 
   constructor(readonly pipeline: PipelineService) {
     effect(() => {
-      const detections = this.pipeline.state().detector.detections;
+      const detections = this.pipeline.state().detections;
       const canvases = this.cropCanvases();
 
       let canvasIndex = 0;

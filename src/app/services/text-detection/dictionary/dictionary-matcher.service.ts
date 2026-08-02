@@ -3,6 +3,7 @@ import { WeightedLevenshteinService } from './weighted-levenshtein.service';
 import productsDictionary from './grocery-dictionary.json';
 import quantityDictionary from './quantity-dictionary.json';
 import { Detection } from '../types';
+import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 
 export type Unit = 'kg';
 
@@ -20,23 +21,21 @@ export interface QuantityDictionaryEntry {
 @Injectable({
   providedIn: 'root',
 })
-export class DictionaryMatcherService {
+export class DictionaryMatcherService implements PipelineStage {
   constructor(private readonly levenshtein: WeightedLevenshteinService) {}
 
-  match(detections: Detection[]): Detection[] {
-    return detections.map((detection) => {
+  execute(state: PipelineState): void {
+    for (const detection of state.detections) {
       if (!detection.rawText) {
-        return detection;
+        continue;
       }
+
       const normalized = this.normalize(detection.rawText);
 
-      return {
-        ...detection,
-        canonicalText: this.matchProduct(normalized),
-        price: this.matchPrice(detection.rawText),
-        quantity: this.matchQuantity(detection.rawText),
-      };
-    });
+      detection.canonicalText = this.matchProduct(normalized);
+      detection.price = this.matchPrice(detection.rawText);
+      detection.quantity = this.matchQuantity(detection.rawText);
+    }
   }
 
   private matchPrice(rawText: string): string | undefined {

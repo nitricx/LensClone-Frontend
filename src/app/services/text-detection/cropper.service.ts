@@ -1,21 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Detection } from './types';
+import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
 
 @Injectable({
   providedIn: 'root',
 })
-export class DetectorCropperService {
+export class DetectorCropperService implements PipelineStage {
   private readonly padding: number = 4;
 
-  crop(source: ImageData, detections: Detection[]): Detection[] {
-    if (detections.length === 0) {
-      return [];
+  execute(state: PipelineState): void {
+    if (state.detections.length === 0) {
+      return;
     }
 
     const canvas = document.createElement('canvas');
 
-    canvas.width = source.width;
-    canvas.height = source.height;
+    canvas.width = state.fullImage!.width;
+    canvas.height = state.fullImage!.height;
 
     const context = canvas.getContext('2d', {
       willReadFrequently: true,
@@ -25,9 +26,9 @@ export class DetectorCropperService {
       throw new Error('Unable to create canvas context');
     }
 
-    context.putImageData(source, 0, 0);
+    context.putImageData(state.fullImage!, 0, 0);
 
-    return detections.map((detection) => ({
+    state.detections = state.detections.map((detection) => ({
       ...detection,
       crop: this.cropRegion(canvas, detection),
     }));

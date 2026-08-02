@@ -1,13 +1,12 @@
 import { Detection } from '../text-detection/types';
 
 export interface PipelineState {
-  detector: DetectorState;
-}
-
-interface DetectorState extends Timings {
+  fullImage?: ImageData;
   detections: Detection[];
+  processingTimeMs: number;
 }
 
-interface Timings {
-  processingTimeMs: number;
+export interface PipelineStage {
+  initialize?(): void | Promise<void>;
+  execute(state: PipelineState): void | Promise<void>;
 }
