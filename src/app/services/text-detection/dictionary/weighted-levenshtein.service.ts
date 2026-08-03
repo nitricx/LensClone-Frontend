@@ -22,8 +22,10 @@ export class WeightedLevenshteinService {
   ]);
 
   similarity(a: string, b: string): number {
+    const maxLen = Math.max(a.length, b.length);
+    if (maxLen === 0) return 1.0;
     const distance = this.distance(a, b);
-    return 1 - distance / Math.max(a.length, b.length);
+    return 1 - distance / maxLen;
   }
 
   private distance(a: string, b: string): number {
