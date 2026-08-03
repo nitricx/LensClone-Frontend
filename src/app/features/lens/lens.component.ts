@@ -68,7 +68,7 @@ export class LensComponent implements AfterViewInit {
         this.captureCanvas.width,
         this.captureCanvas.height,
       );
-      this.pipelineService.execute(image);
+      await this.pipelineService.execute(image);
     } finally {
       this.detectionInProgress = false;
       requestAnimationFrame(this.runDetectionLoop);
