@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { PipelineState } from './pipeline-state';
+import { PipelineStage, PipelineState } from './pipeline-state';
 import { DebugSettings } from '../../features/debug/debug-settings';
 
 import { DetectorCropperService } from '../text-detection/cropper.service';
@@ -22,11 +22,12 @@ export class PipelineService {
   });
 
   readonly state = signal<PipelineState>({
-    detector: {
-      processingTimeMs: 0,
-      detections: [],
-    },
+    fullImage: undefined,
+    detections: [],
+    processingTimeMs: 0,
   });
+
+  private readonly stages: PipelineStage[];
 
   constructor(
     private readonly detector: DetectorService,
@@ -35,104 +36,24 @@ export class PipelineService {
     private readonly recognizer: RecognitionService,
     private readonly dictionary: DictionaryMatcherService,
     private readonly lineGroupingService: LineGroupingService,
-  ) {}
+  ) {
+    this.stages = [detector, detectorFilter, cropper, recognizer, dictionary, lineGroupingService];
+  }
 
   async initialize() {
-    await this.detector.initialize();
-    await this.recognizer.initialize();
+    for (const stage of this.stages) {
+      await stage.initialize?.();
+    }
   }
 
   async execute(image: ImageData) {
-    await this.detectText(image);
-    this.filterDetections();
-    this.cropDetections(image);
-    await this.recognizeText();
-    this.interpretText();
-  }
-
-  private async detectText(image: ImageData): Promise<void> {
-    const start = performance.now();
-
-    const detections = await this.detector.detect(image);
-
     this.state.update((state) => ({
       ...state,
-      detector: {
-        ...state.detector,
-        detections,
-        processingTimeMs: performance.now() - start,
-      },
+      fullImage: image,
     }));
-  }
-
-  private filterDetections(): void {
-    const detections = this.detectorFilter.filter(this.state().detector.detections);
-    this.state.update((state) => ({
-      ...state,
-      detector: {
-        ...state.detector,
-        detections,
-      },
-    }));
-  }
-
-  private cropDetections(image: ImageData): void {
-    const start = performance.now();
-
-    const detections = this.cropper.crop(image, this.state().detector.detections);
-
-    this.state.update((state) => ({
-      ...state,
-      detector: {
-        ...state.detector,
-        detections,
-        processingTimeMs: performance.now() - start,
-      },
-    }));
-  }
-
-  private async recognizeText(): Promise<void> {
-    const start = performance.now();
-
-    const detections = await this.recognizer.recognize(this.state().detector.detections);
-
-    this.state.update((state) => ({
-      ...state,
-      detector: {
-        ...state.detector,
-        detections,
-        processingTimeMs: performance.now() - start,
-      },
-    }));
-  }
-
-  private interpretText(): void {
-    const start = performance.now();
-
-    const detections = this.dictionary.match(this.state().detector.detections);
-
-    this.state.update((state) => ({
-      ...state,
-      detector: {
-        ...state.detector,
-        detections,
-        processingTimeMs: performance.now() - start,
-      },
-    }));
-  }
-
-  private lineGrouping(): void {
-    const start = performance.now();
-
-    const detections = this.lineGroupingService.group(this.state().detector.detections);
-
-    this.state.update((state) => ({
-      ...state,
-      detector: {
-        ...state.detector,
-        detections,
-        processingTimeMs: performance.now() - start,
-      },
-    }));
+    const state = this.state();
+    for (const stage of this.stages) {
+      await stage.execute(state);
+    }
   }
 }

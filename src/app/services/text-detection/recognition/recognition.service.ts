@@ -3,11 +3,12 @@ import { RecognitionPreprocessorService } from '../recognition/recognition-prepr
 import * as ort from 'onnxruntime-web';
 import { RecognitionPostprocessorService } from './recognition-postprocessor.service';
 import { Detection } from '../types';
+import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RecognitionService {
+export class RecognitionService implements PipelineStage {
   private session!: ort.InferenceSession;
   private dictionary!: string[];
 
@@ -16,7 +17,7 @@ export class RecognitionService {
     private readonly postprocessor: RecognitionPostprocessorService,
   ) {}
 
-  async initialize() {
+  async initialize(): Promise<void> {
     ort.env.wasm.proxy = false;
     ort.env.wasm.numThreads = 16;
     ort.env.wasm.wasmPaths = '/assets/ort/';
@@ -31,30 +32,20 @@ export class RecognitionService {
       .filter(Boolean);
   }
 
-  async recognize(detections: Detection[]): Promise<Detection[]> {
-    const result: Detection[] = [];
-
-    for (const detection of detections) {
+  async execute(state: PipelineState): Promise<void> {
+    for (const detection of state.detections) {
       if (!detection.crop) {
-        result.push(detection);
         continue;
       }
 
-      const tensor = this.preprocessor.toTensor(detection.crop);
-
       const output = await this.session.run({
-        x: tensor,
+        x: this.preprocessor.toTensor(detection.crop),
       });
 
       const maps = output[this.session.outputNames[0]] as ort.Tensor;
 
-      result.push({
-        ...detection,
-        rawText: this.postprocessor.decode(maps, this.dictionary, 836),
-      });
+      detection.rawText = this.postprocessor.decode(maps, this.dictionary, 836);
     }
-
-    return result;
   }
 
   private async pullModel(modelUrl: string): Promise<ArrayBuffer> {
