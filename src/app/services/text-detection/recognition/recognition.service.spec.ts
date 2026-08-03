@@ -26,7 +26,9 @@ vi.mock('onnxruntime-web', () => ({
   InferenceSession: {
     create: vi.fn(),
   },
-  Tensor: vi.fn().mockImplementation((type, data, dims) => ({ type, data, dims })),
+  Tensor: vi.fn().mockImplementation(function (type: any, data: any, dims: any) {
+    return { type, data, dims };
+  }),
 }));
 
 describe('RecognitionService', () => {

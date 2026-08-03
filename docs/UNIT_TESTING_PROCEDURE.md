@@ -228,12 +228,13 @@ import { TestBed } from '@angular/core/testing';
 import { DetectorService } from './detector.service';
 import * as ort from 'onnxruntime-web';
 
-// Mock ONNX Runtime Web
 vi.mock('onnxruntime-web', () => ({
   InferenceSession: {
     create: vi.fn(),
   },
-  Tensor: vi.fn().mockImplementation((type, data, dims) => ({ type, data, dims })),
+  Tensor: vi.fn().mockImplementation(function (type: any, data: any, dims: any) {
+    return { type, data, dims };
+  }),
 }));
 
 describe('DetectorService', () => {
