@@ -39,6 +39,7 @@ export class DetectorService implements PipelineStage {
       output[this.session.outputNames[0]] as ort.Tensor,
       state.fullImage!.width,
       state.fullImage!.height,
+      state.config?.detector,
     );
     // Update the state with the new detections
     state.detections = detections;

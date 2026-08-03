@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { PipelineStage, PipelineState } from './pipeline-state';
+import { PipelineConfig } from './pipeline-config.types';
 import { DebugSettings } from '../../features/debug/debug-settings';
 
 import { DetectorCropperService } from '../text-detection/cropper.service';
@@ -46,10 +47,11 @@ export class PipelineService {
     }
   }
 
-  async execute(image: ImageData) {
+  async execute(image: ImageData, config?: PipelineConfig) {
     this.state.update((state) => ({
       ...state,
       fullImage: image,
+      config: config ?? state.config,
     }));
     const state = this.state();
     for (const stage of this.stages) {

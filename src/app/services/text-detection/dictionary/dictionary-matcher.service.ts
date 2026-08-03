@@ -4,6 +4,7 @@ import productsDictionary from './grocery-dictionary.json';
 import quantityDictionary from './quantity-dictionary.json';
 import { Detection } from '../types';
 import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG, DictionaryConfig } from '../../pipeline/pipeline-config.types';
 
 export type Unit = 'kg';
 
@@ -25,6 +26,8 @@ export class DictionaryMatcherService implements PipelineStage {
   constructor(private readonly levenshtein: WeightedLevenshteinService) {}
 
   execute(state: PipelineState): void {
+    const config = state.config?.dictionary ?? DEFAULT_PIPELINE_CONFIG.dictionary;
+
     for (const detection of state.detections) {
       if (!detection.rawText) {
         continue;
@@ -32,13 +35,13 @@ export class DictionaryMatcherService implements PipelineStage {
 
       const normalized = this.normalize(detection.rawText);
 
-      detection.canonicalText = this.matchProduct(normalized);
-      detection.price = this.matchPrice(detection.rawText);
-      detection.quantity = this.matchQuantity(detection.rawText);
+      detection.canonicalText = this.matchProduct(normalized, config);
+      detection.price = this.matchPrice(detection.rawText, config);
+      detection.quantity = this.matchQuantity(detection.rawText, config);
     }
   }
 
-  private matchPrice(rawText: string): string | undefined {
+  private matchPrice(rawText: string, config: DictionaryConfig): string | undefined {
     const normalized = rawText.replace(/\$/g, '').replace(/\s/g, '');
 
     if (!/^\d+$/.test(normalized)) {
@@ -47,7 +50,7 @@ export class DictionaryMatcherService implements PipelineStage {
 
     const price = Number(normalized);
 
-    if (price < 1000 || price > 9999) {
+    if (price < config.priceMin || price > config.priceMax) {
       return undefined;
     }
 
@@ -63,7 +66,7 @@ export class DictionaryMatcherService implements PipelineStage {
       .replace(/B/g, '8');
   }
 
-  private matchQuantity(normalizedText: string): Quantity | undefined {
+  private matchQuantity(normalizedText: string, config: DictionaryConfig): Quantity | undefined {
     let bestMatch: Quantity | undefined;
     let bestScore = 0;
 
@@ -81,10 +84,10 @@ export class DictionaryMatcherService implements PipelineStage {
       }
     }
 
-    return bestScore >= 0.75 ? bestMatch : undefined;
+    return bestScore >= config.similarityThreshold ? bestMatch : undefined;
   }
 
-  private matchProduct(normalizedText: string): string | undefined {
+  private matchProduct(normalizedText: string, config: DictionaryConfig): string | undefined {
     let bestCanonical: string | undefined;
     let bestScore = 0;
 
@@ -99,7 +102,7 @@ export class DictionaryMatcherService implements PipelineStage {
       }
     }
 
-    return bestScore >= 0.75 ? bestCanonical : undefined;
+    return bestScore >= config.similarityThreshold ? bestCanonical : undefined;
   }
 
   private normalize(text: string): string {

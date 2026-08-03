@@ -123,7 +123,7 @@ describe('DetectorService', () => {
 
     expect(preprocessorMock.toTensor).toHaveBeenCalledWith(mockImage);
     expect(mockSession.run).toHaveBeenCalled();
-    expect(postprocessorMock.process).toHaveBeenCalledWith(mockOutputTensor, 10, 10);
+    expect(postprocessorMock.process).toHaveBeenCalledWith(mockOutputTensor, 10, 10, undefined);
     expect(state.detections.length).toBe(1);
 
     vi.unstubAllGlobals();

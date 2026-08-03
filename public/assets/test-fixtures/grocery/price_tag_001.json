@@ -1,0 +1,31 @@
+{
+  "imageId": "price_tag_001",
+  "category": "price-tags",
+  "dimensions": { "width": 1280, "height": 720 },
+  "annotations": [
+    {
+      "id": "box-1",
+      "boundingBox": { "x": 300, "y": 200, "width": 250, "height": 50 },
+      "polygon": [
+        { "x": 300, "y": 200 },
+        { "x": 550, "y": 200 },
+        { "x": 550, "y": 250 },
+        { "x": 300, "y": 250 }
+      ],
+      "expectedText": "ORGANIC OAT MILK 1L",
+      "textCategory": "product_name"
+    },
+    {
+      "id": "box-2",
+      "boundingBox": { "x": 300, "y": 260, "width": 120, "height": 60 },
+      "polygon": [
+        { "x": 300, "y": 260 },
+        { "x": 420, "y": 260 },
+        { "x": 420, "y": 320 },
+        { "x": 300, "y": 320 }
+      ],
+      "expectedText": "$3.49",
+      "textCategory": "price"
+    }
+  ]
+}
