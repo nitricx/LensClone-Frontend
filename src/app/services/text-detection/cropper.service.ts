@@ -1,17 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Detection } from './types';
 import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG, CropperConfig } from '../pipeline/pipeline-config.types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DetectorCropperService implements PipelineStage {
-  private readonly padding: number = 4;
-
   execute(state: PipelineState): void {
     if (state.detections.length === 0) {
       return;
     }
+
+    const cropperConfig = state.config?.cropper ?? DEFAULT_PIPELINE_CONFIG.cropper;
 
     const canvas = document.createElement('canvas');
 
@@ -30,11 +31,15 @@ export class DetectorCropperService implements PipelineStage {
 
     state.detections = state.detections.map((detection) => ({
       ...detection,
-      crop: this.cropRegion(canvas, detection),
+      crop: this.cropRegion(canvas, detection, cropperConfig),
     }));
   }
 
-  private cropRegion(canvas: HTMLCanvasElement, detection: Detection): ImageData {
+  private cropRegion(
+    canvas: HTMLCanvasElement,
+    detection: Detection,
+    config: CropperConfig,
+  ): ImageData {
     const context = canvas.getContext('2d');
 
     if (!context) {
@@ -42,14 +47,13 @@ export class DetectorCropperService implements PipelineStage {
     }
 
     const box = detection.boundingBox;
+    const padding = config.padding;
 
-    const x = Math.max(0, Math.floor(box.x - this.padding));
+    const x = Math.max(0, Math.floor(box.x - padding));
+    const y = Math.max(0, Math.floor(box.y - padding));
 
-    const y = Math.max(0, Math.floor(box.y - this.padding));
-
-    const right = Math.min(canvas.width, Math.ceil(box.x + box.width + this.padding));
-
-    const bottom = Math.min(canvas.height, Math.ceil(box.y + box.height + this.padding));
+    const right = Math.min(canvas.width, Math.ceil(box.x + box.width + padding));
+    const bottom = Math.min(canvas.height, Math.ceil(box.y + box.height + padding));
 
     const width = right - x;
     const height = bottom - y;

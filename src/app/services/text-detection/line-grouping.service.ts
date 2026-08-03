@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BoundingBox, Detection } from './types';
 import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG, LineGroupingConfig } from '../pipeline/pipeline-config.types';
 
 interface TextLine {
   id: number;
@@ -15,23 +16,9 @@ interface TextLine {
   providedIn: 'root',
 })
 export class LineGroupingService implements PipelineStage {
-  private readonly scoring = {
-    maxScore: 1.0,
-
-    weights: {
-      vertical: 0.6,
-      height: 0.25,
-      horizontal: 0.1,
-      confidence: 0.05,
-    },
-
-    limits: {
-      maxVertical: 1.0,
-      maxHeightRatio: 2.0,
-    },
-  };
-
   execute(state: PipelineState): void | Promise<void> {
+    const config = state.config?.lineGrouping ?? DEFAULT_PIPELINE_CONFIG.lineGrouping;
+
     state.detections.forEach((d) => (d.line = undefined));
 
     const remaining = [...state.detections];
@@ -69,7 +56,7 @@ export class LineGroupingService implements PipelineStage {
         let bestScore = Number.POSITIVE_INFINITY;
 
         for (let i = 0; i < remaining.length; i++) {
-          const score = this.scoreCandidate(remaining[i], line);
+          const score = this.scoreCandidate(remaining[i], line, config);
 
           if (score < bestScore) {
             bestScore = score;
@@ -77,7 +64,7 @@ export class LineGroupingService implements PipelineStage {
           }
         }
 
-        if (bestIndex >= 0 && bestScore <= this.scoring.maxScore) {
+        if (bestIndex >= 0 && bestScore <= config.maxScore) {
           line.detections.push(remaining.splice(bestIndex, 1)[0]);
 
           line.score = Math.max(line.score, bestScore);
@@ -103,7 +90,7 @@ export class LineGroupingService implements PipelineStage {
     }
   }
 
-  private scoreCandidate(detection: Detection, line: TextLine): number {
+  private scoreCandidate(detection: Detection, line: TextLine, config: LineGroupingConfig): number {
     const box = detection.boundingBox;
 
     //
@@ -111,7 +98,7 @@ export class LineGroupingService implements PipelineStage {
     //
     const vertical = Math.abs(this.centerY(detection) - line.centerY) / line.averageHeight;
 
-    if (vertical > this.scoring.limits.maxVertical) {
+    if (vertical > config.limits.maxVertical) {
       return Number.POSITIVE_INFINITY;
     }
 
@@ -121,7 +108,7 @@ export class LineGroupingService implements PipelineStage {
     const heightRatio =
       Math.max(box.height, line.averageHeight) / Math.min(box.height, line.averageHeight);
 
-    if (heightRatio > this.scoring.limits.maxHeightRatio) {
+    if (heightRatio > config.limits.maxHeightRatio) {
       return Number.POSITIVE_INFINITY;
     }
 
@@ -146,10 +133,10 @@ export class LineGroupingService implements PipelineStage {
     const confidence = 1 - detection.boundingBoxScore;
 
     return (
-      vertical * this.scoring.weights.vertical +
-      height * this.scoring.weights.height +
-      horizontal * this.scoring.weights.horizontal +
-      confidence * this.scoring.weights.confidence
+      vertical * config.weights.vertical +
+      height * config.weights.height +
+      horizontal * config.weights.horizontal +
+      confidence * config.weights.confidence
     );
   }
 

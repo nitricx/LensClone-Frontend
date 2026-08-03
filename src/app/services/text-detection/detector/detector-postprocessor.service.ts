@@ -1,28 +1,32 @@
 import * as ort from 'onnxruntime-web';
 import { Detection, Point } from '../types';
 import { Injectable } from '@angular/core';
+import { DEFAULT_PIPELINE_CONFIG, DetectorConfig } from '../../pipeline/pipeline-config.types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DetectorPostprocessorService {
   private readonly floodFillQueue: Point[] = [];
-  private readonly thresholdValue: number = 0.3;
-  private readonly minArea: number = 10;
 
-  process(output: ort.Tensor, imageWidth: number, imageHeight: number): Detection[] {
+  process(
+    output: ort.Tensor,
+    imageWidth: number,
+    imageHeight: number,
+    config: DetectorConfig = DEFAULT_PIPELINE_CONFIG.detector,
+  ): Detection[] {
     const [, , height, width] = output.dims;
 
     const scaleX = imageWidth / width;
     const scaleY = imageHeight / height;
 
-    const binary = this.threshold(output);
+    const binary = this.threshold(output, config.thresholdValue);
     const components = this.connectedComponents(binary, width, height);
 
     const detections: Detection[] = [];
 
     for (const component of components) {
-      if (component.length < this.minArea) {
+      if (component.length < config.minArea) {
         continue;
       }
 
@@ -138,14 +142,14 @@ export class DetectorPostprocessorService {
     return component;
   }
 
-  private threshold(output: ort.Tensor): Uint8Array {
+  private threshold(output: ort.Tensor, thresholdValue: number): Uint8Array {
     const [, , height, width] = output.dims;
     const data = output.data as Float32Array;
 
     const binary = new Uint8Array(width * height);
 
     for (let i = 0; i < binary.length; i++) {
-      binary[i] = data[i] >= this.thresholdValue ? 1 : 0;
+      binary[i] = data[i] >= thresholdValue ? 1 : 0;
     }
 
     return binary;
