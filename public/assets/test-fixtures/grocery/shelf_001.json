@@ -1,0 +1,31 @@
+{
+  "imageId": "shelf_001",
+  "category": "shelf-wide",
+  "dimensions": { "width": 1920, "height": 1080 },
+  "annotations": [
+    {
+      "id": "box-101",
+      "boundingBox": { "x": 150, "y": 400, "width": 180, "height": 45 },
+      "expectedText": "WHOLE WHEAT BREAD",
+      "textCategory": "product_name"
+    },
+    {
+      "id": "box-102",
+      "boundingBox": { "x": 150, "y": 450, "width": 90, "height": 40 },
+      "expectedText": "$2.99",
+      "textCategory": "price"
+    },
+    {
+      "id": "box-103",
+      "boundingBox": { "x": 600, "y": 400, "width": 210, "height": 45 },
+      "expectedText": "EXTRA VIRGIN OLIVE OIL",
+      "textCategory": "product_name"
+    },
+    {
+      "id": "box-104",
+      "boundingBox": { "x": 600, "y": 450, "width": 100, "height": 40 },
+      "expectedText": "$8.99",
+      "textCategory": "price"
+    }
+  ]
+}
