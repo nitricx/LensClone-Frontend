@@ -58,10 +58,10 @@ export class MatrixEvaluatorService {
       : [baseConfig.detector.minAspectRatio];
     const detectorMaxSides = matrix.detectorMaxSides?.length
       ? matrix.detectorMaxSides
-      : [baseConfig.detector.maxSide ?? 0];
+      : [baseConfig.detector.maxSide];
     const detectorScaleFactors = matrix.detectorScaleFactors?.length
       ? matrix.detectorScaleFactors
-      : [baseConfig.detector.scaleFactor ?? 0.5];
+      : [baseConfig.detector.scaleFactor];
     const cropperPaddings = matrix.cropperPaddings?.length
       ? matrix.cropperPaddings
       : [baseConfig.cropper.padding];
