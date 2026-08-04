@@ -82,9 +82,14 @@ addEventListener('message', async (event: MessageEvent) => {
         config,
       };
 
+      const stageMetrics: Record<string, number> = {};
       for (const stage of stages) {
+        const stageStart = performance.now();
         await stage.execute(state);
+        const stageName = stage.name || stage.constructor.name;
+        stageMetrics[stageName] = performance.now() - stageStart;
       }
+      state.stageMetrics = stageMetrics;
 
       const totalTimeMs = performance.now() - startTime;
 
@@ -94,6 +99,7 @@ addEventListener('message', async (event: MessageEvent) => {
         state: {
           detections: state.detections,
           processingTimeMs: totalTimeMs,
+          stageMetrics,
           config: state.config,
         },
       });

@@ -9,6 +9,7 @@ import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
   providedIn: 'root',
 })
 export class RecognitionService implements PipelineStage {
+  readonly name = 'recognizer';
   private session!: ort.InferenceSession;
   private dictionary!: string[];
 

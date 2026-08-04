@@ -81,11 +81,14 @@ export class PipelineService {
   async execute(image: ImageData, config?: PipelineConfig): Promise<void> {
     if (this.worker && this.isWorkerInitialized) {
       const requestId = this.generateRequestId();
-      const execPromise = new Promise<{ detections: any[]; processingTimeMs: number; config?: PipelineConfig }>(
-        (resolve, reject) => {
-          this.pendingRequests.set(requestId, { resolve, reject });
-        },
-      );
+      const execPromise = new Promise<{
+        detections: any[];
+        processingTimeMs: number;
+        stageMetrics?: Record<string, number>;
+        config?: PipelineConfig;
+      }>((resolve, reject) => {
+        this.pendingRequests.set(requestId, { resolve, reject });
+      });
 
       // Clone image data buffer for transfer to worker while preserving original object reference if needed
       const buffer = image.data.buffer.slice(0);
@@ -102,17 +105,32 @@ export class PipelineService {
 
       const result = await execPromise;
 
+      const processedDetections = (result.detections || []).map((det: any) => {
+        if (det.crop && !(det.crop instanceof ImageData)) {
+          const cropBuf =
+            det.crop.data instanceof Uint8ClampedArray
+              ? det.crop.data
+              : new Uint8ClampedArray(det.crop.data);
+          det.crop = new ImageData(cropBuf, det.crop.width, det.crop.height);
+        }
+        return det;
+      });
+
       this.state.update((state) => ({
         ...state,
         fullImage: image,
-        detections: result.detections,
+        detections: processedDetections,
         processingTimeMs: result.processingTimeMs,
+        stageMetrics: result.stageMetrics,
         config: result.config ?? state.config,
       }));
       return;
     }
 
     // Fallback: synchronous/sequential execution on main thread
+    const stageMetrics: Record<string, number> = {};
+    const startTime = performance.now();
+
     this.state.update((state) => ({
       ...state,
       fullImage: image,
@@ -120,8 +138,18 @@ export class PipelineService {
     }));
     const state = this.state();
     for (const stage of this.stages) {
+      const stageName = stage.name || stage.constructor.name;
+      const stageStart = performance.now();
       await stage.execute(state);
+      stageMetrics[stageName] = performance.now() - stageStart;
     }
+    const totalTimeMs = performance.now() - startTime;
+
+    this.state.update((s) => ({
+      ...s,
+      processingTimeMs: totalTimeMs,
+      stageMetrics,
+    }));
   }
 
   private setupWorkerListeners(): void {

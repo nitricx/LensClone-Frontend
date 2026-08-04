@@ -7,6 +7,8 @@ import { DEFAULT_PIPELINE_CONFIG, CropperConfig } from '../pipeline/pipeline-con
   providedIn: 'root',
 })
 export class DetectorCropperService implements PipelineStage {
+  readonly name = 'cropper';
+
   execute(state: PipelineState): void {
     if (state.detections.length === 0) {
       return;

@@ -31,12 +31,12 @@ describe('PipelineService', () => {
   let lineGroupingMock: LineGroupingService;
 
   beforeEach(() => {
-    detectorMock = { initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
-    detectorFilterMock = { execute: vi.fn() } as unknown as DetectorFilterService;
-    cropperMock = { execute: vi.fn() } as unknown as DetectorCropperService;
-    recognizerMock = { initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
-    dictionaryMock = { execute: vi.fn() } as unknown as DictionaryMatcherService;
-    lineGroupingMock = { execute: vi.fn() } as unknown as LineGroupingService;
+    detectorMock = { name: 'detector', initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
+    detectorFilterMock = { name: 'detectorFilter', execute: vi.fn() } as unknown as DetectorFilterService;
+    cropperMock = { name: 'cropper', execute: vi.fn() } as unknown as DetectorCropperService;
+    recognizerMock = { name: 'recognizer', initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
+    dictionaryMock = { name: 'dictionary', execute: vi.fn() } as unknown as DictionaryMatcherService;
+    lineGroupingMock = { name: 'lineGrouping', execute: vi.fn() } as unknown as LineGroupingService;
 
     TestBed.configureTestingModule({
       providers: [
@@ -88,6 +88,8 @@ describe('PipelineService', () => {
       'dictionary',
       'lineGrouping',
     ]);
+    expect(service.state().stageMetrics).toBeDefined();
+    expect(typeof service.state().stageMetrics?.['detector']).toBe('number');
   });
 
   it('should delegate pipeline initialization and execution to Worker when available', async () => {

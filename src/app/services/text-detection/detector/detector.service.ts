@@ -9,6 +9,7 @@ import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
   providedIn: 'root',
 })
 export class DetectorService implements PipelineStage {
+  readonly name = 'detector';
   private session!: ort.InferenceSession;
 
   constructor(
