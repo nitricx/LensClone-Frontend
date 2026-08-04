@@ -4,6 +4,7 @@ import { LensComponent } from './lens.component';
 import { CameraService } from '../../services/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { HistoryService } from '../../services/history.service';
+import { AuthService } from '../../services/auth.service';
 import { computed, signal } from '@angular/core';
 
 if (typeof globalThis.ImageData === 'undefined') {
@@ -25,6 +26,7 @@ describe('LensComponent', () => {
   let cameraServiceMock: any;
   let pipelineServiceMock: any;
   let historyServiceMock: any;
+  let authServiceMock: any;
 
   beforeEach(async () => {
     vi.stubGlobal('requestAnimationFrame', vi.fn());
@@ -66,6 +68,18 @@ describe('LensComponent', () => {
       clearHistory: vi.fn(),
     };
 
+    const userSignal = signal<any>(null);
+    authServiceMock = {
+      currentUser: userSignal,
+      isAuthenticated: computed(() => userSignal() !== null),
+      signInWithGoogle: vi.fn().mockImplementation(() => {
+        userSignal.set({ id: '123', name: 'Test User', email: 'test@gmail.com' });
+      }),
+      signOut: vi.fn().mockImplementation(() => {
+        userSignal.set(null);
+      }),
+    };
+
     const mockContext = {
       drawImage: vi.fn(),
       getImageData: vi.fn().mockImplementation((x: number, y: number, w: number, h: number) => {
@@ -84,6 +98,7 @@ describe('LensComponent', () => {
         { provide: CameraService, useValue: cameraServiceMock },
         { provide: PipelineService, useValue: pipelineServiceMock },
         { provide: HistoryService, useValue: historyServiceMock },
+        { provide: AuthService, useValue: authServiceMock },
       ],
     }).compileComponents();
 
@@ -122,14 +137,17 @@ describe('LensComponent', () => {
     vi.restoreAllMocks();
   });
 
-  it('should toggle modals and overflow menu', () => {
+  it('should toggle modals including account modal', () => {
     expect(component.activeModal()).toBe('none');
 
-    component.toggleMenu();
-    expect(component.activeModal()).toBe('menu');
+    component.openModal('account');
+    expect(component.activeModal()).toBe('account');
 
-    component.openModal('feedback');
-    expect(component.activeModal()).toBe('feedback');
+    component.signInGoogle();
+    expect(authServiceMock.signInWithGoogle).toHaveBeenCalled();
+
+    component.signOut();
+    expect(authServiceMock.signOut).toHaveBeenCalled();
 
     component.closeModal();
     expect(component.activeModal()).toBe('none');

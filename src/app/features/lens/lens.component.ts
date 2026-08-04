@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { CameraService } from '../../services/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { HistoryService, HistoryItem } from '../../services/history.service';
+import { AuthService } from '../../services/auth.service';
 import { OverlayComponent } from '../overlay/overlay.component';
 
 export type ModalType =
@@ -22,7 +23,8 @@ export type ModalType =
   | 'feedback'
   | 'permissions'
   | 'privacy'
-  | 'terms';
+  | 'terms'
+  | 'account';
 
 @Component({
   selector: 'app-lens',
@@ -64,6 +66,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     private readonly cameraService: CameraService,
     private readonly pipelineService: PipelineService,
     readonly historyService: HistoryService,
+    readonly authService: AuthService,
   ) {}
 
   async ngAfterViewInit(): Promise<void> {
@@ -158,6 +161,14 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     } else {
       this.openModal('menu');
     }
+  }
+
+  signInGoogle(): void {
+    this.authService.signInWithGoogle();
+  }
+
+  signOut(): void {
+    this.authService.signOut();
   }
 
   submitFeedback(): void {
