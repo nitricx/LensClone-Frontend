@@ -25,7 +25,7 @@ Use this skill when modifying model initialization, pipeline scheduling, or canv
 - **Session Options**: Set up `InferenceSession.SessionOptions` to enable graph optimizations:
   ```typescript
   const options = {
-    executionProviders: ['wasm'],
+    executionProviders: ['webgpu', 'wasm'],
     graphOptimizationLevel: 'all',
   };
   ```

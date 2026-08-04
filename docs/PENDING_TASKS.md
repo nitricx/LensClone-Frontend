@@ -19,7 +19,7 @@ Delete tasks from this list as they are completed.
 - [x] **Detector Input Downscaling (DBNet Aspect Bounding)**: Downscale input frame tensors sent to DBNet detector (`PP-OCRv5_mobile_det.onnx`) to a bounded maximum dimension (e.g., max side 480px or 384px) instead of native video resolution, scaling bounding box coordinates back during post-processing to reduce detector latency from ~140ms to ~35–50ms.
 - [x] **ONNX Graph Optimization & Thread Tuning**: Configure `graphOptimizationLevel: 'all'` in `InferenceSession.SessionOptions` across `DetectorService` and `RecognitionService`, and tune `numThreads` to match `navigator.hardwareConcurrency` to prevent Web Worker thread oversubscription overhead.
 - [ ] **CRNN Recognition Batching**: Batch cropped text image tensors into a single `[N, 3, 48, W]` model pass or cap maximum crops processed per frame to eliminate $N$ sequential `session.run()` passes per frame.
-- [ ] **WebGPU Execution Provider**: Configure ONNX Runtime Web execution providers (`executionProviders: ['webgpu', 'wasm']`) to enable hardware GPU acceleration when supported by the browser, reducing DBNet execution latency to ~10–15ms.
+- [x] **WebGPU Execution Provider**: Configure ONNX Runtime Web execution providers (`executionProviders: ['webgpu', 'wasm']`) to enable hardware GPU acceleration when supported by the browser, reducing DBNet execution latency to ~10–15ms.
 
 ---
 

@@ -28,7 +28,7 @@ export class RecognitionService implements PipelineStage {
 
     const buffer = await this.pullModel('/models/latin_PP-OCRv5_mobile_rec.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
-      executionProviders: ['wasm'],
+      executionProviders: ['webgpu', 'wasm'],
       graphOptimizationLevel: 'all',
     });
     this.preprocessor.initialize(48);

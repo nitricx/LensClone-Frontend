@@ -87,7 +87,7 @@ describe('DetectorService', () => {
     expect(ort.InferenceSession.create).toHaveBeenCalledWith(
       dummyBuffer,
       expect.objectContaining({
-        executionProviders: ['wasm'],
+        executionProviders: ['webgpu', 'wasm'],
         graphOptimizationLevel: 'all',
       }),
     );
