@@ -1,4 +1,29 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('onnxruntime-web', () => {
+  class TensorMock {
+    type: string;
+    data: any;
+    dims: number[];
+    constructor(type: string, data: any, dims: number[]) {
+      this.type = type;
+      this.data = data;
+      this.dims = dims;
+    }
+  }
+  const envMock = { wasm: {} };
+
+  return {
+    __esModule: true,
+    default: {
+      env: envMock,
+      Tensor: TensorMock,
+    },
+    env: envMock,
+    Tensor: TensorMock,
+  };
+});
+
 import { TestBed } from '@angular/core/testing';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 
@@ -33,7 +58,6 @@ describe('DetectorPreprocessorService', () => {
     const width = 4;
     const height = 4;
     const data = new Uint8ClampedArray(width * height * 4);
-    // Fill with white pixels (255, 255, 255, 255)
     data.fill(255);
     const mockImage = new ImageData(data, width, height);
 
@@ -67,8 +91,6 @@ describe('DetectorPreprocessorService', () => {
     const tensor = service.toTensor(mockImage, 0, 0.25);
 
     expect(tensor).toBeDefined();
-    // 1920 * 0.25 = 480 (32 * 15)
-    // 1080 * 0.25 = 270 -> nearest multiple of 32 is 256 (32 * 8)
     expect(tensor.dims).toEqual([1, 3, 256, 480]);
   });
 

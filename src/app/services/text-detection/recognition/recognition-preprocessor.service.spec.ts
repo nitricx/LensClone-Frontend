@@ -1,4 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('onnxruntime-web', () => {
+  class TensorMock {
+    type: string;
+    data: any;
+    dims: number[];
+    constructor(type: string, data: any, dims: number[]) {
+      this.type = type;
+      this.data = data;
+      this.dims = dims;
+    }
+  }
+  const envMock = { wasm: {} };
+
+  return {
+    __esModule: true,
+    default: {
+      env: envMock,
+      Tensor: TensorMock,
+    },
+    env: envMock,
+    Tensor: TensorMock,
+  };
+});
+
 import { TestBed } from '@angular/core/testing';
 import { RecognitionPreprocessorService } from './recognition-preprocessor.service';
 
