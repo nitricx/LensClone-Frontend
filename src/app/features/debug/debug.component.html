@@ -2,27 +2,27 @@
   <section class="panel stats">
     <h2>Pipeline</h2>
 
-    <div>Total Time: {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms</div>
+    <div>Total Time: {{ pipeline.processingTimeMs() | number: '1.0-1' }} ms</div>
 
-    <div>Detector Time: {{ (pipeline.state().stageMetrics?.['detector'] ?? 0) | number: '1.0-1' }} ms</div>
+    <div>Detector Time: {{ (pipeline.stageMetrics()?.['detector'] ?? 0) | number: '1.0-1' }} ms</div>
 
-    <div>Filter Time: {{ (pipeline.state().stageMetrics?.['detectorFilter'] ?? 0) | number: '1.0-1' }} ms</div>
+    <div>Filter Time: {{ (pipeline.stageMetrics()?.['detectorFilter'] ?? 0) | number: '1.0-1' }} ms</div>
 
-    <div>Cropper Time: {{ (pipeline.state().stageMetrics?.['cropper'] ?? 0) | number: '1.0-1' }} ms</div>
+    <div>Cropper Time: {{ (pipeline.stageMetrics()?.['cropper'] ?? 0) | number: '1.0-1' }} ms</div>
 
     <div>
-      Recognizer Time: {{ (pipeline.state().stageMetrics?.['recognizer'] ?? 0) | number: '1.0-1' }} ms
+      Recognizer Time: {{ (pipeline.stageMetrics()?.['recognizer'] ?? 0) | number: '1.0-1' }} ms
     </div>
 
-    <div>Dictionary Time: {{ (pipeline.state().stageMetrics?.['dictionary'] ?? 0) | number: '1.0-1' }} ms</div>
+    <div>Dictionary Time: {{ (pipeline.stageMetrics()?.['dictionary'] ?? 0) | number: '1.0-1' }} ms</div>
 
-    <div>Line Grouping Time: {{ (pipeline.state().stageMetrics?.['lineGrouping'] ?? 0) | number: '1.0-1' }} ms</div>
+    <div>Line Grouping Time: {{ (pipeline.stageMetrics()?.['lineGrouping'] ?? 0) | number: '1.0-1' }} ms</div>
 
-    <div>Detections: {{ pipeline.state().detections.length }}</div>
+    <div>Detections: {{ pipeline.detections().length }}</div>
 
     <div>
       Crops:
-      {{ pipeline.state().detections.filter((d) => d.crop).length }}
+      {{ pipeline.cropsCount() }}
     </div>
   </section>
 
@@ -63,7 +63,7 @@
     <section class="panel crops">
       <h2>Cropped Regions</h2>
 
-      @for (detection of pipeline.state().detections; track $index) {
+      @for (detection of pipeline.detections(); track $index) {
         @if (detection.crop) {
           <app-crop-canvas [crop]="detection.crop" />
         }
@@ -75,7 +75,7 @@
     <section class="panel recognized">
       <h2>Recognized Text</h2>
 
-      @for (detection of pipeline.state().detections; track $index) {
+      @for (detection of pipeline.detections(); track $index) {
         <div>{{ detection.rawText }}</div>
       }
     </section>
@@ -85,7 +85,7 @@
     <section class="panel canonical">
       <h2>Canonical Text</h2>
 
-      @for (detection of pipeline.state().detections; track $index) {
+      @for (detection of pipeline.detections(); track $index) {
         <div>{{ detection.canonicalText }}</div>
       }
     </section>
@@ -95,7 +95,7 @@
     <section class="panel line-grouping">
       <h2>Line Grouping</h2>
 
-      @for (detection of pipeline.state().detections; track $index) {
+      @for (detection of pipeline.detections(); track $index) {
         <div>Line {{ $index + 1 }} ({{ detection.line?.id }} line.id)</div>
       }
     </section>

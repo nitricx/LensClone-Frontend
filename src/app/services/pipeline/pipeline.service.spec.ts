@@ -57,6 +57,29 @@ describe('PipelineService', () => {
     expect(service).toBeTruthy();
     expect(service.debugSettings().lineGrouping).toBe(true);
     expect(service.state().detections.length).toBe(0);
+    expect(service.detections().length).toBe(0);
+    expect(service.processingTimeMs()).toBe(0);
+    expect(service.cropsCount()).toBe(0);
+    expect(service.hasDetections()).toBe(false);
+  });
+
+  it('should reflect updated computed signals after execution', async () => {
+    const mockCrop = new ImageData(new Uint8ClampedArray(16), 2, 2);
+    (detectorMock.execute as any).mockImplementation((st: any) => {
+      st.detections = [
+        { crop: mockCrop, rawText: 'TEST 1' },
+        { crop: undefined, rawText: 'TEST 2' },
+      ];
+    });
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    await service.execute(mockImage);
+
+    expect(service.detections().length).toBe(2);
+    expect(service.cropsCount()).toBe(1);
+    expect(service.hasDetections()).toBe(true);
+    expect(service.processingTimeMs()).toBeGreaterThanOrEqual(0);
+    expect(service.stageMetrics()?.['detector']).toBeDefined();
   });
 
   it('should initialize all pipeline stages sequentially', async () => {

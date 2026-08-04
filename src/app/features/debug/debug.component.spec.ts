@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugComponent } from './debug.component';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { CameraService } from '../../services/camera.service';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 
 describe('DebugComponent', () => {
   let component: DebugComponent;
@@ -27,10 +27,17 @@ describe('DebugComponent', () => {
       mockContext as unknown as CanvasRenderingContext2D,
     );
 
+    const stateSignal = signal({ fullImage: undefined, detections: [], processingTimeMs: 0 } as any);
+
     pipelineServiceMock = {
       initialize: vi.fn().mockResolvedValue(undefined),
       execute: vi.fn(),
-      state: signal({ fullImage: undefined, detections: [], processingTimeMs: 0 }),
+      state: stateSignal,
+      detections: computed(() => stateSignal().detections),
+      processingTimeMs: computed(() => stateSignal().processingTimeMs),
+      stageMetrics: computed(() => stateSignal().stageMetrics),
+      cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
+      hasDetections: computed(() => (stateSignal().detections || []).length > 0),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

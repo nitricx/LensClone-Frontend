@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OverlayComponent } from './overlay.component';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { BoundingBoxRendererService } from '../../services/visualization/boundingbox-renderer.service';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 
 describe('OverlayComponent', () => {
   let component: OverlayComponent;
@@ -26,8 +26,15 @@ describe('OverlayComponent', () => {
       mockContext as unknown as CanvasRenderingContext2D,
     );
 
+    const stateSignal = signal({ fullImage: undefined, detections: [], processingTimeMs: 0 } as any);
+
     pipelineServiceMock = {
-      state: signal({ fullImage: undefined, detections: [], processingTimeMs: 0 }),
+      state: stateSignal,
+      detections: computed(() => stateSignal().detections),
+      processingTimeMs: computed(() => stateSignal().processingTimeMs),
+      stageMetrics: computed(() => stateSignal().stageMetrics),
+      cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
+      hasDetections: computed(() => (stateSignal().detections || []).length > 0),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

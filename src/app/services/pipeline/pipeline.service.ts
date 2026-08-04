@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { PipelineStage, PipelineState } from './pipeline-state';
 import { PipelineConfig } from './pipeline-config.types';
 import { DebugSettings } from '../../features/debug/debug-settings';
@@ -22,11 +22,19 @@ export class PipelineService {
     lineGrouping: true,
   });
 
-  readonly state = signal<PipelineState>({
+  private readonly _state = signal<PipelineState>({
     fullImage: undefined,
     detections: [],
     processingTimeMs: 0,
   });
+
+  readonly state = this._state.asReadonly();
+
+  readonly detections = computed(() => this._state().detections);
+  readonly processingTimeMs = computed(() => this._state().processingTimeMs);
+  readonly stageMetrics = computed(() => this._state().stageMetrics);
+  readonly cropsCount = computed(() => this.detections().filter((d) => !!d.crop).length);
+  readonly hasDetections = computed(() => this.detections().length > 0);
 
   private readonly stages: PipelineStage[];
   private worker?: Worker;
@@ -116,7 +124,7 @@ export class PipelineService {
         return det;
       });
 
-      this.state.update((state) => ({
+      this._state.update((state) => ({
         ...state,
         fullImage: image,
         detections: processedDetections,
@@ -131,7 +139,7 @@ export class PipelineService {
     const stageMetrics: Record<string, number> = {};
     const startTime = performance.now();
 
-    this.state.update((state) => ({
+    this._state.update((state) => ({
       ...state,
       fullImage: image,
       config: config ?? state.config,
@@ -145,7 +153,7 @@ export class PipelineService {
     }
     const totalTimeMs = performance.now() - startTime;
 
-    this.state.update((s) => ({
+    this._state.update((s) => ({
       ...s,
       processingTimeMs: totalTimeMs,
       stageMetrics,
