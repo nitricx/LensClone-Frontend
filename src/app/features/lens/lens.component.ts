@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, signal, ViewChild } from '@angular/core';
 import { CameraService } from '../../services/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { OverlayComponent } from '../overlay/overlay.component';
@@ -10,7 +10,7 @@ import { OverlayComponent } from '../overlay/overlay.component';
   templateUrl: './lens.component.html',
   styleUrl: './lens.component.css',
 })
-export class LensComponent implements AfterViewInit {
+export class LensComponent implements AfterViewInit, OnDestroy {
   @ViewChild('video', { static: true })
   private videoElement!: ElementRef<HTMLVideoElement>;
 
@@ -23,6 +23,8 @@ export class LensComponent implements AfterViewInit {
   })!;
 
   private detectionInProgress = false;
+  private animationFrameId?: number;
+  private isDestroyed = false;
 
   constructor(
     private readonly cameraService: CameraService,
@@ -30,6 +32,7 @@ export class LensComponent implements AfterViewInit {
   ) {}
 
   async ngAfterViewInit(): Promise<void> {
+    this.isDestroyed = false;
     await this.cameraService.start(this.videoElement.nativeElement);
 
     if (this.videoElement.nativeElement.readyState < HTMLMediaElement.HAVE_METADATA) {
@@ -46,32 +49,49 @@ export class LensComponent implements AfterViewInit {
     this.runDetectionLoop();
   }
 
+  ngOnDestroy(): void {
+    this.isDestroyed = true;
+    if (this.animationFrameId !== undefined) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
+    if (this.videoElement?.nativeElement) {
+      this.cameraService.stop?.(this.videoElement.nativeElement);
+    }
+  }
+
   private runDetectionLoop = async () => {
-    if (this.detectionInProgress) {
+    if (this.isDestroyed || this.detectionInProgress) {
       return;
     }
 
     this.detectionInProgress = true;
 
     try {
-      this.captureContext.drawImage(
-        this.videoElement.nativeElement,
-        0,
-        0,
-        this.captureCanvas.width,
-        this.captureCanvas.height,
-      );
+      if (this.videoElement?.nativeElement?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        this.captureContext.drawImage(
+          this.videoElement.nativeElement,
+          0,
+          0,
+          this.captureCanvas.width,
+          this.captureCanvas.height,
+        );
 
-      const image = this.captureContext.getImageData(
-        0,
-        0,
-        this.captureCanvas.width,
-        this.captureCanvas.height,
-      );
-      await this.pipelineService.execute(image);
+        const image = this.captureContext.getImageData(
+          0,
+          0,
+          this.captureCanvas.width,
+          this.captureCanvas.height,
+        );
+        await this.pipelineService.execute(image);
+      }
+    } catch (err) {
+      console.warn('Error in detection loop execution:', err);
     } finally {
       this.detectionInProgress = false;
-      requestAnimationFrame(this.runDetectionLoop);
+      if (!this.isDestroyed) {
+        this.animationFrameId = requestAnimationFrame(this.runDetectionLoop);
+      }
     }
   };
 

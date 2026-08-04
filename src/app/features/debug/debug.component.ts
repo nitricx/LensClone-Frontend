@@ -33,6 +33,7 @@ export class DebugComponent implements OnInit, OnDestroy {
   readonly limitHeapMb = signal<number | null>(null);
   readonly peakHeapMb = signal<number | null>(null);
 
+  readonly activeTab = signal<'crops' | 'text' | 'grouping'>('crops');
   private intervalId?: number;
 
   constructor(readonly pipeline: PipelineService) {}

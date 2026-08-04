@@ -4,7 +4,23 @@ import { Component, ElementRef, effect, input, viewChild } from '@angular/core';
   selector: 'app-crop-canvas',
   standalone: true,
   template: `<canvas #canvas></canvas>`,
-  styles: [`:host { display: inline-block; } canvas { display: block; }`],
+  styles: [
+    `
+      :host {
+        display: block;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+    `,
+  ],
 })
 export class CropCanvasComponent {
   readonly crop = input.required<ImageData>();

@@ -109,29 +109,38 @@ export class PipelineService {
         config: config ?? this.state().config,
       };
 
-      this.worker.postMessage({ type: 'EXECUTE', id: requestId, payload }, [buffer]);
+      try {
+        this.worker.postMessage({ type: 'EXECUTE', id: requestId, payload }, [buffer]);
 
-      const result = await execPromise;
+        const result = await execPromise;
 
-      const processedDetections = (result.detections || []).map((det: any) => {
-        if (det.crop && !(det.crop instanceof ImageData)) {
-          const cropBuf =
-            det.crop.data instanceof Uint8ClampedArray
-              ? det.crop.data
-              : new Uint8ClampedArray(det.crop.data);
-          det.crop = new ImageData(cropBuf, det.crop.width, det.crop.height);
-        }
-        return det;
-      });
+        const processedDetections = (result.detections || []).map((det: any) => {
+          if (det.crop && !(det.crop instanceof ImageData)) {
+            const cropBuf =
+              det.crop.data instanceof Uint8ClampedArray
+                ? det.crop.data
+                : new Uint8ClampedArray(det.crop.data);
+            det.crop = new ImageData(cropBuf, det.crop.width, det.crop.height);
+          }
+          return det;
+        });
 
-      this._state.update((state) => ({
-        ...state,
-        fullImage: image,
-        detections: processedDetections,
-        processingTimeMs: result.processingTimeMs,
-        stageMetrics: result.stageMetrics,
-        config: result.config ?? state.config,
-      }));
+        this._state.set({
+          fullImage: image,
+          detections: processedDetections,
+          processingTimeMs: result.processingTimeMs,
+          stageMetrics: result.stageMetrics,
+          config: result.config ?? this.state().config,
+        });
+      } catch (err) {
+        console.error('Pipeline worker execution failed:', err);
+        this._state.set({
+          fullImage: image,
+          detections: [],
+          processingTimeMs: 0,
+          config: config ?? this.state().config,
+        });
+      }
       return;
     }
 
@@ -139,25 +148,36 @@ export class PipelineService {
     const stageMetrics: Record<string, number> = {};
     const startTime = performance.now();
 
-    this._state.update((state) => ({
-      ...state,
+    const currentState: PipelineState = {
       fullImage: image,
-      config: config ?? state.config,
-    }));
-    const state = this.state();
-    for (const stage of this.stages) {
-      const stageName = stage.name || stage.constructor.name;
-      const stageStart = performance.now();
-      await stage.execute(state);
-      stageMetrics[stageName] = performance.now() - stageStart;
-    }
-    const totalTimeMs = performance.now() - startTime;
+      detections: [],
+      processingTimeMs: 0,
+      config: config ?? this.state().config,
+    };
 
-    this._state.update((s) => ({
-      ...s,
-      processingTimeMs: totalTimeMs,
-      stageMetrics,
-    }));
+    try {
+      for (const stage of this.stages) {
+        const stageName = stage.name || stage.constructor.name;
+        const stageStart = performance.now();
+        await stage.execute(currentState);
+        stageMetrics[stageName] = performance.now() - stageStart;
+      }
+      const totalTimeMs = performance.now() - startTime;
+
+      this._state.set({
+        ...currentState,
+        processingTimeMs: totalTimeMs,
+        stageMetrics,
+      });
+    } catch (err) {
+      console.error('Main thread pipeline execution failed:', err);
+      this._state.set({
+        fullImage: image,
+        detections: [],
+        processingTimeMs: 0,
+        stageMetrics: {},
+      });
+    }
   }
 
   private setupWorkerListeners(): void {

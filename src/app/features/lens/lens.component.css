@@ -1,25 +1,22 @@
 :host {
   display: block;
-
-  width: 100vw;
-  height: 100vh;
-
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
+
 .container {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 canvas {
   position: absolute;
   inset: 0;
-
-  width: 100vw;
-  height: 100vh;
-
+  width: 100%;
+  height: 100%;
   z-index: 2;
 }
 
@@ -27,25 +24,20 @@ canvas {
   position: absolute;
   top: 20px;
   left: 20px;
-
   background: black;
   color: white;
-
   padding: 8px 12px;
-
   border-radius: 8px;
   z-index: 3;
 }
+
 .detections {
   position: absolute;
   top: 20px;
   right: 20px;
-
   background: black;
   color: white;
-
   padding: 8px 12px;
-
   border-radius: 8px;
   z-index: 3;
 }
@@ -55,15 +47,10 @@ app-camera {
   inset: 0;
   z-index: 1;
 }
-:host {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-}
 
 video {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  object-fit: fill;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
