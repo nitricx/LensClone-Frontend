@@ -86,8 +86,12 @@ describe('DetectorService', () => {
     expect(fetch).toHaveBeenCalledWith('/models/PP-OCRv5_mobile_det.onnx');
     expect(ort.InferenceSession.create).toHaveBeenCalledWith(
       dummyBuffer,
-      expect.objectContaining({ executionProviders: ['wasm'] }),
+      expect.objectContaining({
+        executionProviders: ['wasm'],
+        graphOptimizationLevel: 'all',
+      }),
     );
+    expect(ort.env.wasm.numThreads).toBeGreaterThan(0);
 
     vi.unstubAllGlobals();
   });

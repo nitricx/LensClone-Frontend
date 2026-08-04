@@ -20,12 +20,16 @@ export class RecognitionService implements PipelineStage {
 
   async initialize(): Promise<void> {
     ort.env.wasm.proxy = false;
-    ort.env.wasm.numThreads = 16;
+    ort.env.wasm.numThreads =
+      typeof navigator !== 'undefined' && navigator.hardwareConcurrency
+        ? navigator.hardwareConcurrency
+        : 4;
     ort.env.wasm.wasmPaths = '/assets/ort/';
 
     const buffer = await this.pullModel('/models/latin_PP-OCRv5_mobile_rec.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['wasm'],
+      graphOptimizationLevel: 'all',
     });
     this.preprocessor.initialize(48);
     this.dictionary = (await fetch('/models/dictionary.txt').then((r) => r.text()))

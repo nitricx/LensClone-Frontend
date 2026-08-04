@@ -90,7 +90,14 @@ describe('RecognitionService', () => {
     await service.initialize();
 
     expect(preprocessorMock.initialize).toHaveBeenCalledWith(48);
-    expect(ort.InferenceSession.create).toHaveBeenCalled();
+    expect(ort.InferenceSession.create).toHaveBeenCalledWith(
+      dummyBuffer,
+      expect.objectContaining({
+        executionProviders: ['wasm'],
+        graphOptimizationLevel: 'all',
+      }),
+    );
+    expect(ort.env.wasm.numThreads).toBeGreaterThan(0);
 
     vi.unstubAllGlobals();
   });
