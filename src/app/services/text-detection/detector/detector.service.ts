@@ -18,12 +18,14 @@ export class DetectorService implements PipelineStage {
   ) {}
 
   async initialize?(): Promise<void> {
-    ort.env.wasm.proxy = false;
-    ort.env.wasm.numThreads =
-      typeof navigator !== 'undefined' && navigator.hardwareConcurrency
-        ? navigator.hardwareConcurrency
-        : 4;
-    ort.env.wasm.wasmPaths = '/assets/ort/';
+    if (typeof window !== 'undefined' && ort?.env?.wasm) {
+      ort.env.wasm.proxy = false;
+      ort.env.wasm.numThreads =
+        typeof navigator !== 'undefined' && navigator.hardwareConcurrency
+          ? navigator.hardwareConcurrency
+          : 4;
+      ort.env.wasm.wasmPaths = '/assets/ort/';
+    }
 
     const buffer = await this.pullModel('/models/PP-OCRv5_mobile_det.onnx');
     this.session = await ort.InferenceSession.create(buffer, {
