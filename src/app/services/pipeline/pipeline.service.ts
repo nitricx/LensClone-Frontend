@@ -33,6 +33,7 @@ export class PipelineService {
 
   readonly detections = computed(() => this._state().detections);
   readonly processingTimeMs = computed(() => this._state().processingTimeMs);
+  readonly fps = computed(() => (this.processingTimeMs() > 0 ? 1000 / this.processingTimeMs() : 0));
   readonly stageMetrics = computed(() => this._state().stageMetrics);
   readonly cropsCount = computed(() => this.detections().filter((d) => !!d.crop).length);
   readonly hasDetections = computed(() => this.detections().length > 0);

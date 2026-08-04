@@ -35,6 +35,7 @@ describe('DebugComponent', () => {
       state: stateSignal,
       detections: computed(() => stateSignal().detections),
       processingTimeMs: computed(() => stateSignal().processingTimeMs),
+      fps: computed(() => (stateSignal().processingTimeMs > 0 ? 1000 / stateSignal().processingTimeMs : 0)),
       stageMetrics: computed(() => stateSignal().stageMetrics),
       cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
       hasDetections: computed(() => (stateSignal().detections || []).length > 0),
@@ -93,7 +94,7 @@ describe('DebugComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const statsText = compiled.querySelector('.stats')?.textContent;
 
-    expect(statsText).toContain('Total Time: 42.5 ms');
+    expect(statsText).toContain('Total: 42.5 ms (23.5 FPS)');
     expect(statsText).toContain('Detector Time: 12.3 ms');
     expect(statsText).toContain('Filter Time: 1.1 ms');
     expect(statsText).toContain('Cropper Time: 4.2 ms');

@@ -49,7 +49,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
     minArea: 10,
     minAspectRatio: 1.2,
     maxSide: 0,
-    scaleFactor: 1.0,
+    scaleFactor: 0.5,
   },
   cropper: {
     padding: 4,

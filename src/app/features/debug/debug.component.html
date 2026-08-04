@@ -9,8 +9,12 @@
 
     <div class="header-kpis">
       <div class="kpi-card highlight">
-        <span class="kpi-label">Latency</span>
+        <span class="kpi-label">Total Time</span>
         <span class="kpi-value">{{ pipeline.processingTimeMs() | number: '1.0-1' }} <small>ms</small></span>
+      </div>
+      <div class="kpi-card highlight">
+        <span class="kpi-label">FPS</span>
+        <span class="kpi-value">{{ pipeline.fps() | number: '1.0-1' }}</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Detections</span>
@@ -31,7 +35,7 @@
       <section class="panel stats">
         <div class="panel-header">
           <h2>Pipeline Timings</h2>
-          <span class="timing-total">Total Time: {{ pipeline.processingTimeMs() | number: '1.0-1' }} ms</span>
+          <span class="timing-total">Total: {{ pipeline.processingTimeMs() | number: '1.0-1' }} ms ({{ pipeline.fps() | number: '1.0-1' }} FPS)</span>
         </div>
 
         <div class="metrics-list">
