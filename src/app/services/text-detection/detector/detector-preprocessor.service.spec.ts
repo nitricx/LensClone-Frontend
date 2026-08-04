@@ -40,6 +40,29 @@ if (typeof globalThis.ImageData === 'undefined') {
   };
 }
 
+if (typeof globalThis.OffscreenCanvas === 'undefined') {
+  const mockContext = {
+    putImageData: vi.fn(),
+    clearRect: vi.fn(),
+    drawImage: vi.fn(),
+    getImageData: vi.fn().mockImplementation((x: number, y: number, w: number, h: number) => {
+      return new ImageData(new Uint8ClampedArray(w * h * 4), w, h);
+    }),
+  };
+
+  (globalThis as any).OffscreenCanvas = class OffscreenCanvas {
+    width: number;
+    height: number;
+    constructor(width: number, height: number) {
+      this.width = width;
+      this.height = height;
+    }
+    getContext() {
+      return mockContext;
+    }
+  };
+}
+
 describe('DetectorPreprocessorService', () => {
   let service: DetectorPreprocessorService;
 

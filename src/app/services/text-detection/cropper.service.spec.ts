@@ -64,6 +64,7 @@ describe('DetectorCropperService', () => {
       }),
     };
 
+    const origCreateElement = document.createElement.bind(document);
     vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'canvas') {
         return {
@@ -72,7 +73,7 @@ describe('DetectorCropperService', () => {
           getContext: vi.fn().mockReturnValue(mockContext),
         } as unknown as HTMLCanvasElement;
       }
-      return document.createElement(tagName);
+      return origCreateElement(tagName);
     });
 
     service.execute(state);
