@@ -1,4 +1,30 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('onnxruntime-web', () => {
+  const createMock = vi.fn().mockResolvedValue({
+    outputNames: ['out'],
+    run: vi.fn().mockResolvedValue({ out: {} }),
+  });
+  const tensorMock = vi.fn().mockImplementation((type: any, data: any, dims: any) => ({
+    type,
+    data,
+    dims,
+  }));
+  const envMock = { wasm: {} };
+
+  return {
+    __esModule: true,
+    default: {
+      env: envMock,
+      InferenceSession: { create: createMock },
+      Tensor: tensorMock,
+    },
+    env: envMock,
+    InferenceSession: { create: createMock },
+    Tensor: tensorMock,
+  };
+});
+
 import { TestBed } from '@angular/core/testing';
 import { DetectorService } from './detector.service';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
@@ -18,18 +44,6 @@ if (typeof globalThis.ImageData === 'undefined') {
     }
   };
 }
-
-vi.mock('onnxruntime-web', () => ({
-  env: {
-    wasm: {},
-  },
-  InferenceSession: {
-    create: vi.fn(),
-  },
-  Tensor: vi.fn().mockImplementation(function (type: any, data: any, dims: any) {
-    return { type, data, dims };
-  }),
-}));
 
 describe('DetectorService', () => {
   let service: DetectorService;
