@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
+import { TensorBufferPoolService } from '../tensor-buffer-pool.service';
 
 @Injectable({
   providedIn: 'root',
@@ -8,17 +9,22 @@ export class DetectorPreprocessorService {
   private tensor?: ort.Tensor;
   private floatData?: Float32Array;
 
+  constructor(private readonly bufferPool: TensorBufferPoolService) {}
+
   toTensor(image: ImageData): ort.Tensor {
     return this.imageDataToTensor(image);
   }
 
   private imageDataToTensor(image: ImageData): ort.Tensor {
     const pixels = image.data;
-
     const requiredSize = 3 * image.width * image.height;
 
     if (!this.floatData || this.floatData.length !== requiredSize) {
-      this.floatData = new Float32Array(requiredSize);
+      if (this.floatData) {
+        this.bufferPool.releaseBuffer(this.floatData);
+      }
+      this.floatData = this.bufferPool.getBuffer(requiredSize);
+      this.tensor = undefined;
     }
 
     const area = image.width * image.height;
@@ -44,3 +50,4 @@ export class DetectorPreprocessorService {
     return this.tensor;
   }
 }
+
