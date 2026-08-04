@@ -94,4 +94,28 @@ describe('DebugComponent', () => {
     expect(statsText).toContain('Dictionary Time: 3 ms');
     expect(statsText).toContain('Line Grouping Time: 1.5 ms');
   });
+
+  it('should update memory stats when performance.memory is available', () => {
+    const memoryObj = {
+      usedJSHeapSize: 50 * 1024 * 1024,
+      totalJSHeapSize: 100 * 1024 * 1024,
+      jsHeapSizeLimit: 2048 * 1024 * 1024,
+    };
+    vi.stubGlobal('performance', { memory: memoryObj });
+
+    component.updateMemoryStats();
+    fixture.detectChanges();
+
+    expect(component.currentHeapMb()).toBeCloseTo(50, 1);
+    expect(component.totalHeapMb()).toBeCloseTo(100, 1);
+    expect(component.limitHeapMb()).toBeCloseTo(2048, 0);
+
+    const memoryPanelText = (fixture.nativeElement as HTMLElement).querySelector('.memory')?.textContent;
+    expect(memoryPanelText).toContain('Used Heap: 50.0 MB');
+    expect(memoryPanelText).toContain('Peak Heap: 50.0 MB');
+    expect(memoryPanelText).toContain('Total Heap: 100.0 MB');
+
+    vi.unstubAllGlobals();
+  });
 });
+

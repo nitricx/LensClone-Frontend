@@ -26,6 +26,19 @@
     </div>
   </section>
 
+  <section class="panel memory">
+    <h2>Memory Profile</h2>
+    @if (currentHeapMb() !== null) {
+      <div>Used Heap: {{ currentHeapMb() | number: '1.1-1' }} MB</div>
+      <div>Peak Heap: {{ peakHeapMb() | number: '1.1-1' }} MB</div>
+      <div>Total Heap: {{ totalHeapMb() | number: '1.1-1' }} MB</div>
+      <div>Heap Limit: {{ limitHeapMb() | number: '1.0-0' }} MB</div>
+    } @else {
+      <div>JS Heap API unavailable</div>
+    }
+  </section>
+
+
   <section class="panel controls">
     <h2>Overlays</h2>
 
