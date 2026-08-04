@@ -44,8 +44,10 @@ export class DetectorPreprocessorService {
     }
 
     if (scale < 1.0) {
-      const targetWidth = Math.max(1, Math.round(image.width * scale));
-      const targetHeight = Math.max(1, Math.round(image.height * scale));
+      const rawWidth = Math.max(1, Math.round(image.width * scale));
+      const rawHeight = Math.max(1, Math.round(image.height * scale));
+      const targetWidth = Math.max(32, Math.round(rawWidth / 32) * 32);
+      const targetHeight = Math.max(32, Math.round(rawHeight / 32) * 32);
       targetImage = this.downscaleImage(image, targetWidth, targetHeight);
     }
 

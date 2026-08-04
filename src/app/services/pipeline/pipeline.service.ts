@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { PipelineStage, PipelineState } from './pipeline-state';
-import { PipelineConfig } from './pipeline-config.types';
+import { DEFAULT_PIPELINE_CONFIG, PipelineConfig } from './pipeline-config.types';
 import { DebugSettings } from '../../features/debug/debug-settings';
 
 import { DetectorCropperService } from '../text-detection/cropper.service';
@@ -26,6 +26,7 @@ export class PipelineService {
     fullImage: undefined,
     detections: [],
     processingTimeMs: 0,
+    config: DEFAULT_PIPELINE_CONFIG,
   });
 
   readonly state = this._state.asReadonly();
@@ -106,7 +107,7 @@ export class PipelineService {
           height: image.height,
           data: buffer,
         },
-        config: config ?? this.state().config,
+        config: config ?? this.state().config ?? DEFAULT_PIPELINE_CONFIG,
       };
 
       try {
