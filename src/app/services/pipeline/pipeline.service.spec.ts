@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { PipelineService } from './pipeline.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
+import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DetectorCropperService } from '../text-detection/cropper.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
@@ -25,6 +26,7 @@ describe('PipelineService', () => {
   let service: PipelineService;
   let detectorMock: DetectorService;
   let detectorFilterMock: DetectorFilterService;
+  let trackerMock: TrackerService;
   let cropperMock: DetectorCropperService;
   let recognizerMock: RecognitionService;
   let dictionaryMock: DictionaryMatcherService;
@@ -33,6 +35,7 @@ describe('PipelineService', () => {
   beforeEach(() => {
     detectorMock = { name: 'detector', initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
     detectorFilterMock = { name: 'detectorFilter', execute: vi.fn() } as unknown as DetectorFilterService;
+    trackerMock = { name: 'tracker', execute: vi.fn() } as unknown as TrackerService;
     cropperMock = { name: 'cropper', execute: vi.fn() } as unknown as DetectorCropperService;
     recognizerMock = { name: 'recognizer', initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
     dictionaryMock = { name: 'dictionary', execute: vi.fn() } as unknown as DictionaryMatcherService;
@@ -43,6 +46,7 @@ describe('PipelineService', () => {
         PipelineService,
         { provide: DetectorService, useValue: detectorMock },
         { provide: DetectorFilterService, useValue: detectorFilterMock },
+        { provide: TrackerService, useValue: trackerMock },
         { provide: DetectorCropperService, useValue: cropperMock },
         { provide: RecognitionService, useValue: recognizerMock },
         { provide: DictionaryMatcherService, useValue: dictionaryMock },
@@ -96,6 +100,7 @@ describe('PipelineService', () => {
     const callOrder: string[] = [];
     (detectorMock.execute as any).mockImplementation(() => callOrder.push('detector'));
     (detectorFilterMock.execute as any).mockImplementation(() => callOrder.push('filter'));
+    (trackerMock.execute as any).mockImplementation(() => callOrder.push('tracker'));
     (cropperMock.execute as any).mockImplementation(() => callOrder.push('cropper'));
     (recognizerMock.execute as any).mockImplementation(() => callOrder.push('recognizer'));
     (dictionaryMock.execute as any).mockImplementation(() => callOrder.push('dictionary'));
@@ -107,6 +112,7 @@ describe('PipelineService', () => {
     expect(callOrder).toEqual([
       'detector',
       'filter',
+      'tracker',
       'cropper',
       'recognizer',
       'dictionary',
@@ -145,6 +151,7 @@ describe('PipelineService', () => {
       const workerService = new PipelineService(
         detectorMock,
         detectorFilterMock,
+        trackerMock,
         cropperMock,
         recognizerMock,
         dictionaryMock,

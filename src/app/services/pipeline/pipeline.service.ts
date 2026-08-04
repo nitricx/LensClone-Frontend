@@ -7,6 +7,7 @@ import { DetectorCropperService } from '../text-detection/cropper.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
+import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
 
@@ -50,12 +51,21 @@ export class PipelineService {
   constructor(
     private readonly detector: DetectorService,
     private readonly detectorFilter: DetectorFilterService,
+    private readonly tracker: TrackerService,
     private readonly cropper: DetectorCropperService,
     private readonly recognizer: RecognitionService,
     private readonly dictionary: DictionaryMatcherService,
     private readonly lineGroupingService: LineGroupingService,
   ) {
-    this.stages = [detector, detectorFilter, cropper, recognizer, dictionary, lineGroupingService];
+    this.stages = [
+      detector,
+      detectorFilter,
+      tracker,
+      cropper,
+      recognizer,
+      dictionary,
+      lineGroupingService,
+    ];
   }
 
   async initialize(): Promise<void> {

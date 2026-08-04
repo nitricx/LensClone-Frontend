@@ -41,6 +41,10 @@ export class RecognitionService implements PipelineStage {
 
   async execute(state: PipelineState): Promise<void> {
     for (const detection of state.detections) {
+      if (detection.isReused && detection.rawText && !detection.needsRefresh) {
+        continue;
+      }
+
       if (!detection.crop) {
         continue;
       }

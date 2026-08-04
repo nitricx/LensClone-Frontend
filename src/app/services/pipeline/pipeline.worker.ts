@@ -5,6 +5,7 @@ import { DetectorPreprocessorService } from '../text-detection/detector/detector
 import { DetectorPostprocessorService } from '../text-detection/detector/detector-postprocessor.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
+import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DetectorCropperService } from '../text-detection/cropper.service';
 import { RecognitionPreprocessorService } from '../text-detection/recognition/recognition-preprocessor.service';
 import { RecognitionPostprocessorService } from '../text-detection/recognition/recognition-postprocessor.service';
@@ -21,6 +22,7 @@ const detectorPreprocessor = new DetectorPreprocessorService(tensorBufferPool);
 const detectorPostprocessor = new DetectorPostprocessorService();
 const detector = new DetectorService(detectorPreprocessor, detectorPostprocessor);
 const detectorFilter = new DetectorFilterService();
+const tracker = new TrackerService();
 const cropper = new DetectorCropperService();
 
 const recognitionPreprocessor = new RecognitionPreprocessorService(tensorBufferPool);
@@ -34,6 +36,7 @@ const lineGroupingService = new LineGroupingService();
 const stages: PipelineStage[] = [
   detector,
   detectorFilter,
+  tracker,
   cropper,
   recognizer,
   dictionaryMatcher,

@@ -29,10 +29,15 @@ export class DetectorCropperService implements PipelineStage {
 
     this.context.putImageData(state.fullImage!, 0, 0);
 
-    state.detections = state.detections.map((detection) => ({
-      ...detection,
-      crop: this.cropRegion(detection, cropperConfig),
-    }));
+    state.detections = state.detections.map((detection) => {
+      if (detection.isReused && !detection.needsRefresh) {
+        return detection;
+      }
+      return {
+        ...detection,
+        crop: this.cropRegion(detection, cropperConfig),
+      };
+    });
   }
 
   private ensureCanvas(width: number, height: number): void {

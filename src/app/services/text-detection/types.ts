@@ -1,4 +1,5 @@
 import { Quantity } from './dictionary/dictionary-matcher.service';
+export type { Quantity };
 
 export interface Detection {
   boundingBoxScore: number;
@@ -11,6 +12,11 @@ export interface Detection {
   price?: string;
   quantity?: Quantity;
   line?: LineGrouping;
+
+  trackId?: string;
+  isReused?: boolean;
+  isExtrapolated?: boolean;
+  needsRefresh?: boolean;
 }
 
 export interface Point {

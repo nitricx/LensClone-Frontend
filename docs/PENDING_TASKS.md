@@ -24,7 +24,7 @@ Delete tasks from this list as they are completed.
 ---
 
 ## ✨ New Features & Enhancements
-- [ ] **Frame-to-Frame Text Box Tracking (IoU / Kalman Filtering)**: Implement bounding box tracking between consecutive video frames to reuse dictionary-matched text across adjacent frames, reducing ML workload by 60-70% and smoothing bounding box overlay movements.
+- [x] **Frame-to-Frame Text Box Tracking (IoU / Kalman Filtering)**: Implement bounding box tracking between consecutive video frames to reuse dictionary-matched text across adjacent frames, reducing ML workload by 60-70% and smoothing bounding box overlay movements.
 - [ ] **Interactive Lens UX Actions**:
   - [ ] **Click-to-Select / Copy**: Allow users to click detected text overlays to copy text to the clipboard or trigger a web search/translation.
   - [ ] **Freeze / Pause Feed**: Add a camera freeze button so users can tap and interact with detected text without camera motion blur.
