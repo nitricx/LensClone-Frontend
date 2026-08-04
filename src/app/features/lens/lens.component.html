@@ -35,19 +35,27 @@
 
       <!-- Action Controls (Right) -->
       <div class="control-right">
+        <!-- Profile Avatar Button -->
         <button
           type="button"
-          class="icon-btn"
-          (click)="openModal('history')"
-          aria-label="Frame History"
-          title="Captured Frames History"
+          class="profile-btn"
+          [class.signed-in]="authService.isAuthenticated()"
+          (click)="openModal('account')"
+          aria-label="Google Account Profile"
+          [attr.title]="authService.isAuthenticated() ? authService.currentUser()?.name : 'Sign In with Google'"
         >
-          <span class="material-symbols-rounded">history</span>
-          @if (historyService.count() > 0) {
-            <span class="badge">{{ historyService.count() }}</span>
+          @if (authService.currentUser(); as user) {
+            @if (user.avatarUrl) {
+              <img [src]="user.avatarUrl" [alt]="user.name" class="avatar-img" />
+            } @else {
+              <span class="avatar-initial">{{ user.name.charAt(0) }}</span>
+            }
+          } @else {
+            <span class="material-symbols-rounded">account_circle</span>
           }
         </button>
 
+        <!-- Overflow Menu Button -->
         <button
           type="button"
           class="icon-btn"
@@ -93,25 +101,128 @@
   <footer class="bottom-action-bar">
     <div class="bar-gradient-bottom"></div>
 
-    <div class="primary-btn-container">
+    <div class="bottom-controls">
+      <!-- Bottom Left: History Frame Capture Thumbnail Gallery Button -->
       <button
         type="button"
-        class="primary-action-btn"
-        [class.frozen]="isFrozen()"
-        (click)="togglePrimaryAction()"
-        [attr.aria-label]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
-        [attr.title]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
+        class="history-thumb-btn"
+        (click)="openModal('history')"
+        aria-label="Captured Frame History"
+        [attr.title]="historyService.count() > 0 ? 'View captured frames' : 'No captures yet'"
       >
-        <span class="material-symbols-rounded btn-icon">
-          {{ isFrozen() ? 'play_arrow' : 'search' }}
-        </span>
+        @if (historyService.items().length > 0) {
+          <div class="thumb-img-wrapper">
+            <img [src]="historyService.items()[0].dataUrl" alt="Latest Capture" class="thumb-img" />
+          </div>
+          <span class="thumb-badge">{{ historyService.count() }}</span>
+        } @else {
+          <span class="material-symbols-rounded thumb-icon">photo_library</span>
+        }
       </button>
+
+      <!-- Bottom Center: Primary 72px Circular Action Button -->
+      <div class="primary-btn-container">
+        <button
+          type="button"
+          class="primary-action-btn"
+          [class.frozen]="isFrozen()"
+          (click)="togglePrimaryAction()"
+          [attr.aria-label]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
+          [attr.title]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
+        >
+          <span class="material-symbols-rounded btn-icon">
+            {{ isFrozen() ? 'play_arrow' : 'search' }}
+          </span>
+        </button>
+      </div>
+
+      <!-- Bottom Right: Spacer for symmetric centering -->
+      <div class="bottom-right-spacer"></div>
     </div>
   </footer>
 
   <!-- Modal Dialogs Backdrop & Container -->
   @if (activeModal() !== 'none' && activeModal() !== 'menu') {
     <div class="modal-backdrop" (click)="closeModal()"></div>
+
+    <!-- Google Account Modal -->
+    @if (activeModal() === 'account') {
+      <div class="modal-sheet dialog-sheet account-sheet" role="dialog" aria-label="Google Account">
+        <div class="modal-header">
+          <div class="header-title">
+            <span class="material-symbols-rounded">account_circle</span>
+            <h2>Google Account</h2>
+          </div>
+          <button type="button" class="close-btn" (click)="closeModal()" aria-label="Close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body account-body">
+          @if (authService.currentUser(); as user) {
+            <div class="profile-card">
+              @if (user.avatarUrl) {
+                <img [src]="user.avatarUrl" [alt]="user.name" class="card-avatar" />
+              } @else {
+                <div class="card-avatar-placeholder">{{ user.name.charAt(0) }}</div>
+              }
+              <div class="profile-details">
+                <strong class="user-name">{{ user.name }}</strong>
+                <span class="user-email">{{ user.email }}</span>
+              </div>
+            </div>
+
+            <div class="account-status-badge signed-in">
+              <span class="material-symbols-rounded">check_circle</span>
+              <span>Signed in with Google</span>
+            </div>
+
+            <p class="account-desc">
+              Your captured frame history and settings are active for this account.
+            </p>
+          } @else {
+            <div class="anonymous-banner">
+              <span class="material-symbols-rounded anon-icon">no_accounts</span>
+              <h3>Using Lens Anonymously</h3>
+              <p>Sign in to sync search history and access account preferences.</p>
+            </div>
+
+            <button type="button" class="google-btn" (click)="signInGoogle()">
+              <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>Sign in with Google</span>
+            </button>
+          }
+        </div>
+
+        <div class="modal-footer">
+          @if (authService.isAuthenticated()) {
+            <button type="button" class="danger-btn" (click)="signOut()">
+              <span class="material-symbols-rounded">logout</span>
+              Sign Out
+            </button>
+          } @else {
+            <button type="button" class="secondary-btn" (click)="closeModal()">Continue Anonymously</button>
+          }
+        </div>
+      </div>
+    }
 
     <!-- History Drawer / Modal -->
     @if (activeModal() === 'history') {
