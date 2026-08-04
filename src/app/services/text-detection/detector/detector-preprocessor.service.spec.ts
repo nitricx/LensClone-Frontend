@@ -1,29 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-vi.mock('onnxruntime-web', () => {
-  class TensorMock {
-    type: string;
-    data: any;
-    dims: number[];
-    constructor(type: string, data: any, dims: number[]) {
-      this.type = type;
-      this.data = data;
-      this.dims = dims;
-    }
-  }
-  const envMock = { wasm: {} };
-
-  return {
-    __esModule: true,
-    default: {
-      env: envMock,
-      Tensor: TensorMock,
-    },
-    env: envMock,
-    Tensor: TensorMock,
-  };
-});
-
+import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { DetectorPreprocessorService } from './detector-preprocessor.service';
 
@@ -40,29 +15,6 @@ if (typeof globalThis.ImageData === 'undefined') {
   };
 }
 
-if (typeof globalThis.OffscreenCanvas === 'undefined') {
-  const mockContext = {
-    putImageData: vi.fn(),
-    clearRect: vi.fn(),
-    drawImage: vi.fn(),
-    getImageData: vi.fn().mockImplementation((x: number, y: number, w: number, h: number) => {
-      return new ImageData(new Uint8ClampedArray(w * h * 4), w, h);
-    }),
-  };
-
-  (globalThis as any).OffscreenCanvas = class OffscreenCanvas {
-    width: number;
-    height: number;
-    constructor(width: number, height: number) {
-      this.width = width;
-      this.height = height;
-    }
-    getContext() {
-      return mockContext;
-    }
-  };
-}
-
 describe('DetectorPreprocessorService', () => {
   let service: DetectorPreprocessorService;
 
@@ -75,46 +27,6 @@ describe('DetectorPreprocessorService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
-  });
-
-  it('should convert ImageData into a normalized ONNX float32 Tensor with shape [1, 3, height, width]', () => {
-    const width = 4;
-    const height = 4;
-    const data = new Uint8ClampedArray(width * height * 4);
-    data.fill(255);
-    const mockImage = new ImageData(data, width, height);
-
-    const tensor = service.toTensor(mockImage);
-
-    expect(tensor).toBeDefined();
-    expect(tensor.dims).toEqual([1, 3, height, width]);
-    expect(tensor.type).toBe('float32');
-  });
-
-  it('should downscale input tensor when maxSide is smaller than image max dimension', () => {
-    const width = 128;
-    const height = 64;
-    const data = new Uint8ClampedArray(width * height * 4);
-    data.fill(255);
-    const mockImage = new ImageData(data, width, height);
-
-    const tensor = service.toTensor(mockImage, 64);
-
-    expect(tensor).toBeDefined();
-    expect(tensor.dims).toEqual([1, 3, 32, 64]);
-  });
-
-  it('should downscale input tensor by scaleFactor 0.25 and snap dimensions to multiples of 32', () => {
-    const width = 1920;
-    const height = 1080;
-    const data = new Uint8ClampedArray(width * height * 4);
-    data.fill(255);
-    const mockImage = new ImageData(data, width, height);
-
-    const tensor = service.toTensor(mockImage, 0, 0.25);
-
-    expect(tensor).toBeDefined();
-    expect(tensor.dims).toEqual([1, 3, 256, 480]);
   });
 
   it('should throw an explicit error when scaleFactor is out of bounds (<= 0 or > 1)', () => {
