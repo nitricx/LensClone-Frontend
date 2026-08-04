@@ -31,12 +31,12 @@ describe('PipelineService', () => {
   let lineGroupingMock: LineGroupingService;
 
   beforeEach(() => {
-    detectorMock = { initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
-    detectorFilterMock = { execute: vi.fn() } as unknown as DetectorFilterService;
-    cropperMock = { execute: vi.fn() } as unknown as DetectorCropperService;
-    recognizerMock = { initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
-    dictionaryMock = { execute: vi.fn() } as unknown as DictionaryMatcherService;
-    lineGroupingMock = { execute: vi.fn() } as unknown as LineGroupingService;
+    detectorMock = { name: 'detector', initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
+    detectorFilterMock = { name: 'detectorFilter', execute: vi.fn() } as unknown as DetectorFilterService;
+    cropperMock = { name: 'cropper', execute: vi.fn() } as unknown as DetectorCropperService;
+    recognizerMock = { name: 'recognizer', initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
+    dictionaryMock = { name: 'dictionary', execute: vi.fn() } as unknown as DictionaryMatcherService;
+    lineGroupingMock = { name: 'lineGrouping', execute: vi.fn() } as unknown as LineGroupingService;
 
     TestBed.configureTestingModule({
       providers: [
@@ -88,5 +88,58 @@ describe('PipelineService', () => {
       'dictionary',
       'lineGrouping',
     ]);
+    expect(service.state().stageMetrics).toBeDefined();
+    expect(typeof service.state().stageMetrics?.['detector']).toBe('number');
+  });
+
+  it('should delegate pipeline initialization and execution to Worker when available', async () => {
+    let workerOnMessage: ((event: any) => void) | null = null;
+    const postMessageSpy = vi.fn().mockImplementation((msg: any) => {
+      if (msg.type === 'INITIALIZE') {
+        workerOnMessage?.({ data: { type: 'INITIALIZED', id: msg.id } });
+      } else if (msg.type === 'EXECUTE') {
+        workerOnMessage?.({
+          data: {
+            type: 'RESULT',
+            id: msg.id,
+            state: { detections: [{ text: 'TEST WORKER' }], processingTimeMs: 12 },
+          },
+        });
+      }
+    });
+
+    class MockWorker {
+      set onmessage(fn: any) {
+        workerOnMessage = fn;
+      }
+      postMessage = postMessageSpy;
+    }
+
+    vi.stubGlobal('Worker', MockWorker);
+
+    try {
+      const workerService = new PipelineService(
+        detectorMock,
+        detectorFilterMock,
+        cropperMock,
+        recognizerMock,
+        dictionaryMock,
+        lineGroupingMock,
+      );
+
+      await workerService.initialize();
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'INITIALIZE' }),
+      );
+
+      const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+      await workerService.execute(mockImage);
+
+      expect(workerService.state().detections.length).toBe(1);
+      expect((workerService.state().detections[0] as any).text).toBe('TEST WORKER');
+      expect(workerService.state().processingTimeMs).toBe(12);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

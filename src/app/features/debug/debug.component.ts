@@ -1,8 +1,9 @@
-import { Component, effect, ElementRef, viewChildren } from '@angular/core';
+import { Component } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { LensComponent } from '../lens/lens.component';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { DebugSettings } from './debug-settings';
+import { CropCanvasComponent } from './crop-canvas.component';
 
 type DebugSettingKey = keyof DebugSettings & string;
 
@@ -13,13 +14,11 @@ interface DebugControl {
 
 @Component({
   selector: 'app-debug',
-  imports: [DecimalPipe, LensComponent],
+  imports: [DecimalPipe, LensComponent, CropCanvasComponent],
   templateUrl: './debug.component.html',
   styleUrl: './debug.component.css',
 })
 export class DebugComponent {
-  private readonly cropCanvases = viewChildren<ElementRef<HTMLCanvasElement>>('cropCanvas');
-
   readonly controls: DebugControl[] = [
     { key: 'boundingBoxes', label: 'Bounding Boxes' },
     { key: 'croppedRegions', label: 'Cropped Regions' },
@@ -28,35 +27,7 @@ export class DebugComponent {
     { key: 'lineGrouping', label: 'Line Grouping' },
   ];
 
-  constructor(readonly pipeline: PipelineService) {
-    effect(() => {
-      const detections = this.pipeline.state().detections;
-      const canvases = this.cropCanvases();
-
-      let canvasIndex = 0;
-
-      for (const detection of detections) {
-        if (!detection.crop) {
-          continue;
-        }
-
-        const canvas = canvases[canvasIndex++]?.nativeElement;
-        if (!canvas) {
-          continue;
-        }
-
-        canvas.width = detection.crop.width;
-        canvas.height = detection.crop.height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          continue;
-        }
-
-        ctx.putImageData(detection.crop, 0, 0);
-      }
-    });
-  }
+  constructor(readonly pipeline: PipelineService) {}
 
   toggle(setting: DebugSettingKey): void {
     this.pipeline.debugSettings.update((settings) => ({

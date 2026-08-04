@@ -7,6 +7,8 @@ import { DEFAULT_PIPELINE_CONFIG } from '../../pipeline/pipeline-config.types';
   providedIn: 'root',
 })
 export class DetectorFilterService implements PipelineStage {
+  readonly name = 'detectorFilter';
+
   execute(state: PipelineState): void {
     const minAspectRatio =
       state.config?.detector?.minAspectRatio ?? DEFAULT_PIPELINE_CONFIG.detector.minAspectRatio;

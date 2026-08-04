@@ -16,6 +16,8 @@ interface TextLine {
   providedIn: 'root',
 })
 export class LineGroupingService implements PipelineStage {
+  readonly name = 'lineGrouping';
+
   execute(state: PipelineState): void | Promise<void> {
     const config = state.config?.lineGrouping ?? DEFAULT_PIPELINE_CONFIG.lineGrouping;
 

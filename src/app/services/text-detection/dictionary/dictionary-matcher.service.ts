@@ -23,6 +23,8 @@ export interface QuantityDictionaryEntry {
   providedIn: 'root',
 })
 export class DictionaryMatcherService implements PipelineStage {
+  readonly name = 'dictionary';
+
   constructor(private readonly levenshtein: WeightedLevenshteinService) {}
 
   execute(state: PipelineState): void {

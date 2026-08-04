@@ -15,7 +15,7 @@ export class BoundingBoxRendererService {
     ctx.textBaseline = 'top';
 
     for (const detection of detections) {
-      const text = detection.canonicalText;
+      const text = detection.canonicalText ?? detection.price;
       if (!text) {
         continue;
       }

@@ -7,6 +7,8 @@ import { DEFAULT_PIPELINE_CONFIG, CropperConfig } from '../pipeline/pipeline-con
   providedIn: 'root',
 })
 export class DetectorCropperService implements PipelineStage {
+  readonly name = 'cropper';
+
   execute(state: PipelineState): void {
     if (state.detections.length === 0) {
       return;
@@ -14,14 +16,21 @@ export class DetectorCropperService implements PipelineStage {
 
     const cropperConfig = state.config?.cropper ?? DEFAULT_PIPELINE_CONFIG.cropper;
 
-    const canvas = document.createElement('canvas');
-
-    canvas.width = state.fullImage!.width;
-    canvas.height = state.fullImage!.height;
+    const width = state.fullImage!.width;
+    const height = state.fullImage!.height;
+    const canvas: HTMLCanvasElement | OffscreenCanvas =
+      typeof OffscreenCanvas !== 'undefined'
+        ? new OffscreenCanvas(width, height)
+        : (() => {
+            const c = document.createElement('canvas');
+            c.width = width;
+            c.height = height;
+            return c;
+          })();
 
     const context = canvas.getContext('2d', {
       willReadFrequently: true,
-    });
+    }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
     if (!context) {
       throw new Error('Unable to create canvas context');
@@ -36,11 +45,14 @@ export class DetectorCropperService implements PipelineStage {
   }
 
   private cropRegion(
-    canvas: HTMLCanvasElement,
+    canvas: HTMLCanvasElement | OffscreenCanvas,
     detection: Detection,
     config: CropperConfig,
   ): ImageData {
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d') as
+      | CanvasRenderingContext2D
+      | OffscreenCanvasRenderingContext2D
+      | null;
 
     if (!context) {
       throw new Error('Unable to create canvas context');

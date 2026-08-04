@@ -12,7 +12,7 @@ Delete tasks from this list as they are completed.
 ---
 
 ## ⚡ Refactoring & Performance Optimization
-- [ ] **Web Worker Offloading for ML Pipeline**: Move canvas image preprocessing, tensor allocations, and CTC greedy decoding off the main UI thread to a dedicated Web Worker to maintain a fluid 60 FPS camera preview.
+- [x] **Web Worker Offloading for ML Pipeline**: Move canvas image preprocessing, tensor allocations, and CTC greedy decoding off the main UI thread to a dedicated Web Worker to maintain a fluid 60 FPS camera preview.
 - [ ] **Memory & Canvas Context Optimization**: Implement tensor buffer pooling and context reuse for `getImageData()` calls to eliminate Garbage Collection (GC) latency spikes during continuous live inference.
 - [ ] **Signal State Management Clean-up**: Refine reactive state handling across components and services in `src/app/services/pipeline/pipeline-state.ts` to leverage explicit Angular 22 Signals (`signal()`, `computed()`) and eliminate redundant subscriptions.
 

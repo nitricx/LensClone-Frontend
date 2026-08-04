@@ -2,12 +2,21 @@
   <section class="panel stats">
     <h2>Pipeline</h2>
 
-    <div>Detector Time: {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms</div>
+    <div>Total Time: {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms</div>
+
+    <div>Detector Time: {{ (pipeline.state().stageMetrics?.['detector'] ?? 0) | number: '1.0-1' }} ms</div>
+
+    <div>Filter Time: {{ (pipeline.state().stageMetrics?.['detectorFilter'] ?? 0) | number: '1.0-1' }} ms</div>
+
+    <div>Cropper Time: {{ (pipeline.state().stageMetrics?.['cropper'] ?? 0) | number: '1.0-1' }} ms</div>
 
     <div>
-      Recognizer Time:
-      {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms
+      Recognizer Time: {{ (pipeline.state().stageMetrics?.['recognizer'] ?? 0) | number: '1.0-1' }} ms
     </div>
+
+    <div>Dictionary Time: {{ (pipeline.state().stageMetrics?.['dictionary'] ?? 0) | number: '1.0-1' }} ms</div>
+
+    <div>Line Grouping Time: {{ (pipeline.state().stageMetrics?.['lineGrouping'] ?? 0) | number: '1.0-1' }} ms</div>
 
     <div>Detections: {{ pipeline.state().detections.length }}</div>
 
@@ -43,8 +52,7 @@
 
       @for (detection of pipeline.state().detections; track $index) {
         @if (detection.crop) {
-          <canvas #cropCanvas [width]="detection.crop.width" [height]="detection.crop.height">
-          </canvas>
+          <app-crop-canvas [crop]="detection.crop" />
         }
       }
     </section>
