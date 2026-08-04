@@ -3,7 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LensComponent } from './lens.component';
 import { CameraService } from '../../services/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
-import { signal } from '@angular/core';
+import { HistoryService } from '../../services/history.service';
+import { computed, signal } from '@angular/core';
 
 if (typeof globalThis.ImageData === 'undefined') {
   (globalThis as any).ImageData = class ImageData {
@@ -23,6 +24,7 @@ describe('LensComponent', () => {
   let fixture: ComponentFixture<LensComponent>;
   let cameraServiceMock: any;
   let pipelineServiceMock: any;
+  let historyServiceMock: any;
 
   beforeEach(async () => {
     vi.stubGlobal('requestAnimationFrame', vi.fn());
@@ -34,12 +36,19 @@ describe('LensComponent', () => {
         Object.defineProperty(video, 'videoHeight', { value: 480, writable: true });
         return Promise.resolve();
       }),
+      hasTorch: vi.fn().mockReturnValue(true),
+      toggleTorch: vi.fn().mockResolvedValue(true),
+      pause: vi.fn(),
+      resume: vi.fn().mockResolvedValue(undefined),
     };
+
+    const stateSignal = signal({ fullImage: undefined, detections: [], processingTimeMs: 0 } as any);
 
     pipelineServiceMock = {
       initialize: vi.fn().mockResolvedValue(undefined),
       execute: vi.fn(),
-      state: signal({ fullImage: undefined, detections: [], processingTimeMs: 0 }),
+      state: stateSignal,
+      detections: computed(() => stateSignal().detections),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,
@@ -47,6 +56,14 @@ describe('LensComponent', () => {
         canonicalText: true,
         lineGrouping: true,
       }),
+    };
+
+    historyServiceMock = {
+      items: signal([]),
+      count: signal(0),
+      addCapture: vi.fn().mockReturnValue({ id: '1', timestamp: new Date().toISOString() }),
+      deleteItem: vi.fn(),
+      clearHistory: vi.fn(),
     };
 
     const mockContext = {
@@ -59,12 +76,14 @@ describe('LensComponent', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       mockContext as unknown as CanvasRenderingContext2D,
     );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/jpeg;base64,mock');
 
     await TestBed.configureTestingModule({
       imports: [LensComponent],
       providers: [
         { provide: CameraService, useValue: cameraServiceMock },
         { provide: PipelineService, useValue: pipelineServiceMock },
+        { provide: HistoryService, useValue: historyServiceMock },
       ],
     }).compileComponents();
 
@@ -77,8 +96,42 @@ describe('LensComponent', () => {
 
     expect(cameraServiceMock.start).toHaveBeenCalled();
     expect(pipelineServiceMock.initialize).toHaveBeenCalled();
+    expect(component.isTorchSupported()).toBe(true);
 
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it('should toggle primary action between live and frozen', async () => {
+    await component.ngAfterViewInit();
+
+    expect(component.isFrozen()).toBe(false);
+
+    // Click primary button -> freeze
+    await component.togglePrimaryAction();
+    expect(component.isFrozen()).toBe(true);
+    expect(cameraServiceMock.pause).toHaveBeenCalled();
+    expect(historyServiceMock.addCapture).toHaveBeenCalled();
+
+    // Click primary button again -> resume
+    await component.togglePrimaryAction();
+    expect(component.isFrozen()).toBe(false);
+    expect(cameraServiceMock.resume).toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('should toggle modals and overflow menu', () => {
+    expect(component.activeModal()).toBe('none');
+
+    component.toggleMenu();
+    expect(component.activeModal()).toBe('menu');
+
+    component.openModal('feedback');
+    expect(component.activeModal()).toBe('feedback');
+
+    component.closeModal();
+    expect(component.activeModal()).toBe('none');
   });
 });

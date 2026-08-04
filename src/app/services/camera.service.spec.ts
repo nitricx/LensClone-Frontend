@@ -27,7 +27,7 @@ describe('CameraService', () => {
     });
 
     const mockVideo = {
-      readyState: 4, // HAVE_ENOUGH_DATA >= HAVE_METADATA
+      readyState: 4,
       srcObject: null as any,
       play: vi.fn().mockResolvedValue(undefined),
       addEventListener: vi.fn(),
@@ -43,5 +43,46 @@ describe('CameraService', () => {
     expect(mockVideo.play).toHaveBeenCalled();
 
     vi.unstubAllGlobals();
+  });
+
+  it('should check torch capability correctly', () => {
+    const mockVideo = {
+      srcObject: null,
+    } as unknown as HTMLVideoElement;
+
+    expect(service.hasTorch(mockVideo)).toBe(false);
+
+    const mockTrack = {
+      getCapabilities: () => ({ torch: true }),
+    };
+
+    const mockStream = {
+      getVideoTracks: () => [mockTrack],
+    } as unknown as MediaStream;
+
+    const mockVideoWithTorch = {
+      srcObject: mockStream,
+    } as unknown as HTMLVideoElement;
+
+    expect(service.hasTorch(mockVideoWithTorch)).toBe(true);
+  });
+
+  it('should pause and resume video element', async () => {
+    const mockVideo = {
+      paused: false,
+      pause: vi.fn().mockImplementation(function (this: any) {
+        this.paused = true;
+      }),
+      play: vi.fn().mockImplementation(function (this: any) {
+        this.paused = false;
+        return Promise.resolve();
+      }),
+    } as unknown as HTMLVideoElement;
+
+    service.pause(mockVideo);
+    expect(mockVideo.pause).toHaveBeenCalled();
+
+    await service.resume(mockVideo);
+    expect(mockVideo.play).toHaveBeenCalled();
   });
 });

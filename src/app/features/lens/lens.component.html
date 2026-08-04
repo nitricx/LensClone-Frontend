@@ -1,5 +1,320 @@
-<div class="container">
-  <video #video autoplay muted playsinline></video>
+<div class="lens-viewport">
+  <!-- Full-screen Camera Stream -->
+  <video #video autoplay muted playsinline class="camera-video"></video>
 
-  <app-overlay [width]="videoWidth()" [height]="videoHeight()"> </app-overlay>
+  <!-- Bounding Box Canvas Overlay -->
+  <app-overlay [width]="videoWidth()" [height]="videoHeight()"></app-overlay>
+
+  <!-- Top Application Bar Overlay -->
+  <header class="top-app-bar">
+    <div class="bar-gradient-top"></div>
+
+    <div class="bar-content">
+      <!-- Flash Toggle Button -->
+      <div class="control-left">
+        @if (isTorchSupported()) {
+          <button
+            type="button"
+            class="icon-btn"
+            [class.active]="isTorchOn()"
+            (click)="toggleTorch()"
+            aria-label="Toggle Flashlight"
+            [attr.title]="isTorchOn() ? 'Turn Off Flash' : 'Turn On Flash'"
+          >
+            <span class="material-symbols-rounded" [class.filled]="isTorchOn()">
+              {{ isTorchOn() ? 'flash_on' : 'flash_off' }}
+            </span>
+          </button>
+        } @else {
+          <div class="btn-spacer"></div>
+        }
+      </div>
+
+      <!-- Centered Application Title -->
+      <h1 class="app-title">Lens Clone</h1>
+
+      <!-- Action Controls (Right) -->
+      <div class="control-right">
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="openModal('history')"
+          aria-label="Frame History"
+          title="Captured Frames History"
+        >
+          <span class="material-symbols-rounded">history</span>
+          @if (historyService.count() > 0) {
+            <span class="badge">{{ historyService.count() }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="toggleMenu()"
+          aria-label="More Options"
+          title="Overflow Menu"
+        >
+          <span class="material-symbols-rounded">more_vert</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Overflow Dropdown Menu -->
+    @if (activeModal() === 'menu') {
+      <div class="menu-backdrop" (click)="closeModal()"></div>
+      <div class="overflow-menu" role="menu" tabIndex="-1">
+        <button type="button" class="menu-item" (click)="openModal('feedback')">
+          <span class="material-symbols-rounded">feedback</span>
+          <span>Send feedback</span>
+        </button>
+        <button type="button" class="menu-item" (click)="openModal('permissions')">
+          <span class="material-symbols-rounded">security</span>
+          <span>Manage permissions</span>
+        </button>
+        <button type="button" class="menu-item" (click)="openModal('privacy')">
+          <span class="material-symbols-rounded">privacy_tip</span>
+          <span>Privacy policy</span>
+        </button>
+        <button type="button" class="menu-item" (click)="openModal('terms')">
+          <span class="material-symbols-rounded">description</span>
+          <span>Terms of service</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button type="button" class="menu-item debug-item" (click)="triggerDebug()">
+          <span class="material-symbols-rounded">bug_report</span>
+          <span>Debug Diagnostics</span>
+        </button>
+      </div>
+    }
+  </header>
+
+  <!-- Bottom Primary Action Area -->
+  <footer class="bottom-action-bar">
+    <div class="bar-gradient-bottom"></div>
+
+    <div class="primary-btn-container">
+      <button
+        type="button"
+        class="primary-action-btn"
+        [class.frozen]="isFrozen()"
+        (click)="togglePrimaryAction()"
+        [attr.aria-label]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
+        [attr.title]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
+      >
+        <span class="material-symbols-rounded btn-icon">
+          {{ isFrozen() ? 'play_arrow' : 'search' }}
+        </span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Modal Dialogs Backdrop & Container -->
+  @if (activeModal() !== 'none' && activeModal() !== 'menu') {
+    <div class="modal-backdrop" (click)="closeModal()"></div>
+
+    <!-- History Drawer / Modal -->
+    @if (activeModal() === 'history') {
+      <div class="modal-sheet history-sheet" role="dialog" aria-label="Captured Frames History">
+        <div class="modal-header">
+          <div class="header-title">
+            <span class="material-symbols-rounded">history</span>
+            <h2>Captured Frames</h2>
+          </div>
+          <button type="button" class="close-btn" (click)="closeModal()" aria-label="Close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          @if (historyService.count() === 0) {
+            <div class="empty-state">
+              <span class="material-symbols-rounded empty-icon">photo_camera</span>
+              <p>No captured frames yet.</p>
+              <span class="subtext">Tap the search button to freeze and save frames.</span>
+            </div>
+          } @else {
+            <div class="history-grid">
+              @for (item of historyService.items(); track item.id) {
+                <div
+                  class="history-card"
+                  [class.selected]="selectedHistoryItem()?.id === item.id"
+                  (click)="viewHistoryItem(item)"
+                >
+                  <div class="thumbnail-wrapper">
+                    <img [src]="item.dataUrl" alt="Captured Frame" class="thumbnail-img" />
+                    <button
+                      type="button"
+                      class="delete-btn"
+                      (click)="deleteHistoryItem(item.id, $event)"
+                      title="Delete Frame"
+                      aria-label="Delete Frame"
+                    >
+                      <span class="material-symbols-rounded">delete</span>
+                    </button>
+                  </div>
+                  <div class="history-info">
+                    <span class="history-time">{{ item.timestamp | date: 'shortTime' }}</span>
+                    <span class="detections-tag">
+                      <span class="material-symbols-rounded text-icon">subtitles</span>
+                      {{ item.detectionsCount }} detected
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (historyService.count() > 0) {
+          <div class="modal-footer">
+            <button type="button" class="danger-btn" (click)="clearHistory()">
+              <span class="material-symbols-rounded">delete_sweep</span>
+              Clear All History
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Send Feedback Modal -->
+    @if (activeModal() === 'feedback') {
+      <div class="modal-sheet dialog-sheet" role="dialog" aria-label="Send Feedback">
+        <div class="modal-header">
+          <h2>Send Feedback</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          @if (feedbackSubmitted()) {
+            <div class="success-message">
+              <span class="material-symbols-rounded check-icon">check_circle</span>
+              <p>Thank you for your feedback!</p>
+            </div>
+          } @else {
+            <p class="dialog-intro">How is your experience with Lens Clone?</p>
+            <div class="rating-bar">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <button
+                  type="button"
+                  class="star-btn"
+                  [class.active]="star <= feedbackRating()"
+                  (click)="feedbackRating.set(star)"
+                >
+                  <span class="material-symbols-rounded filled">star</span>
+                </button>
+              }
+            </div>
+            <textarea
+              class="feedback-textarea"
+              rows="4"
+              placeholder="Describe your issue or suggestions..."
+              [value]="feedbackText()"
+              (input)="feedbackText.set($any($event.target).value)"
+            ></textarea>
+          }
+        </div>
+        @if (!feedbackSubmitted()) {
+          <div class="modal-footer">
+            <button type="button" class="secondary-btn" (click)="closeModal()">Cancel</button>
+            <button
+              type="button"
+              class="primary-modal-btn"
+              [disabled]="!feedbackText().trim()"
+              (click)="submitFeedback()"
+            >
+              Submit
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Manage Permissions Modal -->
+    @if (activeModal() === 'permissions') {
+      <div class="modal-sheet dialog-sheet" role="dialog" aria-label="Manage Permissions">
+        <div class="modal-header">
+          <h2>Application Permissions</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body permission-body">
+          <div class="perm-item">
+            <span class="material-symbols-rounded perm-icon">videocam</span>
+            <div class="perm-text">
+              <strong>Camera Access</strong>
+              <span>Required for real-time text recognition and frame capture.</span>
+            </div>
+            <span class="perm-status active">Granted</span>
+          </div>
+
+          <div class="perm-item">
+            <span class="material-symbols-rounded perm-icon">storage</span>
+            <div class="perm-text">
+              <strong>Local Storage</strong>
+              <span>Used to save captured frame history locally in browser.</span>
+            </div>
+            <span class="perm-status active">Active</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="primary-modal-btn" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+    }
+
+    <!-- Privacy Policy Modal -->
+    @if (activeModal() === 'privacy') {
+      <div class="modal-sheet dialog-sheet" role="dialog" aria-label="Privacy Policy">
+        <div class="modal-header">
+          <h2>Privacy Policy</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body text-content">
+          <h3>100% On-Device Processing</h3>
+          <p>
+            Lens Clone processes video frames, text detection (DBNet), and text recognition (CRNN)
+            entirely inside your browser using WebAssembly (ONNX Runtime Web).
+          </p>
+          <p>
+            No video streams, cropped images, or detected text data are ever sent to external cloud
+            servers. All frame history items remain stored in your local browser storage.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="primary-modal-btn" (click)="closeModal()">Got it</button>
+        </div>
+      </div>
+    }
+
+    <!-- Terms of Service Modal -->
+    @if (activeModal() === 'terms') {
+      <div class="modal-sheet dialog-sheet" role="dialog" aria-label="Terms of Service">
+        <div class="modal-header">
+          <h2>Terms of Service</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body text-content">
+          <h3>Proof of Concept Project</h3>
+          <p>
+            Lens Clone is an open-source Proof-of-Concept web application intended for research,
+            benchmarking, and demonstration of client-side computer vision models.
+          </p>
+          <p>
+            The application is provided "as-is" without warranty of any kind. Users are free to run
+            and inspect the codebase locally.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="primary-modal-btn" (click)="closeModal()">Accept</button>
+        </div>
+      </div>
+    }
+  }
 </div>
