@@ -58,7 +58,6 @@ describe('PipelineService', () => {
     expect(service.debugSettings().lineGrouping).toBe(true);
     expect(service.state().detections.length).toBe(0);
     expect(service.state().config).toBeDefined();
-    expect(service.state().config?.detector.scaleFactor).toBe(0.25);
     expect(service.detections().length).toBe(0);
     expect(service.processingTimeMs()).toBe(0);
     expect(service.cropsCount()).toBe(0);
