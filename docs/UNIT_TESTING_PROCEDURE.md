@@ -256,7 +256,7 @@ describe('DetectorService', () => {
 
     expect(ort.InferenceSession.create).toHaveBeenCalledWith(
       '/assets/models/dbnet.onnx',
-      expect.objectContaining({ executionProviders: ['wasm'] })
+      expect.objectContaining({ executionProviders: ['webgpu', 'wasm'] })
     );
   });
 });

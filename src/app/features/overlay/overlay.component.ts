@@ -22,8 +22,8 @@ export class OverlayComponent {
       const width = this.width();
       const height = this.height();
 
-      const state = this.pipeline.state();
-      const settings = this.pipeline.debugSettings();
+      const detections = this.pipeline.detections();
+      const showBoundingBoxes = this.pipeline.debugSettings().boundingBoxes;
 
       const canvas = this.canvas().nativeElement;
 
@@ -41,8 +41,8 @@ export class OverlayComponent {
 
       ctx.clearRect(0, 0, width, height);
 
-      if (settings.boundingBoxes) {
-        this.renderer.render(ctx, state.detections);
+      if (showBoundingBoxes) {
+        this.renderer.render(ctx, detections);
       }
     });
   }

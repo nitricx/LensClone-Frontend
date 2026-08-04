@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { MatrixEvaluatorService, PipelineConfigMatrix } from './matrix-evaluator.service';
 import { DatasetEvaluatorService } from './dataset-evaluator.service';
@@ -48,6 +49,18 @@ describe('MatrixEvaluatorService', () => {
       const threshs = permutations.map((p) => p.dictionary.similarityThreshold);
       expect(threshs).toContain(0.7);
       expect(threshs).toContain(0.8);
+    });
+
+    it('should generate permutations for detectorMaxSides', () => {
+      const matrix: PipelineConfigMatrix = {
+        detectorMaxSides: [0, 384, 480],
+      };
+
+      const permutations = service.generateConfigPermutations(matrix);
+
+      expect(permutations.length).toBe(3);
+      const maxSides = permutations.map((p) => p.detector.maxSide);
+      expect(maxSides).toEqual([0, 384, 480]);
     });
   });
 

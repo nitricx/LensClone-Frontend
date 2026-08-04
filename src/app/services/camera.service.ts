@@ -24,4 +24,11 @@ export class CameraService {
 
     await video.play();
   }
+
+  stop(video?: HTMLVideoElement): void {
+    if (video?.srcObject instanceof MediaStream) {
+      video.srcObject.getTracks().forEach((track) => track.stop());
+      video.srcObject = null;
+    }
+  }
 }

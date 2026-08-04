@@ -1,22 +1,24 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
+import { TensorBufferPoolService } from '../tensor-buffer-pool.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RecognitionPreprocessorService {
   private inputHeight!: number;
-
   private currentWidth = 0;
 
-  private targetCanvas?: OffscreenCanvas;
-  private targetContext?: OffscreenCanvasRenderingContext2D;
+  private targetCanvas?: HTMLCanvasElement | OffscreenCanvas;
+  private targetContext?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
-  private sourceCanvas?: OffscreenCanvas;
-  private sourceContext?: OffscreenCanvasRenderingContext2D;
+  private sourceCanvas?: HTMLCanvasElement | OffscreenCanvas;
+  private sourceContext?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
   private floatData?: Float32Array;
   private tensor?: ort.Tensor;
+
+  constructor(private readonly bufferPool: TensorBufferPoolService) {}
 
   initialize(inputHeight: number): void {
     this.inputHeight = inputHeight;
@@ -36,39 +38,58 @@ export class RecognitionPreprocessorService {
   }
 
   private ensureSourceCanvas(width: number, height: number): void {
-    if (
-      this.sourceCanvas &&
-      this.sourceCanvas.width === width &&
-      this.sourceCanvas.height === height
-    ) {
-      return;
+    if (!this.sourceCanvas) {
+      this.sourceCanvas =
+        typeof OffscreenCanvas !== 'undefined'
+          ? new OffscreenCanvas(width, height)
+          : (() => {
+              const c = document.createElement('canvas');
+              c.width = width;
+              c.height = height;
+              return c;
+            })();
+      this.sourceContext = this.sourceCanvas.getContext('2d', {
+        willReadFrequently: true,
+      }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+    } else if (this.sourceCanvas.width !== width || this.sourceCanvas.height !== height) {
+      this.sourceCanvas.width = width;
+      this.sourceCanvas.height = height;
     }
-
-    this.sourceCanvas = new OffscreenCanvas(width, height);
-    this.sourceContext = this.sourceCanvas.getContext('2d', {
-      willReadFrequently: true,
-    })!;
   }
 
   private ensureTargetCanvas(width: number): void {
-    if (this.currentWidth === width) {
-      return;
+    if (!this.targetCanvas) {
+      this.targetCanvas =
+        typeof OffscreenCanvas !== 'undefined'
+          ? new OffscreenCanvas(width, this.inputHeight)
+          : (() => {
+              const c = document.createElement('canvas');
+              c.width = width;
+              c.height = this.inputHeight;
+              return c;
+            })();
+      this.targetContext = this.targetCanvas.getContext('2d', {
+        willReadFrequently: true,
+      }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+    } else if (
+      this.targetCanvas.width !== width ||
+      this.targetCanvas.height !== this.inputHeight
+    ) {
+      this.targetCanvas.width = width;
+      this.targetCanvas.height = this.inputHeight;
     }
 
-    this.currentWidth = width;
+    if (this.currentWidth !== width) {
+      this.currentWidth = width;
+      const requiredSize = 3 * width * this.inputHeight;
 
-    this.targetCanvas = new OffscreenCanvas(width, this.inputHeight);
-    this.targetContext = this.targetCanvas.getContext('2d', {
-      willReadFrequently: true,
-    })!;
+      if (this.floatData) {
+        this.bufferPool.releaseBuffer(this.floatData);
+      }
 
-    const requiredSize = 3 * width * this.inputHeight;
-
-    if (!this.floatData || this.floatData.length !== requiredSize) {
-      this.floatData = new Float32Array(requiredSize);
+      this.floatData = this.bufferPool.getBuffer(requiredSize);
+      this.tensor = new ort.Tensor('float32', this.floatData, [1, 3, this.inputHeight, width]);
     }
-
-    this.tensor = new ort.Tensor('float32', this.floatData, [1, 3, this.inputHeight, width]);
   }
 
   private resize(image: ImageData, targetWidth: number): void {
@@ -81,7 +102,7 @@ export class RecognitionPreprocessorService {
     targetContext.clearRect(0, 0, targetWidth, this.inputHeight);
 
     targetContext.drawImage(
-      source,
+      source as CanvasImageSource,
       0,
       0,
       image.width,
@@ -109,3 +130,4 @@ export class RecognitionPreprocessorService {
     }
   }
 }
+

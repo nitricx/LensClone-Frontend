@@ -12,15 +12,18 @@ import { RecognitionService } from '../text-detection/recognition/recognition.se
 import { WeightedLevenshteinService } from '../text-detection/dictionary/weighted-levenshtein.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { TensorBufferPoolService } from '../text-detection/tensor-buffer-pool.service';
 import { PipelineState, PipelineStage } from './pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG } from './pipeline-config.types';
 
-const detectorPreprocessor = new DetectorPreprocessorService();
+const tensorBufferPool = new TensorBufferPoolService();
+const detectorPreprocessor = new DetectorPreprocessorService(tensorBufferPool);
 const detectorPostprocessor = new DetectorPostprocessorService();
 const detector = new DetectorService(detectorPreprocessor, detectorPostprocessor);
 const detectorFilter = new DetectorFilterService();
 const cropper = new DetectorCropperService();
 
-const recognitionPreprocessor = new RecognitionPreprocessorService();
+const recognitionPreprocessor = new RecognitionPreprocessorService(tensorBufferPool);
 const recognitionPostprocessor = new RecognitionPostprocessorService();
 const recognizer = new RecognitionService(recognitionPreprocessor, recognitionPostprocessor);
 
@@ -45,7 +48,8 @@ addEventListener('message', async (event: MessageEvent) => {
   if (type === 'INITIALIZE') {
     try {
       ort.env.wasm.proxy = false;
-      ort.env.wasm.numThreads = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4;
+      const concurrency = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4;
+      ort.env.wasm.numThreads = Math.min(4, concurrency);
       ort.env.wasm.wasmPaths = '/assets/ort/';
 
       for (const stage of stages) {
@@ -79,7 +83,7 @@ addEventListener('message', async (event: MessageEvent) => {
         fullImage: image,
         detections: [],
         processingTimeMs: 0,
-        config,
+        config: config ?? DEFAULT_PIPELINE_CONFIG,
       };
 
       const stageMetrics: Record<string, number> = {};

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { CameraService } from './services/camera.service';
 import { PipelineService } from './services/pipeline/pipeline.service';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 
 describe('App Component', () => {
   let component: App;
@@ -30,10 +30,17 @@ describe('App Component', () => {
       start: vi.fn().mockResolvedValue(undefined),
     };
 
+    const stateSignal = signal({ fullImage: undefined, detections: [], processingTimeMs: 0 } as any);
+
     const pipelineServiceMock = {
       initialize: vi.fn().mockResolvedValue(undefined),
       execute: vi.fn(),
-      state: signal({ fullImage: undefined, detections: [], processingTimeMs: 0 }),
+      state: stateSignal,
+      detections: computed(() => stateSignal().detections),
+      processingTimeMs: computed(() => stateSignal().processingTimeMs),
+      stageMetrics: computed(() => stateSignal().stageMetrics),
+      cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
+      hasDetections: computed(() => (stateSignal().detections || []).length > 0),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

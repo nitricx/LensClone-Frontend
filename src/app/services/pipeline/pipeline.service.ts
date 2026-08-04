@@ -1,6 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { PipelineStage, PipelineState } from './pipeline-state';
-import { PipelineConfig } from './pipeline-config.types';
+import { DEFAULT_PIPELINE_CONFIG, PipelineConfig } from './pipeline-config.types';
 import { DebugSettings } from '../../features/debug/debug-settings';
 
 import { DetectorCropperService } from '../text-detection/cropper.service';
@@ -22,11 +22,21 @@ export class PipelineService {
     lineGrouping: true,
   });
 
-  readonly state = signal<PipelineState>({
+  private readonly _state = signal<PipelineState>({
     fullImage: undefined,
     detections: [],
     processingTimeMs: 0,
+    config: DEFAULT_PIPELINE_CONFIG,
   });
+
+  readonly state = this._state.asReadonly();
+
+  readonly detections = computed(() => this._state().detections);
+  readonly processingTimeMs = computed(() => this._state().processingTimeMs);
+  readonly fps = computed(() => (this.processingTimeMs() > 0 ? 1000 / this.processingTimeMs() : 0));
+  readonly stageMetrics = computed(() => this._state().stageMetrics);
+  readonly cropsCount = computed(() => this.detections().filter((d) => !!d.crop).length);
+  readonly hasDetections = computed(() => this.detections().length > 0);
 
   private readonly stages: PipelineStage[];
   private worker?: Worker;
@@ -98,32 +108,41 @@ export class PipelineService {
           height: image.height,
           data: buffer,
         },
-        config: config ?? this.state().config,
+        config: config ?? this.state().config ?? DEFAULT_PIPELINE_CONFIG,
       };
 
-      this.worker.postMessage({ type: 'EXECUTE', id: requestId, payload }, [buffer]);
+      try {
+        this.worker.postMessage({ type: 'EXECUTE', id: requestId, payload }, [buffer]);
 
-      const result = await execPromise;
+        const result = await execPromise;
 
-      const processedDetections = (result.detections || []).map((det: any) => {
-        if (det.crop && !(det.crop instanceof ImageData)) {
-          const cropBuf =
-            det.crop.data instanceof Uint8ClampedArray
-              ? det.crop.data
-              : new Uint8ClampedArray(det.crop.data);
-          det.crop = new ImageData(cropBuf, det.crop.width, det.crop.height);
-        }
-        return det;
-      });
+        const processedDetections = (result.detections || []).map((det: any) => {
+          if (det.crop && !(det.crop instanceof ImageData)) {
+            const cropBuf =
+              det.crop.data instanceof Uint8ClampedArray
+                ? det.crop.data
+                : new Uint8ClampedArray(det.crop.data);
+            det.crop = new ImageData(cropBuf, det.crop.width, det.crop.height);
+          }
+          return det;
+        });
 
-      this.state.update((state) => ({
-        ...state,
-        fullImage: image,
-        detections: processedDetections,
-        processingTimeMs: result.processingTimeMs,
-        stageMetrics: result.stageMetrics,
-        config: result.config ?? state.config,
-      }));
+        this._state.set({
+          fullImage: image,
+          detections: processedDetections,
+          processingTimeMs: result.processingTimeMs,
+          stageMetrics: result.stageMetrics,
+          config: result.config ?? this.state().config,
+        });
+      } catch (err) {
+        console.error('Pipeline worker execution failed:', err);
+        this._state.set({
+          fullImage: image,
+          detections: [],
+          processingTimeMs: 0,
+          config: config ?? this.state().config,
+        });
+      }
       return;
     }
 
@@ -131,25 +150,36 @@ export class PipelineService {
     const stageMetrics: Record<string, number> = {};
     const startTime = performance.now();
 
-    this.state.update((state) => ({
-      ...state,
+    const currentState: PipelineState = {
       fullImage: image,
-      config: config ?? state.config,
-    }));
-    const state = this.state();
-    for (const stage of this.stages) {
-      const stageName = stage.name || stage.constructor.name;
-      const stageStart = performance.now();
-      await stage.execute(state);
-      stageMetrics[stageName] = performance.now() - stageStart;
-    }
-    const totalTimeMs = performance.now() - startTime;
+      detections: [],
+      processingTimeMs: 0,
+      config: config ?? this.state().config,
+    };
 
-    this.state.update((s) => ({
-      ...s,
-      processingTimeMs: totalTimeMs,
-      stageMetrics,
-    }));
+    try {
+      for (const stage of this.stages) {
+        const stageName = stage.name || stage.constructor.name;
+        const stageStart = performance.now();
+        await stage.execute(currentState);
+        stageMetrics[stageName] = performance.now() - stageStart;
+      }
+      const totalTimeMs = performance.now() - startTime;
+
+      this._state.set({
+        ...currentState,
+        processingTimeMs: totalTimeMs,
+        stageMetrics,
+      });
+    } catch (err) {
+      console.error('Main thread pipeline execution failed:', err);
+      this._state.set({
+        fullImage: image,
+        detections: [],
+        processingTimeMs: 0,
+        stageMetrics: {},
+      });
+    }
   }
 
   private setupWorkerListeners(): void {

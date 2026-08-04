@@ -1,90 +1,308 @@
-<div class="debug">
-  <section class="panel stats">
-    <h2>Pipeline</h2>
-
-    <div>Total Time: {{ pipeline.state().processingTimeMs | number: '1.0-1' }} ms</div>
-
-    <div>Detector Time: {{ (pipeline.state().stageMetrics?.['detector'] ?? 0) | number: '1.0-1' }} ms</div>
-
-    <div>Filter Time: {{ (pipeline.state().stageMetrics?.['detectorFilter'] ?? 0) | number: '1.0-1' }} ms</div>
-
-    <div>Cropper Time: {{ (pipeline.state().stageMetrics?.['cropper'] ?? 0) | number: '1.0-1' }} ms</div>
-
-    <div>
-      Recognizer Time: {{ (pipeline.state().stageMetrics?.['recognizer'] ?? 0) | number: '1.0-1' }} ms
+<div class="debug-studio">
+  <!-- Header Bar -->
+  <header class="studio-header">
+    <div class="header-title">
+      <span class="status-dot"></span>
+      <h1>ML Vision Studio</h1>
+      <span class="version-tag">PoC-Lens</span>
     </div>
 
-    <div>Dictionary Time: {{ (pipeline.state().stageMetrics?.['dictionary'] ?? 0) | number: '1.0-1' }} ms</div>
-
-    <div>Line Grouping Time: {{ (pipeline.state().stageMetrics?.['lineGrouping'] ?? 0) | number: '1.0-1' }} ms</div>
-
-    <div>Detections: {{ pipeline.state().detections.length }}</div>
-
-    <div>
-      Crops:
-      {{ pipeline.state().detections.filter((d) => d.crop).length }}
+    <div class="header-kpis">
+      <div class="kpi-card highlight">
+        <span class="kpi-label">Total Time</span>
+        <span class="kpi-value">{{ pipeline.processingTimeMs() | number: '1.0-1' }} <small>ms</small></span>
+      </div>
+      <div class="kpi-card highlight">
+        <span class="kpi-label">FPS</span>
+        <span class="kpi-value">{{ pipeline.fps() | number: '1.0-1' }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Detections</span>
+        <span class="kpi-value">{{ pipeline.detections().length }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Crops</span>
+        <span class="kpi-value">{{ pipeline.cropsCount() }}</span>
+      </div>
     </div>
-  </section>
+  </header>
 
-  <section class="panel controls">
-    <h2>Overlays</h2>
+  <!-- Studio Main Content -->
+  <div class="studio-layout">
+    <!-- Telemetry & Controls Sidebar -->
+    <aside class="sidebar">
+      <!-- Pipeline Timings -->
+      <section class="panel stats">
+        <div class="panel-header">
+          <h2>Pipeline Timings</h2>
+          <span class="timing-total">Total: {{ pipeline.processingTimeMs() | number: '1.0-1' }} ms ({{ pipeline.fps() | number: '1.0-1' }} FPS)</span>
+        </div>
 
-    @for (control of controls; track control.key) {
-      <label>
-        <input
-          type="checkbox"
-          [checked]="pipeline.debugSettings()[control.key]"
-          (change)="toggle(control.key)"
-        />
+        <div class="metrics-list">
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Detector Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['detector'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill detector-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['detector'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
 
-        {{ control.label }}
-      </label>
-    }
-  </section>
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Filter Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['detectorFilter'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill filter-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['detectorFilter'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
 
-  <section class="viewer">
-    <app-lens />
-  </section>
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Cropper Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['cropper'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill cropper-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['cropper'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
 
-  @if (pipeline.debugSettings().croppedRegions) {
-    <section class="panel crops">
-      <h2>Cropped Regions</h2>
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Recognizer Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['recognizer'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill recognizer-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['recognizer'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
 
-      @for (detection of pipeline.state().detections; track $index) {
-        @if (detection.crop) {
-          <app-crop-canvas [crop]="detection.crop" />
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Dictionary Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['dictionary'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill dictionary-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['dictionary'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+
+          <div class="metric-row">
+            <div class="metric-info">
+              <span class="metric-name">Line Grouping Time: </span>
+              <span class="metric-val">{{ (pipeline.stageMetrics()?.['lineGrouping'] ?? 0) | number: '1.0-1' }} ms</span>
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill grouping-fill"
+                [style.width.%]="pipeline.processingTimeMs() > 0 ? ((pipeline.stageMetrics()?.['lineGrouping'] ?? 0) / pipeline.processingTimeMs()) * 100 : 0"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Memory Profile -->
+      <section class="panel memory">
+        <div class="panel-header">
+          <h2>Memory Profile</h2>
+          @if (currentHeapMb() !== null) {
+            <span class="memory-badge">{{ currentHeapMb() | number: '1.1-1' }} MB</span>
+          }
+        </div>
+
+        @if (currentHeapMb() !== null) {
+          <div class="metrics-list">
+            <div class="metric-row">
+              <div class="metric-info">
+                <span class="metric-name">Used Heap: </span>
+                <span class="metric-val">{{ currentHeapMb() | number: '1.1-1' }} MB</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill memory-used-fill"
+                  [style.width.%]="limitHeapMb() ? (currentHeapMb()! / limitHeapMb()!) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+
+            <div class="metric-row">
+              <div class="metric-info">
+                <span class="metric-name">Peak Heap: </span>
+                <span class="metric-val">{{ peakHeapMb() | number: '1.1-1' }} MB</span>
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill memory-peak-fill"
+                  [style.width.%]="limitHeapMb() ? (peakHeapMb()! / limitHeapMb()!) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+
+            <div class="memory-meta">
+              <span>Total Heap: {{ totalHeapMb() | number: '1.1-1' }} MB</span>
+              <span>Heap Limit: {{ limitHeapMb() | number: '1.0-0' }} MB</span>
+            </div>
+          </div>
+        } @else {
+          <div class="api-unavailable">JS Heap API unavailable</div>
         }
-      }
-    </section>
-  }
+      </section>
 
-  @if (pipeline.debugSettings().recognizedText) {
-    <section class="panel recognized">
-      <h2>Recognized Text</h2>
+      <!-- Overlay Controls -->
+      <section class="panel controls">
+        <div class="panel-header">
+          <h2>Overlay Controls</h2>
+        </div>
 
-      @for (detection of pipeline.state().detections; track $index) {
-        <div>{{ detection.rawText }}</div>
-      }
-    </section>
-  }
+        <div class="controls-list">
+          @for (control of controls; track control.key) {
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="pipeline.debugSettings()[control.key]"
+                (change)="toggle(control.key)"
+              />
+              <span class="switch-slider"></span>
+              <span class="switch-label">{{ control.label }}</span>
+            </label>
+          }
+        </div>
+      </section>
+    </aside>
 
-  @if (pipeline.debugSettings().canonicalText) {
-    <section class="panel canonical">
-      <h2>Canonical Text</h2>
+    <!-- Workspace Main Area -->
+    <main class="workspace">
+      <!-- Camera Viewer -->
+      <section class="viewer-container">
+        <div class="viewer-header">
+          <span class="viewer-title">Live Preview & Overlay Engine</span>
+        </div>
+        <div class="viewer">
+          <app-lens />
+        </div>
+      </section>
 
-      @for (detection of pipeline.state().detections; track $index) {
-        <div>{{ detection.canonicalText }}</div>
-      }
-    </section>
-  }
+      <!-- Inspection Drawer -->
+      <section class="inspection-drawer">
+        <nav class="tab-nav">
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'crops'"
+            (click)="activeTab.set('crops')"
+          >
+            Cropped Regions
+            <span class="tab-badge">{{ pipeline.cropsCount() }}</span>
+          </button>
 
-  @if (pipeline.debugSettings().lineGrouping) {
-    <section class="panel line-grouping">
-      <h2>Line Grouping</h2>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'text'"
+            (click)="activeTab.set('text')"
+          >
+            Recognized Text
+            <span class="tab-badge">{{ pipeline.detections().length }}</span>
+          </button>
 
-      @for (detection of pipeline.state().detections; track $index) {
-        <div>Line {{ $index + 1 }} ({{ detection.line?.id }} line.id)</div>
-      }
-    </section>
-  }
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'grouping'"
+            (click)="activeTab.set('grouping')"
+          >
+            Line Grouping
+          </button>
+        </nav>
+
+        <div class="tab-content">
+          <!-- Tab 1: Cropped Regions -->
+          @if (activeTab() === 'crops') {
+            <div class="panel crops">
+              @if (pipeline.cropsCount() > 0) {
+                <div class="crops-grid">
+                  @for (detection of pipeline.detections(); track $index) {
+                    @if (detection.crop) {
+                      <div class="crop-card">
+                        <div class="crop-card-header">#{{ $index + 1 }}</div>
+                        <app-crop-canvas [crop]="detection.crop" />
+                        <div class="crop-card-footer">{{ detection.crop.width }}×{{ detection.crop.height }}px</div>
+                      </div>
+                    }
+                  }
+                </div>
+              } @else {
+                <div class="empty-state">No cropped regions detected in current frame</div>
+              }
+            </div>
+          }
+
+          <!-- Tab 2: Recognized & Canonical Text -->
+          @if (activeTab() === 'text') {
+            <div class="panel text-inspection">
+              @if (pipeline.detections().length > 0) {
+                <table class="text-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Raw OCR Text</th>
+                      <th>Canonical / Matched Text</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (detection of pipeline.detections(); track $index) {
+                      <tr>
+                        <td class="col-index">#{{ $index + 1 }}</td>
+                        <td class="col-raw">{{ detection.rawText || '—' }}</td>
+                        <td class="col-canonical">
+                          <span class="canonical-badge">{{ detection.canonicalText || '—' }}</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              } @else {
+                <div class="empty-state">No text detected in current frame</div>
+              }
+            </div>
+          }
+
+          <!-- Tab 3: Line Grouping -->
+          @if (activeTab() === 'grouping') {
+            <div class="panel line-grouping">
+              @if (pipeline.detections().length > 0) {
+                <div class="lines-list">
+                  @for (detection of pipeline.detections(); track $index) {
+                    <div class="line-item">
+                      <span class="line-index">Line {{ $index + 1 }}</span>
+                      <span class="line-id-tag">Line ID: {{ detection.line?.id ?? 'N/A' }}</span>
+                      <span class="line-text">{{ detection.canonicalText || detection.rawText }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state">No line groupings available</div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </main>
+  </div>
 </div>
+

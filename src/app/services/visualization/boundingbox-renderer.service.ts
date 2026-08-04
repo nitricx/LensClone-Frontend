@@ -15,14 +15,15 @@ export class BoundingBoxRendererService {
     ctx.textBaseline = 'top';
 
     for (const detection of detections) {
+      const box = detection.boundingBox;
+
+      // Always render bounding box rectangle
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+
       const text = detection.canonicalText ?? detection.price;
       if (!text) {
         continue;
       }
-
-      const box = detection.boundingBox;
-      // Bounding box
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
 
       const padding = 4;
       const textWidth = ctx.measureText(text).width;
