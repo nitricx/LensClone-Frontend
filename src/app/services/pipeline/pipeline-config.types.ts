@@ -35,12 +35,21 @@ export interface DictionaryConfig {
   priceMax: number;
 }
 
+export interface TrackingConfig {
+  enabled: boolean;
+  iouThreshold: number;
+  maxMisses: number;
+  smoothingFactor: number;
+  refreshIntervalFrames: number;
+}
+
 export interface PipelineConfig {
   detector: DetectorConfig;
   cropper: CropperConfig;
   recognizer: RecognizerConfig;
   lineGrouping: LineGroupingConfig;
   dictionary: DictionaryConfig;
+  tracking: TrackingConfig;
 }
 
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
@@ -75,5 +84,12 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
     similarityThreshold: 0.75,
     priceMin: 1000,
     priceMax: 9999,
+  },
+  tracking: {
+    enabled: true,
+    iouThreshold: 0.3,
+    maxMisses: 3,
+    smoothingFactor: 0.6,
+    refreshIntervalFrames: 30,
   },
 };

@@ -31,6 +31,10 @@ export class DictionaryMatcherService implements PipelineStage {
     const config = state.config?.dictionary ?? DEFAULT_PIPELINE_CONFIG.dictionary;
 
     for (const detection of state.detections) {
+      if (detection.isReused && !detection.needsRefresh) {
+        continue;
+      }
+
       if (!detection.rawText) {
         continue;
       }
