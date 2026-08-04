@@ -52,6 +52,7 @@ public/                         # Static assets and ONNX model files
 
 ### 3. Code Formatting & TypeScript Rules
 - **Strict Types**: Maintain strict TypeScript typing. Avoid `any` where explicit interfaces or types can be defined.
+- **Explicit Error Handling**: Throw explicit errors for invalid or unexpected input values and configuration parameters (e.g. out-of-range scale factors) rather than silently ignoring invalid values or swallowing errors with hardcoded fallbacks.
 - **Prettier**: Code should adhere to formatting defined in `.prettierrc`.
 
 ---

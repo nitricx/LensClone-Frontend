@@ -121,10 +121,53 @@ describe('DetectorService', () => {
 
     await service.execute(state);
 
-    expect(preprocessorMock.toTensor).toHaveBeenCalledWith(mockImage);
+    expect(preprocessorMock.toTensor).toHaveBeenCalledWith(mockImage, undefined, undefined);
     expect(mockSession.run).toHaveBeenCalled();
     expect(postprocessorMock.process).toHaveBeenCalledWith(mockOutputTensor, 10, 10, undefined);
     expect(state.detections.length).toBe(1);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('should pass detector maxSide and scaleFactor config to preprocessor', async () => {
+    const dummyBuffer = new ArrayBuffer(2000);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: new Headers({ 'content-type': 'application/octet-stream' }),
+        arrayBuffer: vi.fn().mockResolvedValue(dummyBuffer),
+      }),
+    );
+
+    const mockOutputTensor = {} as ort.Tensor;
+    const mockSession = {
+      outputNames: ['out'],
+      run: vi.fn().mockResolvedValue({ out: mockOutputTensor }),
+    };
+    (ort.InferenceSession.create as any).mockResolvedValue(mockSession);
+
+    await service.initialize?.();
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    const state: PipelineState = {
+      fullImage: mockImage,
+      detections: [],
+      processingTimeMs: 0,
+      config: {
+        detector: {
+          thresholdValue: 0.3,
+          minArea: 10,
+          minAspectRatio: 1.2,
+          maxSide: 480,
+          scaleFactor: 0.5,
+        },
+      } as any,
+    };
+
+    await service.execute(state);
+
+    expect(preprocessorMock.toTensor).toHaveBeenCalledWith(mockImage, 480, 0.5);
 
     vi.unstubAllGlobals();
   });

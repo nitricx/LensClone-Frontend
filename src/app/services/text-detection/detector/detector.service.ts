@@ -29,8 +29,12 @@ export class DetectorService implements PipelineStage {
   }
 
   async execute(state: PipelineState): Promise<void> {
-    // Preprocess the image
-    const tensor = this.preprocessor.toTensor(state.fullImage!);
+    // Preprocess the image with optional aspect-bounding downscaling or scale factor
+    const tensor = this.preprocessor.toTensor(
+      state.fullImage!,
+      state.config?.detector?.maxSide,
+      state.config?.detector?.scaleFactor,
+    );
     // Run the model
     const output = await this.session.run({
       x: tensor,

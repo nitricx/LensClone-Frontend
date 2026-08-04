@@ -2,6 +2,8 @@ export interface DetectorConfig {
   thresholdValue: number;
   minArea: number;
   minAspectRatio: number;
+  maxSide?: number;
+  scaleFactor?: number;
 }
 
 export interface CropperConfig {
@@ -46,6 +48,8 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
     thresholdValue: 0.3,
     minArea: 10,
     minAspectRatio: 1.2,
+    maxSide: 0,
+    scaleFactor: 0.5,
   },
   cropper: {
     padding: 4,

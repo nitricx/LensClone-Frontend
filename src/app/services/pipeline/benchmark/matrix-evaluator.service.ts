@@ -12,6 +12,8 @@ export interface PipelineConfigMatrix {
   detectorThresholds?: number[];
   detectorMinAreas?: number[];
   detectorMinAspectRatios?: number[];
+  detectorMaxSides?: number[];
+  detectorScaleFactors?: number[];
   cropperPaddings?: number[];
   dictionarySimilarityThresholds?: number[];
   lineGroupingMaxScores?: number[];
@@ -54,6 +56,12 @@ export class MatrixEvaluatorService {
     const detectorMinAspectRatios = matrix.detectorMinAspectRatios?.length
       ? matrix.detectorMinAspectRatios
       : [baseConfig.detector.minAspectRatio];
+    const detectorMaxSides = matrix.detectorMaxSides?.length
+      ? matrix.detectorMaxSides
+      : [baseConfig.detector.maxSide ?? 0];
+    const detectorScaleFactors = matrix.detectorScaleFactors?.length
+      ? matrix.detectorScaleFactors
+      : [baseConfig.detector.scaleFactor ?? 0.5];
     const cropperPaddings = matrix.cropperPaddings?.length
       ? matrix.cropperPaddings
       : [baseConfig.cropper.padding];
@@ -72,35 +80,41 @@ export class MatrixEvaluatorService {
     for (const thresholdValue of detectorThresholds) {
       for (const minArea of detectorMinAreas) {
         for (const minAspectRatio of detectorMinAspectRatios) {
-          for (const padding of cropperPaddings) {
-            for (const similarityThreshold of dictionarySimilarityThresholds) {
-              for (const maxScore of lineGroupingMaxScores) {
-                for (const verticalWeight of lineGroupingVerticalWeights) {
-                  permutations.push({
-                    ...baseConfig,
-                    detector: {
-                      ...baseConfig.detector,
-                      thresholdValue,
-                      minArea,
-                      minAspectRatio,
-                    },
-                    cropper: {
-                      ...baseConfig.cropper,
-                      padding,
-                    },
-                    dictionary: {
-                      ...baseConfig.dictionary,
-                      similarityThreshold,
-                    },
-                    lineGrouping: {
-                      ...baseConfig.lineGrouping,
-                      maxScore,
-                      weights: {
-                        ...baseConfig.lineGrouping.weights,
-                        vertical: verticalWeight,
-                      },
-                    },
-                  });
+          for (const maxSide of detectorMaxSides) {
+            for (const scaleFactor of detectorScaleFactors) {
+              for (const padding of cropperPaddings) {
+                for (const similarityThreshold of dictionarySimilarityThresholds) {
+                  for (const maxScore of lineGroupingMaxScores) {
+                    for (const verticalWeight of lineGroupingVerticalWeights) {
+                      permutations.push({
+                        ...baseConfig,
+                        detector: {
+                          ...baseConfig.detector,
+                          thresholdValue,
+                          minArea,
+                          minAspectRatio,
+                          maxSide,
+                          scaleFactor,
+                        },
+                        cropper: {
+                          ...baseConfig.cropper,
+                          padding,
+                        },
+                        dictionary: {
+                          ...baseConfig.dictionary,
+                          similarityThreshold,
+                        },
+                        lineGrouping: {
+                          ...baseConfig.lineGrouping,
+                          maxScore,
+                          weights: {
+                            ...baseConfig.lineGrouping.weights,
+                            vertical: verticalWeight,
+                          },
+                        },
+                      });
+                    }
+                  }
                 }
               }
             }
