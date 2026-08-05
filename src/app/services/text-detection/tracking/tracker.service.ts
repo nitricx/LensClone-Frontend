@@ -3,6 +3,8 @@ import { BoundingBox, Detection, Quantity, LineGrouping } from '../types';
 import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG, TrackingConfig } from '../../pipeline/pipeline-config.types';
 
+import { hasAllThreeProperties } from '../detection-helpers';
+
 export interface TrackedBox {
   id: string;
   box: BoundingBox;
@@ -118,16 +120,30 @@ export class TrackerService implements PipelineStage {
       track.age++;
       track.misses = 0;
 
+      const trackAsDet: Detection = {
+        boundingBoxScore: track.boundingBoxScore,
+        boundingBox: track.box,
+        rawText: track.rawText,
+        rawTextScore: track.rawTextScore,
+        canonicalText: track.canonicalText,
+        price: track.price,
+        quantity: track.quantity,
+        line: track.line,
+      };
+
+      const isHighConfidence = (track.rawTextScore ?? 0) >= 0.95;
+      const isComplete = hasAllThreeProperties([trackAsDet]);
+      const isFullySatisfied = isHighConfidence && isComplete;
+
       const framesSinceLastRefresh = this.frameCount - track.lastRefreshedFrame;
-      const needsRefresh = framesSinceLastRefresh >= config.refreshIntervalFrames;
+      const needsRefresh = !isFullySatisfied || framesSinceLastRefresh >= config.refreshIntervalFrames;
 
       if (needsRefresh) {
         track.lastRefreshedFrame = this.frameCount;
       }
       track.lastSeenFrame = this.frameCount;
 
-      const hasRecognizedText = !!(track.canonicalText || track.price || track.rawText);
-      const isReused = hasRecognizedText && !needsRefresh;
+      const isReused = isFullySatisfied && !needsRefresh;
 
       const updatedDet: Detection = {
         ...det,

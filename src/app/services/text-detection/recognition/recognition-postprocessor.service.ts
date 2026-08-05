@@ -1,56 +1,78 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
 
+export interface RecognitionResult {
+  text: string;
+  score: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class RecognitionPostprocessorService {
   decode(output: ort.Tensor, dictionary: string[], blankIndex = 0): string {
+    return this.decodeWithScore(output, dictionary, blankIndex).text;
+  }
+
+  decodeWithScore(output: ort.Tensor, dictionary: string[], blankIndex = 0): RecognitionResult {
     const data = output.data as Float32Array;
     const [, sequenceLength, classCount] = output.dims;
 
-    const indices: number[] = [];
+    let previous = -1;
+    let text = '';
+    const charScores: number[] = [];
 
     for (let t = 0; t < sequenceLength; t++) {
       let bestClass = 0;
-      let bestScore = -Infinity;
-
+      let bestLogit = -Infinity;
       const offset = t * classCount;
 
+      let maxLogit = -Infinity;
       for (let c = 0; c < classCount; c++) {
-        const score = data[offset + c];
+        if (data[offset + c] > maxLogit) {
+          maxLogit = data[offset + c];
+        }
+      }
 
-        if (score > bestScore) {
-          bestScore = score;
+      let expSum = 0;
+      for (let c = 0; c < classCount; c++) {
+        const val = Math.exp(data[offset + c] - maxLogit);
+        expSum += val;
+        if (data[offset + c] > bestLogit) {
+          bestLogit = data[offset + c];
           bestClass = c;
         }
       }
 
-      indices.push(bestClass);
-    }
+      const bestProb = Math.exp(bestLogit - maxLogit) / (expSum || 1);
 
-    let previous = -1;
-    let text = '';
-
-    for (const index of indices) {
-      if (index === blankIndex) {
-        previous = index;
+      if (bestClass === blankIndex) {
+        previous = bestClass;
         continue;
       }
 
-      if (index === previous) {
+      if (bestClass === previous) {
         continue;
       }
 
-      const character = dictionary[index - 1];
+      const character = dictionary[bestClass - 1];
 
       if (character) {
         text += character;
+        charScores.push(bestProb);
       }
 
-      previous = index;
+      previous = bestClass;
     }
 
-    return text;
+    const avgScore =
+      charScores.length > 0
+        ? charScores.reduce((sum, s) => sum + s, 0) / charScores.length
+        : 0;
+
+    return {
+      text,
+      score: Number(avgScore.toFixed(3)),
+    };
   }
 }

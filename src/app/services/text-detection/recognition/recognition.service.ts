@@ -54,8 +54,9 @@ export class RecognitionService implements PipelineStage {
       });
 
       const maps = output[this.session.outputNames[0]] as ort.Tensor;
-
-      detection.rawText = this.postprocessor.decode(maps, this.dictionary, 836);
+      const res = this.postprocessor.decodeWithScore(maps, this.dictionary, 836);
+      detection.rawText = res.text;
+      detection.rawTextScore = res.score;
     }
   }
 
