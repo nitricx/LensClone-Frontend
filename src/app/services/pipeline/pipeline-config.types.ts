@@ -61,7 +61,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
     scaleFactor: 0.5,
   },
   cropper: {
-    padding: 0,
+    padding: 6,
     paddingMode: 'fixed',
   },
   recognizer: {

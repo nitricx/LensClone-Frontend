@@ -88,7 +88,7 @@ describe('TrackerService', () => {
     expect(matchedDet.boundingBox.x).toBe(11);
   });
 
-  it('should continue running recognition if rawTextScore < 0.95 or if any of product, quantity, or price are missing', () => {
+  it('should continue running recognition if rawTextScore < 0.85 and text is low confidence', () => {
     const frame1State: PipelineState = {
       detections: [
         { boundingBoxScore: 0.9, boundingBox: { x: 10, y: 10, width: 100, height: 50 } },
@@ -100,11 +100,9 @@ describe('TrackerService', () => {
     service.execute(frame1State);
     const assignedTrackId = frame1State.detections[0].trackId;
 
-    // Detection has missing price and rawTextScore < 0.95
+    // Detection has low confidence score (< 0.85)
     frame1State.detections[0].rawText = 'TOMATE';
-    frame1State.detections[0].rawTextScore = 0.85;
-    frame1State.detections[0].canonicalText = 'TOMATE';
-    frame1State.detections[0].quantity = { quantity: 2, unit: 'kg' };
+    frame1State.detections[0].rawTextScore = 0.50;
 
     const frame2State: PipelineState = {
       detections: [
@@ -119,6 +117,56 @@ describe('TrackerService', () => {
     expect(frame2State.detections[0].trackId).toBe(assignedTrackId);
     expect(frame2State.detections[0].needsRefresh).toBe(true);
     expect(frame2State.detections[0].isReused).toBe(false);
+  });
+
+  it('should preserve higher-confidence recognition result when subsequent frame returns a lower score', () => {
+    const frame1State: PipelineState = {
+      detections: [
+        { boundingBoxScore: 0.9, boundingBox: { x: 10, y: 10, width: 100, height: 50 } },
+      ],
+      processingTimeMs: 0,
+      config: DEFAULT_PIPELINE_CONFIG,
+    };
+
+    service.execute(frame1State);
+    const assignedTrackId = frame1State.detections[0].trackId;
+
+    // High confidence recognition on frame 1
+    frame1State.detections[0].rawText = 'TOMATE 2KG $3000';
+    frame1State.detections[0].rawTextScore = 0.95;
+
+    // Frame 2: process frame 2
+    const frame2State: PipelineState = {
+      detections: [
+        { boundingBoxScore: 0.9, boundingBox: { x: 10, y: 10, width: 100, height: 50 } },
+      ],
+      processingTimeMs: 0,
+      config: DEFAULT_PIPELINE_CONFIG,
+    };
+
+    service.execute(frame2State);
+    expect(frame2State.detections[0].isReused).toBe(true);
+    expect(frame2State.detections[0].rawText).toBe('TOMATE 2KG $3000');
+
+    // Simulate downstream recognition returning a lower score on frame 2 (e.g. motion blur)
+    frame2State.detections[0].rawText = 'TOMATE';
+    frame2State.detections[0].rawTextScore = 0.50;
+
+    // Frame 3
+    const frame3State: PipelineState = {
+      detections: [
+        { boundingBoxScore: 0.9, boundingBox: { x: 10, y: 10, width: 100, height: 50 } },
+      ],
+      processingTimeMs: 0,
+      config: DEFAULT_PIPELINE_CONFIG,
+    };
+
+    service.execute(frame3State);
+
+    // Verified that low-confidence score (0.50) was rejected and high-confidence (0.95) was preserved
+    expect(frame3State.detections[0].trackId).toBe(assignedTrackId);
+    expect(frame3State.detections[0].rawText).toBe('TOMATE 2KG $3000');
+    expect(frame3State.detections[0].rawTextScore).toBe(0.95);
   });
 
   it('should extrapolate detection when box is missed for 1 frame (drop tolerance)', () => {

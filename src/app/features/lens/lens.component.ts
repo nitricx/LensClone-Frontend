@@ -116,32 +116,63 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private frozenImageData: ImageData | null = null;
+  private frozenRefinementCount = 0;
+  private frozenConverged = false;
+  private readonly MAX_FROZEN_REFINEMENT_PASSES = 6;
+
   async togglePrimaryAction(): Promise<void> {
     const video = this.videoElement.nativeElement;
 
     if (!this.isFrozen()) {
+      // Capture static frame before pausing camera feed
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        this.captureContext.drawImage(
+          video,
+          0,
+          0,
+          this.captureCanvas.width,
+          this.captureCanvas.height,
+        );
+        this.frozenImageData = this.captureContext.getImageData(
+          0,
+          0,
+          this.captureCanvas.width,
+          this.captureCanvas.height,
+        );
+      }
+
       // Freeze frame state
       this.cameraService.pause(video);
       this.isFrozen.set(true);
+      this.frozenRefinementCount = 0;
+      this.frozenConverged = false;
 
-      // Save frame capture to history
-      try {
-        const dataUrl = this.captureCanvas.toDataURL('image/jpeg', 0.85);
-        const detections = this.pipelineService.detections() || [];
-        const textSnippet = detections
-          .map((d) => d.canonicalText || d.rawText || '')
-          .filter(Boolean)
-          .join(' ')
-          .trim();
-
-        this.historyService.addCapture(dataUrl, detections.length, textSnippet);
-      } catch (e) {
-        console.warn('Could not capture frame to history:', e);
-      }
+      // Save initial frame capture to history
+      this.saveHistoryCapture();
     } else {
       // Resume live state
       await this.cameraService.resume(video);
       this.isFrozen.set(false);
+      this.frozenImageData = null;
+      this.frozenRefinementCount = 0;
+      this.frozenConverged = false;
+    }
+  }
+
+  private saveHistoryCapture(): void {
+    try {
+      const dataUrl = this.captureCanvas.toDataURL('image/jpeg', 0.85);
+      const detections = this.pipelineService.detections() || [];
+      const textSnippet = detections
+        .map((d) => d.canonicalText || d.rawText || '')
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+
+      this.historyService.addCapture(dataUrl, detections.length, textSnippet);
+    } catch (e) {
+      console.warn('Could not capture frame to history:', e);
     }
   }
 
@@ -207,31 +238,56 @@ export class LensComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // When live and not in progress, execute detection pipeline
-    if (!this.isFrozen() && !this.detectionInProgress) {
-      this.detectionInProgress = true;
-      try {
-        if (this.videoElement?.nativeElement?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-          this.captureContext.drawImage(
-            this.videoElement.nativeElement,
-            0,
-            0,
-            this.captureCanvas.width,
-            this.captureCanvas.height,
-          );
+    if (!this.detectionInProgress) {
+      if (!this.isFrozen()) {
+        // LIVE FEED MODE: capture & execute live frame
+        this.detectionInProgress = true;
+        try {
+          if (this.videoElement?.nativeElement?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+            this.captureContext.drawImage(
+              this.videoElement.nativeElement,
+              0,
+              0,
+              this.captureCanvas.width,
+              this.captureCanvas.height,
+            );
 
-          const image = this.captureContext.getImageData(
-            0,
-            0,
-            this.captureCanvas.width,
-            this.captureCanvas.height,
-          );
-          await this.pipelineService.execute(image);
+            const image = this.captureContext.getImageData(
+              0,
+              0,
+              this.captureCanvas.width,
+              this.captureCanvas.height,
+            );
+            await this.pipelineService.execute(image);
+          }
+        } catch (err) {
+          console.warn('Error in detection loop execution:', err);
+        } finally {
+          this.detectionInProgress = false;
         }
-      } catch (err) {
-        console.warn('Error in detection loop execution:', err);
-      } finally {
-        this.detectionInProgress = false;
+      } else if (!this.frozenConverged && this.frozenImageData) {
+        // FROZEN FRAME MODE: refine static image until convergence or max passes
+        this.detectionInProgress = true;
+        try {
+          await this.pipelineService.execute(this.frozenImageData);
+          this.frozenRefinementCount++;
+
+          const detections = this.pipelineService.detections() || [];
+          const allSatisfied =
+            detections.length > 0 &&
+            detections.every(
+              (d) => d.isReused || (d.rawTextScore !== undefined && d.rawTextScore >= 0.85),
+            );
+
+          if (allSatisfied || this.frozenRefinementCount >= this.MAX_FROZEN_REFINEMENT_PASSES) {
+            this.frozenConverged = true;
+          }
+        } catch (err) {
+          console.warn('Error in frozen frame refinement loop:', err);
+          this.frozenConverged = true;
+        } finally {
+          this.detectionInProgress = false;
+        }
       }
     }
 

@@ -131,9 +131,12 @@ export class TrackerService implements PipelineStage {
         line: track.line,
       };
 
-      const isHighConfidence = (track.rawTextScore ?? 0) >= 0.95;
+      const isHighConfidence =
+        (track.rawTextScore ?? 0) >= 0.85 &&
+        track.rawText !== undefined &&
+        track.rawText.trim().length > 0;
       const isComplete = hasAllThreeProperties([trackAsDet]);
-      const isFullySatisfied = isHighConfidence && isComplete;
+      const isFullySatisfied = isHighConfidence || isComplete;
 
       const framesSinceLastRefresh = this.frameCount - track.lastRefreshedFrame;
       const needsRefresh = !isFullySatisfied || framesSinceLastRefresh >= config.refreshIntervalFrames;
@@ -254,12 +257,25 @@ export class TrackerService implements PipelineStage {
         return;
       }
 
-      if (prevDet.rawText !== undefined) track.rawText = prevDet.rawText;
-      if (prevDet.rawTextScore !== undefined) track.rawTextScore = prevDet.rawTextScore;
-      if (prevDet.canonicalText !== undefined) track.canonicalText = prevDet.canonicalText;
-      if (prevDet.price !== undefined) track.price = prevDet.price;
-      if (prevDet.quantity !== undefined) track.quantity = prevDet.quantity;
-      if (prevDet.line !== undefined) track.line = prevDet.line;
+      const prevScore = prevDet.rawTextScore ?? 0;
+      const currentScore = track.rawTextScore ?? 0;
+
+      const shouldUpdateRecognition =
+        !track.rawText ||
+        prevScore >= currentScore ||
+        currentScore < 0.85;
+
+      if (shouldUpdateRecognition) {
+        if (prevDet.rawText !== undefined) track.rawText = prevDet.rawText;
+        if (prevDet.rawTextScore !== undefined) track.rawTextScore = prevDet.rawTextScore;
+        if (prevDet.canonicalText !== undefined) track.canonicalText = prevDet.canonicalText;
+        if (prevDet.price !== undefined) track.price = prevDet.price;
+        if (prevDet.quantity !== undefined) track.quantity = prevDet.quantity;
+      }
+
+      if (prevDet.line !== undefined) {
+        track.line = prevDet.line;
+      }
     });
   }
 }

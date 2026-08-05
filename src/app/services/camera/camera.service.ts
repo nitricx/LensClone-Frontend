@@ -8,11 +8,18 @@ export class CameraService {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
       },
       audio: false,
     });
 
     video.srcObject = stream;
+
+    const track = stream.getVideoTracks()?.[0];
+    if (track) {
+      await this.optimizeTrackConstraints(track);
+    }
 
     if (video.readyState < HTMLMediaElement.HAVE_METADATA) {
       await new Promise<void>((resolve) => {
@@ -23,6 +30,34 @@ export class CameraService {
     }
 
     await video.play();
+  }
+
+  private async optimizeTrackConstraints(track: MediaStreamTrack): Promise<void> {
+    if (typeof track.getCapabilities !== 'function') {
+      return;
+    }
+    const capabilities = track.getCapabilities() as Record<string, unknown>;
+    const advancedConstraints: Record<string, unknown> = {};
+
+    const focusModes = capabilities['focusMode'];
+    if (Array.isArray(focusModes) && focusModes.includes('continuous')) {
+      advancedConstraints['focusMode'] = 'continuous';
+    }
+
+    const targetConstraints: MediaTrackConstraints = {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+    };
+
+    if (Object.keys(advancedConstraints).length > 0) {
+      targetConstraints.advanced = [advancedConstraints as MediaTrackConstraintSet];
+    }
+
+    try {
+      await track.applyConstraints(targetConstraints);
+    } catch (err) {
+      console.warn('Failed to apply advanced camera track constraints:', err);
+    }
   }
 
   stop(video?: HTMLVideoElement): void {
