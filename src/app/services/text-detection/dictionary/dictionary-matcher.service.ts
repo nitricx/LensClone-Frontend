@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { WeightedLevenshteinService } from './weighted-levenshtein.service';
 import productsDictionary from './grocery-dictionary.json';
 import quantityDictionary from './quantity-dictionary.json';
+import headerDictionary from './header-dictionary.json';
 import { Detection } from '../types';
 import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG, DictionaryConfig } from '../../pipeline/pipeline-config.types';
@@ -44,6 +45,7 @@ export class DictionaryMatcherService implements PipelineStage {
       detection.canonicalText = this.matchProduct(normalized, config);
       detection.price = this.matchPrice(detection.rawText, config);
       detection.quantity = this.matchQuantity(detection.rawText, config);
+      detection.isHeader = this.matchHeader(normalized, config);
     }
   }
 
@@ -109,6 +111,21 @@ export class DictionaryMatcherService implements PipelineStage {
     }
 
     return bestScore >= config.similarityThreshold ? bestCanonical : undefined;
+  }
+
+  private matchHeader(normalizedText: string, config: DictionaryConfig): boolean {
+    let bestScore = 0;
+
+    for (const aliases of Object.values(headerDictionary)) {
+      for (const alias of aliases) {
+        const score = this.levenshtein.similarity(normalizedText, alias);
+        if (score > bestScore) {
+          bestScore = score;
+        }
+      }
+    }
+
+    return bestScore >= config.similarityThreshold;
   }
 
   private normalize(text: string): string {

@@ -235,6 +235,7 @@ export class OfferExtractorService implements PipelineStage {
   }
 
   private isProductCandidate(d: Detection): boolean {
+    if (d.isHeader) return false;
     if (d.canonicalText) return true;
     if (!d.rawText) return false;
     if (this.isQuantity(d)) return false;

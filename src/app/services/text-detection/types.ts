@@ -23,6 +23,7 @@ export interface Detection {
   quantity?: Quantity;
   line?: LineGrouping;
   offerId?: string;
+  isHeader?: boolean;
 
   trackId?: string;
   isReused?: boolean;
