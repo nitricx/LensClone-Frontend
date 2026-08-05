@@ -54,6 +54,64 @@
           "textCategory": "price"
         }
       ]
+    },
+    {
+      "imageId": "billboard_001",
+      "category": "chalkboard-vertical",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_001.png",
+      "expectedOffers": [
+        { "product": "BANANA", "quantity": "2 Kg", "price": "$4500" },
+        { "product": "MANDARINA", "quantity": null, "price": "$2000" },
+        { "product": "ARANDANOS", "quantity": "2 x", "price": "$5500" }
+      ]
+    },
+    {
+      "imageId": "billboard_002",
+      "category": "chalkboard-vertical",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_002.png",
+      "expectedOffers": [
+        { "product": "BERENJENA", "quantity": "2 Kg", "price": "$2000" },
+        { "product": "ZAPALLITO", "quantity": "2 Kg", "price": "$2000" },
+        { "product": "MANZANA", "quantity": "2 Kg", "price": "$3500" }
+      ]
+    },
+    {
+      "imageId": "billboard_003",
+      "category": "chalkboard-vertical",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_003.png",
+      "expectedOffers": [
+        { "product": "TOMATE", "quantity": "2 Kg", "price": "$2500" },
+        { "product": "MANZANA", "quantity": "2 Kg", "price": "$3500" },
+        { "product": "ESPARRAGOS", "quantity": "2 x", "price": "$5000" }
+      ]
+    },
+    {
+      "imageId": "billboard_004",
+      "category": "poster-grid",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_004.png",
+      "expectedOffers": [
+        { "product": "REMOLACHA", "quantity": "X PAQUETE", "price": "$999.99" },
+        { "product": "MORRON VERDE", "quantity": "KG", "price": "$1999.99" },
+        { "product": "FRUTILLA", "quantity": "1/4 KG", "price": "$999.99" },
+        { "product": "PAPIN", "quantity": "2 KG", "price": "$1999.99" },
+        { "product": "RUCULA", "quantity": "3x PAQUETE", "price": "$1999.99" },
+        { "product": "ARANDANOS", "quantity": "2x POTE", "price": "$2999.99" }
+      ]
+    },
+    {
+      "imageId": "billboard_005",
+      "category": "crate-labels-grid",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_005.png",
+      "expectedOffers": [
+        { "product": "NARANJA PARA JUGO", "quantity": "2 kg", "price": "$1500" },
+        { "product": "MANDARINA AFUREN", "quantity": "2 kg", "price": "$3000" },
+        { "product": "MANZANA RED", "quantity": "2 kg", "price": "$3000" },
+        { "product": "NARANJA OMBLIGO", "quantity": "2 kg", "price": "$2500" },
+        { "product": "MANDARINA NOVA", "quantity": "2 kg", "price": "$2500" },
+        { "product": "LIMON", "quantity": "2 kg", "price": "$1800" },
+        { "product": "MANDARINA MURCO", "quantity": "2 kg", "price": "$2500" },
+        { "product": "MANDARINA ENCORE", "quantity": "2 kg", "price": "$3000" }
+      ]
     }
   ]
 }
