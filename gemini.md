@@ -23,15 +23,17 @@ src/
 │   ├── app.ts                  # Root standalone component
 │   ├── app.config.ts           # Application config (providers, routing)
 │   ├── app.routes.ts           # Application routes
-│   ├── features/               # Feature components
+│   ├── features/               # Feature components (with co-located README.md)
 │   │   ├── debug/              # Debugging & diagnostics views
 │   │   ├── lens/               # Main camera feed & detection loop view
 │   │   └── overlay/            # Canvas overlay for detected text boxes
-│   └── services/               # Core services & vision pipeline
-│       ├── camera.service.ts   # WebRTC camera access & video stream setup
-│       ├── pipeline/           # Detection & recognition pipeline orchestration
-│       ├── text-detection/     # ML preprocessing, text cropping, line grouping, recognition
-│       └── visualization/      # Canvas rendering of text bounding boxes
+│   └── services/               # Core services & vision pipeline (with co-located README.md)
+│       ├── auth/               # User authentication state & persistence
+│       ├── camera/             # WebRTC camera access & video stream setup
+│       ├── history/            # Scan history tracking & local storage persistence
+│       ├── pipeline/           # Detection & recognition pipeline orchestration & worker
+│       ├── text-detection/     # ML models (DBNet/CRNN), cropping, tracking, OCR, line grouping
+│       └── visualization/      # Canvas rendering of text bounding boxes & line overlays
 public/                         # Static assets and ONNX model files
 ```
 
@@ -54,6 +56,10 @@ public/                         # Static assets and ONNX model files
 - **Strict Types**: Maintain strict TypeScript typing. Avoid `any` where explicit interfaces or types can be defined.
 - **Explicit Error Handling**: Throw explicit errors for invalid or unexpected input values and configuration parameters (e.g. out-of-range scale factors) rather than silently ignoring invalid values or swallowing errors with hardcoded fallbacks.
 - **Prettier**: Code should adhere to formatting defined in `.prettierrc`.
+
+### 4. Modular Co-located Documentation
+- **Co-located `README.md` Files**: Maintain co-located `README.md` files inside feature components (`src/app/features/*/README.md`) and service modules (`src/app/services/*/README.md`).
+- **Targeted Context Retrieval**: Agents and developers should use module `README.md` files for quick architectural reference, Signal state definitions, and public API contracts without ingesting all implementation source code.
 
 ---
 
