@@ -34,6 +34,12 @@ export interface MatrixBenchmarkReport {
   results: MatrixEvaluationResult[];
 }
 
+export interface MatrixEvaluationOptions {
+  batchSize?: number;
+  topK?: number;
+  maxConfigurations?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -41,12 +47,30 @@ export class MatrixEvaluatorService {
   constructor(private readonly datasetEvaluator: DatasetEvaluatorService) {}
 
   /**
-   * Generates all Cartesian product permutations of a parameter matrix.
+   * Computes total combinations for a parameter matrix without pre-allocating.
    */
-  generateConfigPermutations(
+  calculateTotalCombinations(matrix: PipelineConfigMatrix): number {
+    const len = (arr?: any[]) => (arr?.length ? arr.length : 1);
+    return (
+      len(matrix.detectorThresholds) *
+      len(matrix.detectorMinAreas) *
+      len(matrix.detectorMinAspectRatios) *
+      len(matrix.detectorMaxSides) *
+      len(matrix.detectorScaleFactors) *
+      len(matrix.cropperPaddings) *
+      len(matrix.dictionarySimilarityThresholds) *
+      len(matrix.lineGroupingMaxScores) *
+      len(matrix.lineGroupingVerticalWeights)
+    );
+  }
+
+  /**
+   * Lazy generator yielding Cartesian product permutations of a parameter matrix.
+   */
+  *generateConfigPermutationsGenerator(
     matrix: PipelineConfigMatrix,
     baseConfig: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
-  ): PipelineConfig[] {
+  ): Generator<PipelineConfig> {
     const detectorThresholds = matrix.detectorThresholds?.length
       ? matrix.detectorThresholds
       : [baseConfig.detector.thresholdValue];
@@ -75,8 +99,6 @@ export class MatrixEvaluatorService {
       ? matrix.lineGroupingVerticalWeights
       : [baseConfig.lineGrouping.weights.vertical];
 
-    const permutations: PipelineConfig[] = [];
-
     for (const thresholdValue of detectorThresholds) {
       for (const minArea of detectorMinAreas) {
         for (const minAspectRatio of detectorMinAspectRatios) {
@@ -86,7 +108,7 @@ export class MatrixEvaluatorService {
                 for (const similarityThreshold of dictionarySimilarityThresholds) {
                   for (const maxScore of lineGroupingMaxScores) {
                     for (const verticalWeight of lineGroupingVerticalWeights) {
-                      permutations.push({
+                      yield {
                         ...baseConfig,
                         detector: {
                           ...baseConfig.detector,
@@ -112,7 +134,7 @@ export class MatrixEvaluatorService {
                             vertical: verticalWeight,
                           },
                         },
-                      });
+                      };
                     }
                   }
                 }
@@ -122,8 +144,16 @@ export class MatrixEvaluatorService {
         }
       }
     }
+  }
 
-    return permutations;
+  /**
+   * Generates all Cartesian product permutations of a parameter matrix as an array.
+   */
+  generateConfigPermutations(
+    matrix: PipelineConfigMatrix,
+    baseConfig: PipelineConfig = DEFAULT_PIPELINE_CONFIG,
+  ): PipelineConfig[] {
+    return Array.from(this.generateConfigPermutationsGenerator(matrix, baseConfig));
   }
 
   /**
@@ -141,7 +171,7 @@ export class MatrixEvaluatorService {
   }
 
   /**
-   * Evaluates a hyperparameter matrix across a set of ground truth items using a provided pipeline runner callback.
+   * Evaluates a hyperparameter matrix in streaming batches, keeping only Top-K results in memory.
    */
   async evaluateMatrix(
     manifestItems: GroundTruthManifestItem[],
@@ -151,37 +181,70 @@ export class MatrixEvaluatorService {
       config: PipelineConfig,
     ) => Promise<PipelineState>,
     baseConfig = DEFAULT_PIPELINE_CONFIG,
+    onProgress?: (combIndex: number, totalComb: number, config: PipelineConfig, bestScore: number) => void,
+    options: MatrixEvaluationOptions = {},
   ): Promise<MatrixBenchmarkReport> {
-    const configs = this.generateConfigPermutations(matrix, baseConfig);
-    const results: MatrixEvaluationResult[] = [];
+    const batchSize = options.batchSize ?? 10;
+    const topK = options.topK ?? 20;
+    const maxConfigs = options.maxConfigurations ?? Infinity;
 
-    for (const config of configs) {
-      const sampleResults: SampleBenchmarkResult[] = [];
+    const totalPossible = this.calculateTotalCombinations(matrix);
+    const totalToTest = Math.min(totalPossible, maxConfigs);
 
-      for (const item of manifestItems) {
-        const state = await pipelineRunner(item, config);
-        const sampleResult = this.datasetEvaluator.evaluateSample(item, state);
-        sampleResults.push(sampleResult);
+    const generator = this.generateConfigPermutationsGenerator(matrix, baseConfig);
+    const topKResults: MatrixEvaluationResult[] = [];
+    let testedCount = 0;
+
+    let currentBatch: PipelineConfig[] = [];
+
+    for (const config of generator) {
+      if (testedCount >= totalToTest) break;
+
+      currentBatch.push(config);
+      testedCount++;
+
+      if (currentBatch.length >= batchSize || testedCount === totalToTest) {
+        // Process current batch
+        for (const batchConfig of currentBatch) {
+          const sampleResults: SampleBenchmarkResult[] = [];
+
+          for (const item of manifestItems) {
+            const state = await pipelineRunner(item, batchConfig);
+            const sampleResult = this.datasetEvaluator.evaluateSample(item, state);
+            sampleResults.push(sampleResult);
+          }
+
+          const summaryReport = this.datasetEvaluator.generateSummaryReport(sampleResults);
+          const overallScore = this.computeOverallScore(summaryReport);
+
+          // Top-K Insertion Sort
+          topKResults.push({
+            config: batchConfig,
+            summaryReport,
+            overallScore,
+          });
+
+          topKResults.sort((a, b) => b.overallScore - a.overallScore);
+          if (topKResults.length > topK) {
+            topKResults.length = topK; // Prune non-Top-K entries to allow Garbage Collection
+          }
+        }
+
+        const bestScore = topKResults[0]?.overallScore ?? 0;
+        if (onProgress) {
+          onProgress(testedCount, totalToTest, currentBatch[currentBatch.length - 1], bestScore);
+        }
+
+        currentBatch = [];
       }
-
-      const summaryReport = this.datasetEvaluator.generateSummaryReport(sampleResults);
-      const overallScore = this.computeOverallScore(summaryReport);
-
-      results.push({
-        config,
-        summaryReport,
-        overallScore,
-      });
     }
-
-    results.sort((a, b) => b.overallScore - a.overallScore);
 
     return {
       timestamp: new Date().toISOString(),
-      totalCombinationsTested: results.length,
-      bestConfig: results[0]?.config ?? baseConfig,
-      bestScore: results[0]?.overallScore ?? 0,
-      results,
+      totalCombinationsTested: testedCount,
+      bestConfig: topKResults[0]?.config ?? baseConfig,
+      bestScore: topKResults[0]?.overallScore ?? 0,
+      results: topKResults,
     };
   }
 }

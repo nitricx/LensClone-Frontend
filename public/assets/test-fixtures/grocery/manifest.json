@@ -4,65 +4,25 @@
   "description": "Sample benchmark dataset for evaluating DBNet detector and CRNN recognition models on grocery shelf static images.",
   "samples": [
     {
-      "imageId": "price_tag_001",
-      "category": "price-tags",
-      "imagePath": "/assets/test-fixtures/grocery/price_tag_001.jpg",
-      "dimensions": { "width": 1280, "height": 720 },
-      "annotations": [
-        {
-          "id": "box-1",
-          "boundingBox": { "x": 300, "y": 200, "width": 250, "height": 50 },
-          "expectedText": "ORGANIC OAT MILK 1L",
-          "textCategory": "product_name"
-        },
-        {
-          "id": "box-2",
-          "boundingBox": { "x": 300, "y": 260, "width": 120, "height": 60 },
-          "expectedText": "$3.49",
-          "textCategory": "price"
-        }
-      ]
-    },
-    {
-      "imageId": "shelf_001",
-      "category": "shelf-wide",
-      "imagePath": "/assets/test-fixtures/grocery/shelf_001.jpg",
-      "dimensions": { "width": 1920, "height": 1080 },
-      "annotations": [
-        {
-          "id": "box-101",
-          "boundingBox": { "x": 150, "y": 400, "width": 180, "height": 45 },
-          "expectedText": "WHOLE WHEAT BREAD",
-          "textCategory": "product_name"
-        },
-        {
-          "id": "box-102",
-          "boundingBox": { "x": 150, "y": 450, "width": 90, "height": 40 },
-          "expectedText": "$2.99",
-          "textCategory": "price"
-        },
-        {
-          "id": "box-103",
-          "boundingBox": { "x": 600, "y": 400, "width": 210, "height": 45 },
-          "expectedText": "EXTRA VIRGIN OLIVE OIL",
-          "textCategory": "product_name"
-        },
-        {
-          "id": "box-104",
-          "boundingBox": { "x": 600, "y": 450, "width": 100, "height": 40 },
-          "expectedText": "$8.99",
-          "textCategory": "price"
-        }
-      ]
-    },
-    {
       "imageId": "billboard_001",
       "category": "chalkboard-vertical",
       "imagePath": "/assets/test-fixtures/grocery/billboard_001.png",
       "expectedOffers": [
-        { "product": "BANANA", "quantity": "2 Kg", "price": "$4500" },
-        { "product": "MANDARINA", "quantity": null, "price": "$2000" },
-        { "product": "ARANDANOS", "quantity": "2 x", "price": "$5500" }
+        {
+          "product": "BANANA",
+          "quantity": "2 Kg",
+          "price": "$4500"
+        },
+        {
+          "product": "MANDARINA",
+          "quantity": null,
+          "price": "$2000"
+        },
+        {
+          "product": "ARANDANOS",
+          "quantity": "2 x",
+          "price": "$5500"
+        }
       ]
     },
     {
@@ -70,9 +30,21 @@
       "category": "chalkboard-vertical",
       "imagePath": "/assets/test-fixtures/grocery/billboard_002.png",
       "expectedOffers": [
-        { "product": "BERENJENA", "quantity": "2 Kg", "price": "$2000" },
-        { "product": "ZAPALLITO", "quantity": "2 Kg", "price": "$2000" },
-        { "product": "MANZANA", "quantity": "2 Kg", "price": "$3500" }
+        {
+          "product": "BERENJENA",
+          "quantity": "2 Kg",
+          "price": "$2000"
+        },
+        {
+          "product": "ZAPALLITO",
+          "quantity": "2 Kg",
+          "price": "$2000"
+        },
+        {
+          "product": "MANZANA",
+          "quantity": "2 Kg",
+          "price": "$3500"
+        }
       ]
     },
     {
@@ -80,9 +52,21 @@
       "category": "chalkboard-vertical",
       "imagePath": "/assets/test-fixtures/grocery/billboard_003.png",
       "expectedOffers": [
-        { "product": "TOMATE", "quantity": "2 Kg", "price": "$2500" },
-        { "product": "MANZANA", "quantity": "2 Kg", "price": "$3500" },
-        { "product": "ESPARRAGOS", "quantity": "2 x", "price": "$5000" }
+        {
+          "product": "TOMATE",
+          "quantity": "2 Kg",
+          "price": "$2500"
+        },
+        {
+          "product": "MANZANA",
+          "quantity": "2 Kg",
+          "price": "$3500"
+        },
+        {
+          "product": "ESPARRAGOS",
+          "quantity": "2 x",
+          "price": "$5000"
+        }
       ]
     },
     {
@@ -90,12 +74,36 @@
       "category": "poster-grid",
       "imagePath": "/assets/test-fixtures/grocery/billboard_004.png",
       "expectedOffers": [
-        { "product": "REMOLACHA", "quantity": "X PAQUETE", "price": "$999.99" },
-        { "product": "MORRON VERDE", "quantity": "KG", "price": "$1999.99" },
-        { "product": "FRUTILLA", "quantity": "1/4 KG", "price": "$999.99" },
-        { "product": "PAPIN", "quantity": "2 KG", "price": "$1999.99" },
-        { "product": "RUCULA", "quantity": "3x PAQUETE", "price": "$1999.99" },
-        { "product": "ARANDANOS", "quantity": "2x POTE", "price": "$2999.99" }
+        {
+          "product": "REMOLACHA",
+          "quantity": "X PAQUETE",
+          "price": "$999.99"
+        },
+        {
+          "product": "MORRON VERDE",
+          "quantity": "KG",
+          "price": "$1999.99"
+        },
+        {
+          "product": "FRUTILLA",
+          "quantity": "1/4 KG",
+          "price": "$999.99"
+        },
+        {
+          "product": "PAPIN",
+          "quantity": "2 KG",
+          "price": "$1999.99"
+        },
+        {
+          "product": "RUCULA",
+          "quantity": "3x PAQUETE",
+          "price": "$1999.99"
+        },
+        {
+          "product": "ARANDANOS",
+          "quantity": "2x POTE",
+          "price": "$2999.99"
+        }
       ]
     },
     {
@@ -103,14 +111,46 @@
       "category": "crate-labels-grid",
       "imagePath": "/assets/test-fixtures/grocery/billboard_005.png",
       "expectedOffers": [
-        { "product": "NARANJA PARA JUGO", "quantity": "2 kg", "price": "$1500" },
-        { "product": "MANDARINA AFUREN", "quantity": "2 kg", "price": "$3000" },
-        { "product": "MANZANA RED", "quantity": "2 kg", "price": "$3000" },
-        { "product": "NARANJA OMBLIGO", "quantity": "2 kg", "price": "$2500" },
-        { "product": "MANDARINA NOVA", "quantity": "2 kg", "price": "$2500" },
-        { "product": "LIMON", "quantity": "2 kg", "price": "$1800" },
-        { "product": "MANDARINA MURCO", "quantity": "2 kg", "price": "$2500" },
-        { "product": "MANDARINA ENCORE", "quantity": "2 kg", "price": "$3000" }
+        {
+          "product": "NARANJA PARA JUGO",
+          "quantity": "2 kg",
+          "price": "$1500"
+        },
+        {
+          "product": "MANDARINA AFUREN",
+          "quantity": "2 kg",
+          "price": "$3000"
+        },
+        {
+          "product": "MANZANA RED",
+          "quantity": "2 kg",
+          "price": "$3000"
+        },
+        {
+          "product": "NARANJA OMBLIGO",
+          "quantity": "2 kg",
+          "price": "$2500"
+        },
+        {
+          "product": "MANDARINA NOVA",
+          "quantity": "2 kg",
+          "price": "$2500"
+        },
+        {
+          "product": "LIMON",
+          "quantity": "2 kg",
+          "price": "$1800"
+        },
+        {
+          "product": "MANDARINA MURCO",
+          "quantity": "2 kg",
+          "price": "$2500"
+        },
+        {
+          "product": "MANDARINA ENCORE",
+          "quantity": "2 kg",
+          "price": "$3000"
+        }
       ]
     },
     {
@@ -118,15 +158,51 @@
       "category": "chalkboard-single-line-list",
       "imagePath": "/assets/test-fixtures/grocery/billboard_006.png",
       "expectedOffers": [
-        { "product": "PAPA", "quantity": "3KG", "price": "2000" },
-        { "product": "CEBOLLA", "quantity": null, "price": null },
-        { "product": "ZANAHORIA", "quantity": "2KG", "price": "2500" },
-        { "product": "ZAPALLITO", "quantity": "1KG", "price": "2000" },
-        { "product": "ANCO", "quantity": "1KG", "price": "1000" },
-        { "product": "LIMON", "quantity": "1KG", "price": "2000" },
-        { "product": "NARANJA", "quantity": "2KG", "price": "2500" },
-        { "product": "POMELO", "quantity": "1KG", "price": "1500" },
-        { "product": "RUCULA", "quantity": "3x", "price": "1500" }
+        {
+          "product": "PAPA",
+          "quantity": "3KG",
+          "price": "2000"
+        },
+        {
+          "product": "CEBOLLA",
+          "quantity": null,
+          "price": null
+        },
+        {
+          "product": "ZANAHORIA",
+          "quantity": "2KG",
+          "price": "2500"
+        },
+        {
+          "product": "ZAPALLITO",
+          "quantity": "1KG",
+          "price": "2000"
+        },
+        {
+          "product": "ANCO",
+          "quantity": "1KG",
+          "price": "1000"
+        },
+        {
+          "product": "LIMON",
+          "quantity": "1KG",
+          "price": "2000"
+        },
+        {
+          "product": "NARANJA",
+          "quantity": "2KG",
+          "price": "2500"
+        },
+        {
+          "product": "POMELO",
+          "quantity": "1KG",
+          "price": "1500"
+        },
+        {
+          "product": "RUCULA",
+          "quantity": "3x",
+          "price": "1500"
+        }
       ]
     }
   ]

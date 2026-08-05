@@ -212,10 +212,11 @@ export class DatasetEvaluatorService {
     detectionTimeMs = 0,
     recognitionTimeMs = 0,
   ): SampleBenchmarkResult {
+    const annotations = gtItem.annotations ?? [];
     const predictedBoxes = state.detections.map((d) => d.boundingBox);
     const detectionMetrics = this.evaluateDetection(
       predictedBoxes,
-      gtItem.annotations,
+      annotations,
     );
 
     const recPairs: Array<{ predicted: string; expected: string }> = [];
@@ -225,7 +226,7 @@ export class DatasetEvaluatorService {
       let bestIoU = 0;
       let bestGTText = '';
 
-      for (const gt of gtItem.annotations) {
+      for (const gt of annotations) {
         const iou = this.calculateIoU(detection.boundingBox, gt.boundingBox);
         if (iou > bestIoU) {
           bestIoU = iou;
@@ -238,6 +239,21 @@ export class DatasetEvaluatorService {
           predicted: detection.rawText,
           expected: bestGTText,
         });
+      }
+    }
+
+    // Also match expectedOffers if present
+    if (gtItem.expectedOffers && gtItem.expectedOffers.length > 0 && state.offers) {
+      for (const offer of state.offers) {
+        if (offer.product) {
+          const match = gtItem.expectedOffers.find((eo) => eo.product === offer.product);
+          if (match && match.product) {
+            recPairs.push({
+              predicted: offer.product,
+              expected: match.product,
+            });
+          }
+        }
       }
     }
 

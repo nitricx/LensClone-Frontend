@@ -8,12 +8,19 @@ export interface GroundTruthAnnotation {
   textCategory?: 'price' | 'product_name' | 'quantity' | 'brand' | 'other';
 }
 
+export interface ExpectedOffer {
+  product: string | null;
+  quantity: string | null;
+  price: string | null;
+}
+
 export interface GroundTruthManifestItem {
   imageId: string;
-  category: 'price-tags' | 'packaging' | 'shelf-wide' | 'synthetic';
+  category?: string;
   imagePath: string;
-  dimensions: { width: number; height: number };
-  annotations: GroundTruthAnnotation[];
+  dimensions?: { width: number; height: number };
+  annotations?: GroundTruthAnnotation[];
+  expectedOffers?: ExpectedOffer[];
 }
 
 export interface DatasetManifest {
