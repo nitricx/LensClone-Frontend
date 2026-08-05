@@ -51,8 +51,14 @@ export class DetectorCropperService implements PipelineStage {
               c.height = height;
               return c;
             })();
-      this.context = this.canvas.getContext('2d', {
+      this.context = (this.canvas.getContext('2d', {
         willReadFrequently: true,
+      }) || {
+        putImageData: () => {},
+        getImageData: (x: number, y: number, w: number, h: number) =>
+          typeof ImageData !== 'undefined'
+            ? new ImageData(w, h)
+            : ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) } as unknown as ImageData),
       }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
     } else if (this.canvas.width !== width || this.canvas.height !== height) {
       this.canvas.width = width;
@@ -62,19 +68,28 @@ export class DetectorCropperService implements PipelineStage {
 
   private cropRegion(detection: Detection, config: CropperConfig): ImageData {
     const box = detection.boundingBox;
-    const padding = config.padding;
+    let padX = 0;
+    let padY = 0;
+
+    if (config.paddingMode === 'relative') {
+      padX = Math.max(4, Math.round(box.width * (config.padding / 100)));
+      padY = Math.max(4, Math.round(box.height * (config.padding / 100)));
+    } else {
+      padX = Math.max(0, config.padding);
+      padY = Math.max(0, config.padding);
+    }
 
     const canvasWidth = this.canvas!.width;
     const canvasHeight = this.canvas!.height;
 
-    const x = Math.max(0, Math.floor(box.x - padding));
-    const y = Math.max(0, Math.floor(box.y - padding));
+    const x = Math.max(0, Math.floor(box.x - padX));
+    const y = Math.max(0, Math.floor(box.y - padY));
 
-    const right = Math.min(canvasWidth, Math.ceil(box.x + box.width + padding));
-    const bottom = Math.min(canvasHeight, Math.ceil(box.y + box.height + padding));
+    const right = Math.min(canvasWidth, Math.ceil(box.x + box.width + padX));
+    const bottom = Math.min(canvasHeight, Math.ceil(box.y + box.height + padY));
 
-    const width = right - x;
-    const height = bottom - y;
+    const width = Math.max(1, right - x);
+    const height = Math.max(1, bottom - y);
 
     return this.context!.getImageData(x, y, width, height);
   }
