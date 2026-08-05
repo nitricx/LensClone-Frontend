@@ -6,7 +6,7 @@ The `CameraService` handles WebRTC media stream initialization, device video str
 - [camera.service.ts](file:///d:/Repositories/PoC-LensClone/src/app/services/camera/camera.service.ts) - Service for managing HTML5 `<video>` media streams and camera hardware capabilities.
 
 ## Key Methods
-- `start(video: HTMLVideoElement)`: Requests environment camera media stream (`facingMode: 'environment'`) via `navigator.mediaDevices.getUserMedia` and attaches it to the `<video>` element.
+- `start(video: HTMLVideoElement)`: Requests environment camera media stream (`facingMode: 'environment'`) via `navigator.mediaDevices.getUserMedia` with Full HD resolution defaults (`width: { ideal: 1920 }`, `height: { ideal: 1080 }`), enables continuous autofocus (`focusMode: 'continuous'`), and attaches the stream to the `<video>` element.
 - `stop(video?: HTMLVideoElement)`: Stops active media stream tracks and detaches srcObject.
 - `hasTorch(video?: HTMLVideoElement)`: Checks if the active video track supports flashlight / torch capabilities.
 - `toggleTorch(video: HTMLVideoElement, enable: boolean)`: Applies constraints to turn the hardware flashlight on/off.

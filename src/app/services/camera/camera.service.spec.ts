@@ -17,7 +17,9 @@ describe('CameraService', () => {
   });
 
   it('should request media stream and set it on video element', async () => {
-    const mockStream = {} as MediaStream;
+    const mockStream = {
+      getVideoTracks: () => [],
+    } as unknown as MediaStream;
     const mockGetUserMedia = vi.fn().mockResolvedValue(mockStream);
 
     vi.stubGlobal('navigator', {
@@ -36,7 +38,11 @@ describe('CameraService', () => {
     await service.start(mockVideo);
 
     expect(mockGetUserMedia).toHaveBeenCalledWith({
-      video: { facingMode: 'environment' },
+      video: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
       audio: false,
     });
     expect(mockVideo.srcObject).toBe(mockStream);
