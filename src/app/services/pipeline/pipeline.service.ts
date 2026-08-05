@@ -79,7 +79,9 @@ export class PipelineService {
         const minY = Math.min(...sorted.map((d) => d.boundingBox.y));
         const maxX = Math.max(...sorted.map((d) => d.boundingBox.x + d.boundingBox.width));
         const maxY = Math.max(...sorted.map((d) => d.boundingBox.y + d.boundingBox.height));
-        const score = Math.max(...sorted.map((d) => d.line?.score ?? 0));
+        const avgScore =
+          sorted.reduce((sum, d) => sum + (d.boundingBoxScore || 0.9), 0) / sorted.length;
+        const score = Number((sorted[0].line?.score || avgScore).toFixed(2));
 
         sorted.forEach((d) => processedDetections.add(d));
 
