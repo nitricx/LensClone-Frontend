@@ -83,6 +83,11 @@ export class LineGroupingService implements PipelineStage {
     }
 
     for (const line of lines) {
+      const avgScore =
+        line.detections.reduce((sum, d) => sum + (d.boundingBoxScore || 0.9), 0) /
+        line.detections.length;
+      line.score = Number(avgScore.toFixed(2));
+
       for (const detection of line.detections) {
         detection.line = {
           id: line.id,

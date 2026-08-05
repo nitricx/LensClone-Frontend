@@ -8,6 +8,7 @@ import { DetectorCropperService } from '../text-detection/cropper.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
 if (typeof globalThis.ImageData === 'undefined') {
   (globalThis as any).ImageData = class ImageData {
@@ -31,6 +32,7 @@ describe('PipelineService', () => {
   let recognizerMock: RecognitionService;
   let dictionaryMock: DictionaryMatcherService;
   let lineGroupingMock: LineGroupingService;
+  let offerExtractorMock: OfferExtractorService;
 
   beforeEach(() => {
     detectorMock = { name: 'detector', initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
@@ -40,6 +42,7 @@ describe('PipelineService', () => {
     recognizerMock = { name: 'recognizer', initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
     dictionaryMock = { name: 'dictionary', execute: vi.fn() } as unknown as DictionaryMatcherService;
     lineGroupingMock = { name: 'lineGrouping', execute: vi.fn() } as unknown as LineGroupingService;
+    offerExtractorMock = { name: 'offerExtractor', execute: vi.fn() } as unknown as OfferExtractorService;
 
     TestBed.configureTestingModule({
       providers: [
@@ -51,6 +54,7 @@ describe('PipelineService', () => {
         { provide: RecognitionService, useValue: recognizerMock },
         { provide: DictionaryMatcherService, useValue: dictionaryMock },
         { provide: LineGroupingService, useValue: lineGroupingMock },
+        { provide: OfferExtractorService, useValue: offerExtractorMock },
       ],
     });
 
@@ -85,6 +89,106 @@ describe('PipelineService', () => {
     expect(service.hasDetections()).toBe(true);
     expect(service.processingTimeMs()).toBeGreaterThanOrEqual(0);
     expect(service.stageMetrics()?.['detector']).toBeDefined();
+  });
+
+  it('should compute groupedLines correctly and filter out false positive lines lacking product, quantity, or price', async () => {
+    (detectorMock.execute as any).mockImplementation((st: any) => {
+      st.detections = [
+        // Line 0: Complete line with Product, Quantity, and Price
+        {
+          boundingBoxScore: 0.9,
+          boundingBox: { x: 10, y: 20, width: 50, height: 20 },
+          rawText: 'GALLETITAS',
+          canonicalText: 'GALLETITAS',
+          line: { id: 0, score: 0.1 },
+        },
+        {
+          boundingBoxScore: 0.85,
+          boundingBox: { x: 70, y: 20, width: 30, height: 20 },
+          rawText: '500G',
+          quantity: { quantity: 500, unit: 'g' },
+          line: { id: 0, score: 0.1 },
+        },
+        {
+          boundingBoxScore: 0.95,
+          boundingBox: { x: 110, y: 20, width: 40, height: 20 },
+          rawText: '$1200',
+          price: '$1200',
+          line: { id: 0, score: 0.1 },
+        },
+        // Line 1: Incomplete line (price only, no product or quantity) -> Should be filtered out
+        {
+          boundingBoxScore: 0.95,
+          boundingBox: { x: 10, y: 50, width: 30, height: 20 },
+          rawText: '$500',
+          price: '$500',
+          line: { id: 1, score: 0.05 },
+        },
+      ];
+    });
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    await service.execute(mockImage);
+
+    const grouped = service.groupedLines();
+    expect(grouped.length).toBe(1);
+    expect(grouped[0].lineId).toBe(0);
+    expect(grouped[0].combinedText).toBe('GALLETITAS 500G $1200');
+    expect(grouped[0].detections.length).toBe(3);
+    expect(grouped[0].boundingBox).toEqual({ x: 10, y: 20, width: 140, height: 20 });
+  });
+
+  it('should include both Tomate (single concatenated detection with K6 OCR substitution) and Pera (multi-line split) in groupedLines', async () => {
+    (detectorMock.execute as any).mockImplementation((st: any) => {
+      st.detections = [
+        // Case 1: TOMATE2K6$3000
+        {
+          boundingBoxScore: 0.95,
+          boundingBox: { x: 10, y: 10, width: 150, height: 30 },
+          rawText: 'TOMATE2K6$3000',
+          canonicalText: 'TOMATE',
+          quantity: { quantity: 2, unit: 'kg' },
+          price: '$3000',
+          line: { id: 0, score: 0.1 },
+        },
+        // Case 2 Line A: PERA
+        {
+          boundingBoxScore: 0.9,
+          boundingBox: { x: 10, y: 50, width: 60, height: 25 },
+          rawText: 'PERA',
+          canonicalText: 'PERA',
+          line: { id: 1, score: 0.1 },
+        },
+        // Case 2 Line B: 1K6$1500
+        {
+          boundingBoxScore: 0.92,
+          boundingBox: { x: 10, y: 80, width: 80, height: 25 },
+          rawText: '1K6$1500',
+          quantity: { quantity: 1, unit: 'kg' },
+          price: '$1500',
+          line: { id: 2, score: 0.1 },
+        },
+      ];
+      st.offers = [
+        {
+          id: 'offer_pera',
+          product: 'PERA',
+          quantity: { quantity: 1, unit: 'kg' },
+          price: '$1500',
+          confidence: 0.92,
+          boundingBox: { x: 10, y: 50, width: 80, height: 55 },
+          detections: [st.detections[1], st.detections[2]],
+        },
+      ];
+    });
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    await service.execute(mockImage);
+
+    const grouped = service.groupedLines();
+    expect(grouped.length).toBe(2);
+    expect(grouped[0].combinedText).toBe('TOMATE 2KG $3000');
+    expect(grouped[1].combinedText).toBe('PERA 1KG $1500');
   });
 
   it('should initialize all pipeline stages sequentially', async () => {
@@ -156,6 +260,7 @@ describe('PipelineService', () => {
         recognizerMock,
         dictionaryMock,
         lineGroupingMock,
+        offerExtractorMock,
       );
 
       await workerService.initialize();

@@ -10,6 +10,10 @@ import { DetectorService } from '../text-detection/detector/detector.service';
 import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
+
+import { Detection, GroupedTextLine } from '../text-detection/types';
+import { hasAllThreeProperties } from '../text-detection/detection-helpers';
 
 @Injectable({
   providedIn: 'root',
@@ -26,6 +30,7 @@ export class PipelineService {
   private readonly _state = signal<PipelineState>({
     fullImage: undefined,
     detections: [],
+    offers: [],
     processingTimeMs: 0,
     config: DEFAULT_PIPELINE_CONFIG,
   });
@@ -33,11 +38,95 @@ export class PipelineService {
   readonly state = this._state.asReadonly();
 
   readonly detections = computed(() => this._state().detections);
+  readonly offers = computed(() => this._state().offers ?? []);
   readonly processingTimeMs = computed(() => this._state().processingTimeMs);
   readonly fps = computed(() => (this.processingTimeMs() > 0 ? 1000 / this.processingTimeMs() : 0));
   readonly stageMetrics = computed(() => this._state().stageMetrics);
   readonly cropsCount = computed(() => this.detections().filter((d) => !!d.crop).length);
   readonly hasDetections = computed(() => this.detections().length > 0);
+
+  readonly groupedLines = computed<GroupedTextLine[]>(() => {
+    const dets = this.detections();
+    const offers = this.offers();
+    const result: GroupedTextLine[] = [];
+    const processedDetections = new Set<Detection>();
+
+    // 1. Single-line horizontal groupings
+    const groupsMap = new Map<number, Detection[]>();
+    for (const d of dets) {
+      if (d.line && d.line.id !== undefined && d.line.id !== null) {
+        if (!groupsMap.has(d.line.id)) {
+          groupsMap.set(d.line.id, []);
+        }
+        groupsMap.get(d.line.id)!.push(d);
+      }
+    }
+
+    for (const [lineId, lineDetections] of groupsMap.entries()) {
+      if (hasAllThreeProperties(lineDetections)) {
+        const sorted = [...lineDetections].sort((a, b) => a.boundingBox.x - b.boundingBox.x);
+        const combinedText = sorted
+          .map((d) => {
+            if (d.canonicalText && d.quantity && d.price) {
+              return `${d.canonicalText} ${d.quantity.quantity}KG ${d.price}`;
+            }
+            return d.canonicalText || d.rawText || d.price || '';
+          })
+          .filter((t) => t.length > 0)
+          .join(' ');
+
+        const minX = Math.min(...sorted.map((d) => d.boundingBox.x));
+        const minY = Math.min(...sorted.map((d) => d.boundingBox.y));
+        const maxX = Math.max(...sorted.map((d) => d.boundingBox.x + d.boundingBox.width));
+        const maxY = Math.max(...sorted.map((d) => d.boundingBox.y + d.boundingBox.height));
+        const avgScore =
+          sorted.reduce((sum, d) => sum + (d.boundingBoxScore || 0.9), 0) / sorted.length;
+        const score = Number((sorted[0].line?.score || avgScore).toFixed(2));
+
+        sorted.forEach((d) => processedDetections.add(d));
+
+        result.push({
+          lineId,
+          score,
+          combinedText,
+          boundingBox: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          },
+          detections: sorted,
+        });
+      }
+    }
+
+    // 2. Multi-line offer compositions (e.g. PERA on Line A + 1K6$1500 on Line B)
+    let nextOfferLineId = result.length > 0 ? Math.max(...result.map((r) => r.lineId)) + 1 : 0;
+    for (const offer of offers) {
+      if (offer.product && offer.price) {
+        const offerDets = offer.detections || [];
+        const hasUnprocessed = offerDets.some((d) => !processedDetections.has(d));
+
+        if (hasUnprocessed) {
+          const qtyStr = offer.quantity ? `${offer.quantity.quantity}KG` : '';
+          const combinedText = `${offer.product} ${qtyStr} ${offer.price}`.replace(/\s+/g, ' ').trim();
+
+          result.push({
+            lineId: nextOfferLineId++,
+            score: offer.confidence || 0.9,
+            combinedText,
+            boundingBox: offer.boundingBox,
+            detections: offerDets,
+          });
+
+          offerDets.forEach((d) => processedDetections.add(d));
+        }
+      }
+    }
+
+    return result.sort((a, b) => a.lineId - b.lineId);
+  });
+
 
   private readonly stages: PipelineStage[];
   private worker?: Worker;
@@ -56,6 +145,7 @@ export class PipelineService {
     private readonly recognizer: RecognitionService,
     private readonly dictionary: DictionaryMatcherService,
     private readonly lineGroupingService: LineGroupingService,
+    private readonly offerExtractorService: OfferExtractorService,
   ) {
     this.stages = [
       detector,
@@ -65,6 +155,7 @@ export class PipelineService {
       recognizer,
       dictionary,
       lineGroupingService,
+      offerExtractorService,
     ];
   }
 
@@ -103,6 +194,7 @@ export class PipelineService {
       const requestId = this.generateRequestId();
       const execPromise = new Promise<{
         detections: any[];
+        offers?: any[];
         processingTimeMs: number;
         stageMetrics?: Record<string, number>;
         config?: PipelineConfig;
@@ -140,6 +232,7 @@ export class PipelineService {
         this._state.set({
           fullImage: image,
           detections: processedDetections,
+          offers: result.offers || [],
           processingTimeMs: result.processingTimeMs,
           stageMetrics: result.stageMetrics,
           config: result.config ?? this.state().config,

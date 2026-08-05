@@ -227,6 +227,7 @@
             (click)="activeTab.set('grouping')"
           >
             Line Grouping
+            <span class="tab-badge">{{ pipeline.groupedLines().length }}</span>
           </button>
         </nav>
 
@@ -285,18 +286,45 @@
           <!-- Tab 3: Line Grouping -->
           @if (activeTab() === 'grouping') {
             <div class="panel line-grouping">
-              @if (pipeline.detections().length > 0) {
-                <div class="lines-list">
-                  @for (detection of pipeline.detections(); track $index) {
-                    <div class="line-item">
-                      <span class="line-index">Line {{ $index + 1 }}</span>
-                      <span class="line-id-tag">Line ID: {{ detection.line?.id ?? 'N/A' }}</span>
-                      <span class="line-text">{{ detection.canonicalText || detection.rawText }}</span>
+              @if (pipeline.groupedLines().length > 0) {
+                <div class="grouping-grid">
+                  @for (group of pipeline.groupedLines(); track group.lineId) {
+                    <div class="group-card">
+                      <div class="group-card-header">
+                        <div class="group-title-box">
+                          <span class="line-badge">Line #{{ group.lineId }}</span>
+                          <span class="items-count">{{ group.detections.length }} {{ group.detections.length === 1 ? 'item' : 'items' }}</span>
+                        </div>
+                        <div class="group-meta-box">
+                          <span class="score-pill">Score: {{ group.score | number: '1.2-2' }}</span>
+                          <span class="size-pill">{{ group.boundingBox.width | number: '1.0-0' }}×{{ group.boundingBox.height | number: '1.0-0' }}px</span>
+                        </div>
+                      </div>
+
+                      <div class="group-combined-text">
+                        <span class="text-label">Combined Line:</span>
+                        <span class="text-value">{{ group.combinedText || '—' }}</span>
+                      </div>
+
+                      <div class="group-detections">
+                        <span class="members-label">Detections in Line:</span>
+                        <div class="members-chips">
+                          @for (det of group.detections; track $index) {
+                            <div class="det-chip">
+                              <span class="det-idx">#{{ $index + 1 }}</span>
+                              <span class="det-text">{{ det.canonicalText || det.rawText || '—' }}</span>
+                              @if (det.price) {
+                                <span class="price-tag">{{ det.price }}</span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      </div>
                     </div>
                   }
                 </div>
               } @else {
-                <div class="empty-state">No line groupings available</div>
+                <div class="empty-state">No line groupings available in current frame</div>
               }
             </div>
           }

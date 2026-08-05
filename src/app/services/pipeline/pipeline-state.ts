@@ -1,9 +1,10 @@
-import { Detection } from '../text-detection/types';
+import { Detection, ProductOffer } from '../text-detection/types';
 import { PipelineConfig } from './pipeline-config.types';
 
 export interface PipelineState {
   fullImage?: ImageData;
   detections: Detection[];
+  offers?: ProductOffer[];
   processingTimeMs: number;
   stageMetrics?: Record<string, number>;
   config?: PipelineConfig;

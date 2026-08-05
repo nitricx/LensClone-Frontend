@@ -23,7 +23,9 @@ export class OverlayComponent {
       const height = this.height();
 
       const detections = this.pipeline.detections();
+      const groupedLines = this.pipeline.groupedLines();
       const showBoundingBoxes = this.pipeline.debugSettings().boundingBoxes;
+      const showLineGrouping = this.pipeline.debugSettings().lineGrouping;
 
       const canvas = this.canvas().nativeElement;
 
@@ -43,6 +45,10 @@ export class OverlayComponent {
 
       if (showBoundingBoxes) {
         this.renderer.render(ctx, detections);
+      }
+
+      if (showLineGrouping) {
+        this.renderer.renderLineGroupings(ctx, groupedLines);
       }
     });
   }
