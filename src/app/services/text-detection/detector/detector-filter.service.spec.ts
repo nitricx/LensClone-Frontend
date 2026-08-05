@@ -38,12 +38,12 @@ describe('DetectorFilterService', () => {
     expect(state.detections[0].boundingBox.width).toBe(20);
   });
 
-  it('should keep detections with aspect ratio exactly equal to 1.2', () => {
+  it('should keep detections with aspect ratio exactly equal to minAspectRatio threshold', () => {
     const state: PipelineState = {
       detections: [
         {
           boundingBoxScore: 0.8,
-          boundingBox: { x: 0, y: 0, width: 12, height: 10 }, // ratio = 1.2 (valid)
+          boundingBox: { x: 0, y: 0, width: 14, height: 10 }, // ratio = 1.4 (valid)
         },
       ],
       processingTimeMs: 0,

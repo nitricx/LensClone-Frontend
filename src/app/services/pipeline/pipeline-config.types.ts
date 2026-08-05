@@ -54,23 +54,23 @@ export interface PipelineConfig {
 
 export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
   detector: {
-    thresholdValue: 0.3,
+    thresholdValue: 0.2,
     minArea: 10,
-    minAspectRatio: 1.2,
+    minAspectRatio: 1.4,
     maxSide: 0,
     scaleFactor: 0.5,
   },
   cropper: {
-    padding: 4,
+    padding: 0,
     paddingMode: 'fixed',
   },
   recognizer: {
     targetHeight: 48,
   },
   lineGrouping: {
-    maxScore: 1.0,
+    maxScore: 0.8,
     weights: {
-      vertical: 0.6,
+      vertical: 0.3,
       height: 0.25,
       horizontal: 0.1,
       confidence: 0.05,
@@ -81,7 +81,7 @@ export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
     },
   },
   dictionary: {
-    similarityThreshold: 0.75,
+    similarityThreshold: 0.65,
     priceMin: 1000,
     priceMax: 9999,
   },

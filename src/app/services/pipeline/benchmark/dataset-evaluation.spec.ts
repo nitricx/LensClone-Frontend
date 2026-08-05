@@ -67,7 +67,7 @@ describe('Dataset Evaluation Suite (Skeleton Benchmark)', () => {
     const results = mockManifest.samples.map((sample: GroundTruthManifestItem) => {
       // Skeleton PipelineState mimicking outputs from DetectorService & RecognitionService
       const mockState: PipelineState = {
-        detections: sample.annotations.map((gt) => ({
+        detections: (sample.annotations ?? []).map((gt) => ({
           boundingBoxScore: 0.92,
           boundingBox: { ...gt.boundingBox },
           rawText: gt.expectedText,
