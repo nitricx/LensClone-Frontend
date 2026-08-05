@@ -5,12 +5,12 @@ description: Guidelines for optimizing ONNX Runtime Web WASM inference, canvas-b
 
 # ONNX WASM & Canvas Optimization Guidelines
 
-Use this skill when modifying model initialization, pipeline scheduling, or canvas image extraction routines.
+Use this skill when modifying model initialization, pipeline scheduling, canvas image extraction, or memory buffer pooling.
 
 ## Canvas Context & Memory Allocation
 - **`willReadFrequently` Context Attribute**: When calling `.getContext('2d')` on elements used to read image data back (such as crop canvases or detection capture canvases), always pass `{ willReadFrequently: true }`. This enables GPU-to-CPU cache optimizations.
-- **Canvas Resizing**: Minimize canvas resizing operations during inference loops. Reuse static elements or keep sizes fixed to model dimensions (e.g., resizing to 640x640 once, rather than on every frame).
-- **Garbage Collection (GC) Pressure**: Avoid allocating large typed arrays inside the inference loops. Reuse buffers, Float32Arrays, or pre-allocated objects.
+- **Canvas Resizing**: Minimize canvas resizing operations during inference loops. Reuse static elements or keep sizes fixed to model dimensions (e.g. resizing to 640x640 once, rather than on every frame).
+- **Tensor Buffer Pooling**: Avoid allocating large `Float32Array` typed arrays inside high-frequency inference loops. Use [TensorBufferPoolService](file:///d:/Repositories/PoC-LensClone/src/app/services/text-detection/tensor-buffer-pool/tensor-buffer-pool.service.ts) to acquire and release reusable Float32Array buffers to eliminate Garbage Collection (GC) pressure.
 
 ## ONNX Runtime Web Configuration
 - **WASM Paths**: Ensure WASM assets are resolved properly from the configured local assets directory:
@@ -18,11 +18,11 @@ Use this skill when modifying model initialization, pipeline scheduling, or canv
   import { env } from 'onnxruntime-web';
   env.wasm.wasmPaths = '/assets/ort/';
   ```
-- **Thread Count & Web Workers**: For multithreading support, configure:
+- **Thread Count & Web Workers**: For multithreading support, configure `hardwareConcurrency`. To keep the main UI thread at 60 FPS, offload ONNX model execution to [pipeline.worker.ts](file:///d:/Repositories/PoC-LensClone/src/app/services/pipeline/pipeline.worker.ts):
   ```typescript
   env.wasm.numThreads = navigator.hardwareConcurrency || 4;
   ```
-- **Session Options**: Set up `InferenceSession.SessionOptions` to enable graph optimizations:
+- **Session Options**: Set up `InferenceSession.SessionOptions` in [DetectorService](file:///d:/Repositories/PoC-LensClone/src/app/services/text-detection/detector/detector.service.ts) and [RecognitionService](file:///d:/Repositories/PoC-LensClone/src/app/services/text-detection/recognition/recognition.service.ts) to enable graph optimizations:
   ```typescript
   const options = {
     executionProviders: ['webgpu', 'wasm'],
@@ -31,4 +31,4 @@ Use this skill when modifying model initialization, pipeline scheduling, or canv
   ```
 
 ## Frame Synchronization
-- **RequestAnimationFrame Rules**: Ensure that only one inference run is active at a time. Guard frame handling loops with a boolean flag (e.g., `detectionInProgress`). If the previous frame's inference takes longer than $16.7\text{ ms}$, skip frames rather than queuing multiple concurrent WASM runs.
+- **RequestAnimationFrame Rules**: Ensure that only one inference run is active at a time. Guard frame handling loops in [LensComponent](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.ts) with a boolean flag (e.g., `detectionInProgress`). If the previous frame's inference takes longer than \(16.7\text{ ms}\), skip frames rather than queuing multiple concurrent WASM runs.
