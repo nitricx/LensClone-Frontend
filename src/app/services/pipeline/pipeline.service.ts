@@ -10,6 +10,7 @@ import { DetectorService } from '../text-detection/detector/detector.service';
 import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
 @Injectable({
   providedIn: 'root',
@@ -26,6 +27,7 @@ export class PipelineService {
   private readonly _state = signal<PipelineState>({
     fullImage: undefined,
     detections: [],
+    offers: [],
     processingTimeMs: 0,
     config: DEFAULT_PIPELINE_CONFIG,
   });
@@ -33,6 +35,7 @@ export class PipelineService {
   readonly state = this._state.asReadonly();
 
   readonly detections = computed(() => this._state().detections);
+  readonly offers = computed(() => this._state().offers ?? []);
   readonly processingTimeMs = computed(() => this._state().processingTimeMs);
   readonly fps = computed(() => (this.processingTimeMs() > 0 ? 1000 / this.processingTimeMs() : 0));
   readonly stageMetrics = computed(() => this._state().stageMetrics);
@@ -56,6 +59,7 @@ export class PipelineService {
     private readonly recognizer: RecognitionService,
     private readonly dictionary: DictionaryMatcherService,
     private readonly lineGroupingService: LineGroupingService,
+    private readonly offerExtractorService: OfferExtractorService,
   ) {
     this.stages = [
       detector,
@@ -65,6 +69,7 @@ export class PipelineService {
       recognizer,
       dictionary,
       lineGroupingService,
+      offerExtractorService,
     ];
   }
 
@@ -103,6 +108,7 @@ export class PipelineService {
       const requestId = this.generateRequestId();
       const execPromise = new Promise<{
         detections: any[];
+        offers?: any[];
         processingTimeMs: number;
         stageMetrics?: Record<string, number>;
         config?: PipelineConfig;
@@ -140,6 +146,7 @@ export class PipelineService {
         this._state.set({
           fullImage: image,
           detections: processedDetections,
+          offers: result.offers || [],
           processingTimeMs: result.processingTimeMs,
           stageMetrics: result.stageMetrics,
           config: result.config ?? this.state().config,

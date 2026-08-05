@@ -8,6 +8,7 @@ import { DetectorCropperService } from '../text-detection/cropper.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
 if (typeof globalThis.ImageData === 'undefined') {
   (globalThis as any).ImageData = class ImageData {
@@ -31,6 +32,7 @@ describe('PipelineService', () => {
   let recognizerMock: RecognitionService;
   let dictionaryMock: DictionaryMatcherService;
   let lineGroupingMock: LineGroupingService;
+  let offerExtractorMock: OfferExtractorService;
 
   beforeEach(() => {
     detectorMock = { name: 'detector', initialize: vi.fn(), execute: vi.fn() } as unknown as DetectorService;
@@ -40,6 +42,7 @@ describe('PipelineService', () => {
     recognizerMock = { name: 'recognizer', initialize: vi.fn(), execute: vi.fn() } as unknown as RecognitionService;
     dictionaryMock = { name: 'dictionary', execute: vi.fn() } as unknown as DictionaryMatcherService;
     lineGroupingMock = { name: 'lineGrouping', execute: vi.fn() } as unknown as LineGroupingService;
+    offerExtractorMock = { name: 'offerExtractor', execute: vi.fn() } as unknown as OfferExtractorService;
 
     TestBed.configureTestingModule({
       providers: [
@@ -51,6 +54,7 @@ describe('PipelineService', () => {
         { provide: RecognitionService, useValue: recognizerMock },
         { provide: DictionaryMatcherService, useValue: dictionaryMock },
         { provide: LineGroupingService, useValue: lineGroupingMock },
+        { provide: OfferExtractorService, useValue: offerExtractorMock },
       ],
     });
 
@@ -156,6 +160,7 @@ describe('PipelineService', () => {
         recognizerMock,
         dictionaryMock,
         lineGroupingMock,
+        offerExtractorMock,
       );
 
       await workerService.initialize();

@@ -1,6 +1,16 @@
 import { Quantity } from './dictionary/dictionary-matcher.service';
 export type { Quantity };
 
+export interface ProductOffer {
+  id: string;
+  product?: string;
+  quantity?: Quantity;
+  price?: string;
+  confidence: number;
+  boundingBox: BoundingBox;
+  detections: Detection[];
+}
+
 export interface Detection {
   boundingBoxScore: number;
   boundingBox: BoundingBox;
@@ -12,6 +22,7 @@ export interface Detection {
   price?: string;
   quantity?: Quantity;
   line?: LineGrouping;
+  offerId?: string;
 
   trackId?: string;
   isReused?: boolean;
@@ -35,3 +46,4 @@ export interface LineGrouping {
   id: number;
   score: number;
 }
+

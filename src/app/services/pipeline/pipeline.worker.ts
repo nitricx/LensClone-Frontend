@@ -13,6 +13,7 @@ import { RecognitionService } from '../text-detection/recognition/recognition.se
 import { WeightedLevenshteinService } from '../text-detection/dictionary/weighted-levenshtein.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 import { TensorBufferPoolService } from '../text-detection/tensor-buffer-pool.service';
 import { PipelineState, PipelineStage } from './pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG } from './pipeline-config.types';
@@ -32,6 +33,7 @@ const recognizer = new RecognitionService(recognitionPreprocessor, recognitionPo
 const weightedLevenshtein = new WeightedLevenshteinService();
 const dictionaryMatcher = new DictionaryMatcherService(weightedLevenshtein);
 const lineGroupingService = new LineGroupingService();
+const offerExtractorService = new OfferExtractorService();
 
 const stages: PipelineStage[] = [
   detector,
@@ -41,6 +43,7 @@ const stages: PipelineStage[] = [
   recognizer,
   dictionaryMatcher,
   lineGroupingService,
+  offerExtractorService,
 ];
 
 let isInitialized = false;
@@ -87,6 +90,7 @@ addEventListener('message', async (event: MessageEvent) => {
       const state: PipelineState = {
         fullImage: image,
         detections: [],
+        offers: [],
         processingTimeMs: 0,
         config: config ?? DEFAULT_PIPELINE_CONFIG,
       };
@@ -107,6 +111,7 @@ addEventListener('message', async (event: MessageEvent) => {
         id,
         state: {
           detections: state.detections,
+          offers: state.offers,
           processingTimeMs: totalTimeMs,
           stageMetrics,
           config: state.config,
