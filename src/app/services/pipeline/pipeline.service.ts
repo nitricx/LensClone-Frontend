@@ -47,8 +47,12 @@ export class PipelineService {
 
   readonly groupedLines = computed<GroupedTextLine[]>(() => {
     const dets = this.detections();
-    const groupsMap = new Map<number, Detection[]>();
+    const offers = this.offers();
+    const result: GroupedTextLine[] = [];
+    const processedDetections = new Set<Detection>();
 
+    // 1. Single-line horizontal groupings
+    const groupsMap = new Map<number, Detection[]>();
     for (const d of dets) {
       if (d.line && d.line.id !== undefined && d.line.id !== null) {
         if (!groupsMap.has(d.line.id)) {
@@ -58,36 +62,64 @@ export class PipelineService {
       }
     }
 
-    const result: GroupedTextLine[] = [];
     for (const [lineId, lineDetections] of groupsMap.entries()) {
-      if (!hasAllThreeProperties(lineDetections)) {
-        continue;
+      if (hasAllThreeProperties(lineDetections)) {
+        const sorted = [...lineDetections].sort((a, b) => a.boundingBox.x - b.boundingBox.x);
+        const combinedText = sorted
+          .map((d) => {
+            if (d.canonicalText && d.quantity && d.price) {
+              return `${d.canonicalText} ${d.quantity.quantity}KG ${d.price}`;
+            }
+            return d.canonicalText || d.rawText || d.price || '';
+          })
+          .filter((t) => t.length > 0)
+          .join(' ');
+
+        const minX = Math.min(...sorted.map((d) => d.boundingBox.x));
+        const minY = Math.min(...sorted.map((d) => d.boundingBox.y));
+        const maxX = Math.max(...sorted.map((d) => d.boundingBox.x + d.boundingBox.width));
+        const maxY = Math.max(...sorted.map((d) => d.boundingBox.y + d.boundingBox.height));
+        const score = Math.max(...sorted.map((d) => d.line?.score ?? 0));
+
+        sorted.forEach((d) => processedDetections.add(d));
+
+        result.push({
+          lineId,
+          score,
+          combinedText,
+          boundingBox: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          },
+          detections: sorted,
+        });
       }
+    }
 
-      const sorted = [...lineDetections].sort((a, b) => a.boundingBox.x - b.boundingBox.x);
-      const combinedText = sorted
-        .map((d) => d.canonicalText || d.rawText || d.price || '')
-        .filter((t) => t.length > 0)
-        .join(' ');
+    // 2. Multi-line offer compositions (e.g. PERA on Line A + 1K6$1500 on Line B)
+    let nextOfferLineId = result.length > 0 ? Math.max(...result.map((r) => r.lineId)) + 1 : 0;
+    for (const offer of offers) {
+      if (offer.product && offer.price) {
+        const offerDets = offer.detections || [];
+        const hasUnprocessed = offerDets.some((d) => !processedDetections.has(d));
 
-      const minX = Math.min(...sorted.map((d) => d.boundingBox.x));
-      const minY = Math.min(...sorted.map((d) => d.boundingBox.y));
-      const maxX = Math.max(...sorted.map((d) => d.boundingBox.x + d.boundingBox.width));
-      const maxY = Math.max(...sorted.map((d) => d.boundingBox.y + d.boundingBox.height));
-      const score = Math.max(...sorted.map((d) => d.line?.score ?? 0));
+        if (hasUnprocessed) {
+          const qtyStr = offer.quantity ? `${offer.quantity.quantity}KG` : '';
+          const combinedText = `${offer.product} ${qtyStr} ${offer.price}`.replace(/\s+/g, ' ').trim();
 
-      result.push({
-        lineId,
-        score,
-        combinedText,
-        boundingBox: {
-          x: minX,
-          y: minY,
-          width: maxX - minX,
-          height: maxY - minY,
-        },
-        detections: sorted,
-      });
+          result.push({
+            lineId: nextOfferLineId++,
+            score: offer.confidence || 0.9,
+            combinedText,
+            boundingBox: offer.boundingBox,
+            detections: offerDets,
+          });
+
+          offerDets.forEach((d) => processedDetections.add(d));
+        }
+      }
     }
 
     return result.sort((a, b) => a.lineId - b.lineId);

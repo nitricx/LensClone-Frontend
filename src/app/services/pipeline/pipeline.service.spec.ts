@@ -138,6 +138,59 @@ describe('PipelineService', () => {
     expect(grouped[0].boundingBox).toEqual({ x: 10, y: 20, width: 140, height: 20 });
   });
 
+  it('should include both Tomate (single concatenated detection with K6 OCR substitution) and Pera (multi-line split) in groupedLines', async () => {
+    (detectorMock.execute as any).mockImplementation((st: any) => {
+      st.detections = [
+        // Case 1: TOMATE2K6$3000
+        {
+          boundingBoxScore: 0.95,
+          boundingBox: { x: 10, y: 10, width: 150, height: 30 },
+          rawText: 'TOMATE2K6$3000',
+          canonicalText: 'TOMATE',
+          quantity: { quantity: 2, unit: 'kg' },
+          price: '$3000',
+          line: { id: 0, score: 0.1 },
+        },
+        // Case 2 Line A: PERA
+        {
+          boundingBoxScore: 0.9,
+          boundingBox: { x: 10, y: 50, width: 60, height: 25 },
+          rawText: 'PERA',
+          canonicalText: 'PERA',
+          line: { id: 1, score: 0.1 },
+        },
+        // Case 2 Line B: 1K6$1500
+        {
+          boundingBoxScore: 0.92,
+          boundingBox: { x: 10, y: 80, width: 80, height: 25 },
+          rawText: '1K6$1500',
+          quantity: { quantity: 1, unit: 'kg' },
+          price: '$1500',
+          line: { id: 2, score: 0.1 },
+        },
+      ];
+      st.offers = [
+        {
+          id: 'offer_pera',
+          product: 'PERA',
+          quantity: { quantity: 1, unit: 'kg' },
+          price: '$1500',
+          confidence: 0.92,
+          boundingBox: { x: 10, y: 50, width: 80, height: 55 },
+          detections: [st.detections[1], st.detections[2]],
+        },
+      ];
+    });
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    await service.execute(mockImage);
+
+    const grouped = service.groupedLines();
+    expect(grouped.length).toBe(2);
+    expect(grouped[0].combinedText).toBe('TOMATE 2KG $3000');
+    expect(grouped[1].combinedText).toBe('PERA 1KG $1500');
+  });
+
   it('should initialize all pipeline stages sequentially', async () => {
     await service.initialize();
 
