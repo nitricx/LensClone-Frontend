@@ -79,7 +79,7 @@ addEventListener('message', async (event: MessageEvent) => {
 
     try {
       const startTime = performance.now();
-      const { imageData, config } = payload;
+      const { imageData, config, coordinates } = payload;
 
       const image = new ImageData(
         new Uint8ClampedArray(imageData.data),
@@ -91,6 +91,7 @@ addEventListener('message', async (event: MessageEvent) => {
         fullImage: image,
         detections: [],
         offers: [],
+        coordinates,
         processingTimeMs: 0,
         config: config ?? DEFAULT_PIPELINE_CONFIG,
       };
@@ -112,6 +113,7 @@ addEventListener('message', async (event: MessageEvent) => {
         state: {
           detections: state.detections,
           offers: state.offers,
+          coordinates: state.coordinates,
           processingTimeMs: totalTimeMs,
           stageMetrics,
           config: state.config,

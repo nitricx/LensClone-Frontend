@@ -1,4 +1,4 @@
-import { Detection } from '../types';
+import { Detection, ProductOffer } from '../types';
 
 const NON_PRODUCT_HEADERS = new Set([
   'OFERTAS',
@@ -55,4 +55,8 @@ export function hasAllThreeProperties(detections: Detection[]): boolean {
   const hasQuantity = detections.some((d) => isDetectionQuantity(d));
   const hasPrice = detections.some((d) => isDetectionPrice(d));
   return hasProduct && hasQuantity && hasPrice;
+}
+
+export function isOfferComplete(offer: ProductOffer): boolean {
+  return Boolean(offer.product && offer.quantity && offer.price);
 }

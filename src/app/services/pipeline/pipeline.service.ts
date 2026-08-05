@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, Optional, computed, signal } from '@angular/core';
 import { PipelineStage, PipelineState } from './pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG, PipelineConfig } from './pipeline-config.types';
 import { DebugSettings } from '../../features/debug/debug-settings';
@@ -11,6 +11,7 @@ import { TrackerService } from '../text-detection/tracking/tracker.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
 import { LineGroupingService } from '../text-detection/line-grouping/line-grouping.service';
 import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
+import { LocationService } from '../location/location.service';
 
 import { Detection, GroupedTextLine } from '../text-detection/types';
 import { hasAllThreeProperties } from '../text-detection/detection-helper/detection-helpers';
@@ -48,6 +49,7 @@ export class PipelineService {
   readonly groupedLines = computed<GroupedTextLine[]>(() => {
     const dets = this.detections();
     const offers = this.offers();
+    const coords = this.locationService?.coordinates() || undefined;
     const result: GroupedTextLine[] = [];
     const processedDetections = new Set<Detection>();
 
@@ -96,6 +98,7 @@ export class PipelineService {
             height: maxY - minY,
           },
           detections: sorted,
+          coordinates: coords,
         });
       }
     }
@@ -117,6 +120,7 @@ export class PipelineService {
             combinedText,
             boundingBox: offer.boundingBox,
             detections: offerDets,
+            coordinates: offer.coordinates || coords,
           });
 
           offerDets.forEach((d) => processedDetections.add(d));
@@ -146,6 +150,7 @@ export class PipelineService {
     private readonly dictionary: DictionaryMatcherService,
     private readonly lineGroupingService: LineGroupingService,
     private readonly offerExtractorService: OfferExtractorService,
+    @Optional() private readonly locationService?: LocationService,
   ) {
     this.stages = [
       detector,
@@ -160,6 +165,8 @@ export class PipelineService {
   }
 
   async initialize(): Promise<void> {
+    this.locationService?.startTracking();
+
     if (typeof Worker !== 'undefined') {
       try {
         this.worker = new Worker(new URL('./pipeline.worker', import.meta.url), {
@@ -190,6 +197,8 @@ export class PipelineService {
   }
 
   async execute(image: ImageData, config?: PipelineConfig): Promise<void> {
+    const coordinates = this.locationService?.coordinates() || undefined;
+
     if (this.worker && this.isWorkerInitialized) {
       const requestId = this.generateRequestId();
       const execPromise = new Promise<{
@@ -211,6 +220,7 @@ export class PipelineService {
           data: buffer,
         },
         config: config ?? this.state().config ?? DEFAULT_PIPELINE_CONFIG,
+        coordinates,
       };
 
       try {
@@ -233,6 +243,7 @@ export class PipelineService {
           fullImage: image,
           detections: processedDetections,
           offers: result.offers || [],
+          coordinates,
           processingTimeMs: result.processingTimeMs,
           stageMetrics: result.stageMetrics,
           config: result.config ?? this.state().config,
@@ -256,6 +267,7 @@ export class PipelineService {
     const currentState: PipelineState = {
       fullImage: image,
       detections: [],
+      coordinates,
       processingTimeMs: 0,
       config: config ?? this.state().config,
     };

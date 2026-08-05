@@ -296,6 +296,9 @@
                           <span class="items-count">{{ group.detections.length }} {{ group.detections.length === 1 ? 'item' : 'items' }}</span>
                         </div>
                         <div class="group-meta-box">
+                          @if (group.coordinates) {
+                            <span class="score-pill gps-pill" title="Approximate Location">📍 {{ group.coordinates.latitude | number: '1.2-2' }}, {{ group.coordinates.longitude | number: '1.2-2' }} (approx)</span>
+                          }
                           <span class="score-pill">Score: {{ group.score | number: '1.2-2' }}</span>
                           <span class="size-pill">{{ group.boundingBox.width | number: '1.0-0' }}×{{ group.boundingBox.height | number: '1.0-0' }}px</span>
                         </div>

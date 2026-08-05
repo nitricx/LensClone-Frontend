@@ -237,4 +237,42 @@ describe('OfferExtractorService', () => {
     service.execute(state);
     expect(state.offers).toEqual([]);
   });
+
+  it('should attach GPS coordinates only to complete offers with product, quantity, and price', () => {
+    const detections: Detection[] = [
+      {
+        boundingBoxScore: 0.95,
+        boundingBox: { x: 50, y: 50, width: 200, height: 40 },
+        rawText: 'BANANA',
+        canonicalText: 'BANANA',
+      },
+      {
+        boundingBoxScore: 0.9,
+        boundingBox: { x: 50, y: 100, width: 80, height: 40 },
+        rawText: '2 Kg',
+        quantity: { quantity: 2, unit: 'kg' },
+      },
+      {
+        boundingBoxScore: 0.92,
+        boundingBox: { x: 140, y: 100, width: 110, height: 40 },
+        rawText: '$4500',
+        price: '$4500',
+      },
+    ];
+
+    const state: PipelineState = {
+      detections,
+      coordinates: { latitude: -34.6, longitude: -58.38, isApproximate: true },
+      processingTimeMs: 0,
+    };
+
+    service.execute(state);
+
+    expect(state.offers?.length).toBe(1);
+    expect(state.offers![0].coordinates).toEqual({
+      latitude: -34.6,
+      longitude: -58.38,
+      isApproximate: true,
+    });
+  });
 });

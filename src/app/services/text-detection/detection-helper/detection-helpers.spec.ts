@@ -4,8 +4,9 @@ import {
   isDetectionQuantity,
   isDetectionProduct,
   hasAllThreeProperties,
+  isOfferComplete,
 } from './detection-helpers';
-import { Detection } from '../types';
+import { Detection, ProductOffer } from '../types';
 
 describe('detection-helpers', () => {
   it('should correctly identify price detections', () => {
@@ -49,5 +50,28 @@ describe('detection-helpers', () => {
       { rawText: 'OFERTAS ALMACEN', isHeader: true } as Detection,
     ];
     expect(hasAllThreeProperties(headerOnly)).toBe(false);
+  });
+
+  it('should validate if an offer is complete with product name, quantity unit, and price', () => {
+    const completeOffer: ProductOffer = {
+      id: 'offer_1',
+      product: 'ARROZ',
+      quantity: { quantity: 1, unit: 'kg' },
+      price: '$1500',
+      confidence: 0.9,
+      boundingBox: { x: 0, y: 0, width: 100, height: 50 },
+      detections: [],
+    };
+    expect(isOfferComplete(completeOffer)).toBe(true);
+
+    const incompleteOffer: ProductOffer = {
+      id: 'offer_2',
+      product: 'ARROZ',
+      price: '$1500',
+      confidence: 0.9,
+      boundingBox: { x: 0, y: 0, width: 100, height: 50 },
+      detections: [],
+    };
+    expect(isOfferComplete(incompleteOffer)).toBe(false);
   });
 });

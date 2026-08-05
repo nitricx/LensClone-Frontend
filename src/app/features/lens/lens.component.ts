@@ -169,8 +169,9 @@ export class LensComponent implements AfterViewInit, OnDestroy {
         .filter(Boolean)
         .join(' ')
         .trim();
+      const coordinates = this.pipelineService.state().coordinates;
 
-      this.historyService.addCapture(dataUrl, detections.length, textSnippet);
+      this.historyService.addCapture(dataUrl, detections.length, textSnippet, coordinates);
     } catch (e) {
       console.warn('Could not capture frame to history:', e);
     }

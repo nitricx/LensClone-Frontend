@@ -5,6 +5,7 @@ import {
   isDetectionPrice,
   isDetectionQuantity,
   isDetectionProduct,
+  isOfferComplete,
 } from '../detection-helper/detection-helpers';
 
 @Injectable({
@@ -31,6 +32,15 @@ export class OfferExtractorService implements PipelineStage {
     for (const cluster of clusters) {
       const clusterOffers = this.extractOffersFromCluster(cluster);
       offers.push(...clusterOffers);
+    }
+
+    // Step 3: Attach GPS coordinates to completed data groups (offers with name, unit, and price)
+    if (state.coordinates) {
+      for (const offer of offers) {
+        if (isOfferComplete(offer)) {
+          offer.coordinates = state.coordinates;
+        }
+      }
     }
 
     state.offers = offers;

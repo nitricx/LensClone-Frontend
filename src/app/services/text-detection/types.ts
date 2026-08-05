@@ -1,6 +1,13 @@
 import { Quantity } from './dictionary/dictionary-matcher.service';
 export type { Quantity };
 
+export interface GpsCoordinates {
+  latitude: number;
+  longitude: number;
+  isApproximate: boolean;
+  timestamp?: number;
+}
+
 export interface ProductOffer {
   id: string;
   product?: string;
@@ -9,6 +16,7 @@ export interface ProductOffer {
   confidence: number;
   boundingBox: BoundingBox;
   detections: Detection[];
+  coordinates?: GpsCoordinates;
 }
 
 export interface Detection {
@@ -54,6 +62,7 @@ export interface GroupedTextLine {
   combinedText: string;
   boundingBox: BoundingBox;
   detections: Detection[];
+  coordinates?: GpsCoordinates;
 }
 
 

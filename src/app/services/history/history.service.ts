@@ -1,4 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { GpsCoordinates } from '../text-detection/types';
 
 export interface HistoryItem {
   id: string;
@@ -6,6 +7,7 @@ export interface HistoryItem {
   dataUrl: string;
   detectionsCount: number;
   textSnippet?: string;
+  coordinates?: GpsCoordinates;
 }
 
 const STORAGE_KEY = 'lens_clone_history_v1';
@@ -20,13 +22,19 @@ export class HistoryService {
   readonly items = computed(() => this._items());
   readonly count = computed(() => this._items().length);
 
-  addCapture(dataUrl: string, detectionsCount: number, textSnippet?: string): HistoryItem {
+  addCapture(
+    dataUrl: string,
+    detectionsCount: number,
+    textSnippet?: string,
+    coordinates?: GpsCoordinates,
+  ): HistoryItem {
     const newItem: HistoryItem = {
       id: `capture_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       timestamp: new Date().toISOString(),
       dataUrl,
       detectionsCount,
       textSnippet: textSnippet?.trim() || undefined,
+      coordinates,
     };
 
     const updated = [newItem, ...this._items()].slice(0, MAX_HISTORY_ITEMS);
