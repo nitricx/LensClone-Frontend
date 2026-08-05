@@ -35,6 +35,7 @@ describe('OverlayComponent', () => {
       stageMetrics: computed(() => stateSignal().stageMetrics),
       cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
       hasDetections: computed(() => (stateSignal().detections || []).length > 0),
+      groupedLines: computed(() => []),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,
@@ -46,6 +47,7 @@ describe('OverlayComponent', () => {
 
     rendererMock = {
       render: vi.fn(),
+      renderLineGroupings: vi.fn(),
     };
 
     await TestBed.configureTestingModule({

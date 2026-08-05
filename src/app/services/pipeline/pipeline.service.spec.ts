@@ -91,6 +91,43 @@ describe('PipelineService', () => {
     expect(service.stageMetrics()?.['detector']).toBeDefined();
   });
 
+  it('should compute groupedLines correctly from detections with line metadata', async () => {
+    (detectorMock.execute as any).mockImplementation((st: any) => {
+      st.detections = [
+        {
+          boundingBoxScore: 0.9,
+          boundingBox: { x: 10, y: 20, width: 50, height: 20 },
+          rawText: 'GALLETITAS',
+          line: { id: 0, score: 0.1 },
+        },
+        {
+          boundingBoxScore: 0.85,
+          boundingBox: { x: 70, y: 20, width: 40, height: 20 },
+          rawText: 'CHOCMAN',
+          line: { id: 0, score: 0.1 },
+        },
+        {
+          boundingBoxScore: 0.95,
+          boundingBox: { x: 10, y: 50, width: 30, height: 20 },
+          price: '$500',
+          line: { id: 1, score: 0.05 },
+        },
+      ];
+    });
+
+    const mockImage = new ImageData(new Uint8ClampedArray(400), 10, 10);
+    await service.execute(mockImage);
+
+    const grouped = service.groupedLines();
+    expect(grouped.length).toBe(2);
+    expect(grouped[0].lineId).toBe(0);
+    expect(grouped[0].combinedText).toBe('GALLETITAS CHOCMAN');
+    expect(grouped[0].detections.length).toBe(2);
+    expect(grouped[0].boundingBox).toEqual({ x: 10, y: 20, width: 100, height: 20 });
+    expect(grouped[1].lineId).toBe(1);
+    expect(grouped[1].combinedText).toBe('$500');
+  });
+
   it('should initialize all pipeline stages sequentially', async () => {
     await service.initialize();
 

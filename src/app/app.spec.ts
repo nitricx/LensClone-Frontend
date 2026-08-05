@@ -41,6 +41,7 @@ describe('App Component', () => {
       stageMetrics: computed(() => stateSignal().stageMetrics),
       cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
       hasDetections: computed(() => (stateSignal().detections || []).length > 0),
+      groupedLines: computed(() => []),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

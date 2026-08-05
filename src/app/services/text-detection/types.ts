@@ -48,3 +48,12 @@ export interface LineGrouping {
   score: number;
 }
 
+export interface GroupedTextLine {
+  lineId: number;
+  score: number;
+  combinedText: string;
+  boundingBox: BoundingBox;
+  detections: Detection[];
+}
+
+

@@ -52,4 +52,38 @@ describe('BoundingBoxRendererService', () => {
     expect(mockContext.fillText).toHaveBeenCalledWith('CEBOLLA', expect.any(Number), expect.any(Number));
     expect(mockContext.restore).toHaveBeenCalled();
   });
+
+  it('should render line grouping bounding box and label when renderLineGroupings is called', () => {
+    const mockContext = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      strokeRect: vi.fn(),
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
+      setLineDash: vi.fn(),
+      measureText: vi.fn().mockReturnValue({ width: 60 }),
+      lineWidth: 0,
+      strokeStyle: '',
+      font: '',
+      textBaseline: '',
+      fillStyle: '',
+    } as unknown as CanvasRenderingContext2D;
+
+    const groupedLines = [
+      {
+        lineId: 0,
+        score: 0.1,
+        combinedText: 'OFERTA ALMACEN',
+        boundingBox: { x: 15, y: 25, width: 120, height: 35 },
+        detections: [],
+      },
+    ];
+
+    service.renderLineGroupings(mockContext, groupedLines);
+
+    expect(mockContext.save).toHaveBeenCalled();
+    expect(mockContext.strokeRect).toHaveBeenCalledWith(15, 25, 120, 35);
+    expect(mockContext.fillText).toHaveBeenCalledWith('Line #0 (0)', expect.any(Number), expect.any(Number));
+    expect(mockContext.restore).toHaveBeenCalled();
+  });
 });

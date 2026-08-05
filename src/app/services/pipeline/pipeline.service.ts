@@ -12,6 +12,8 @@ import { DictionaryMatcherService } from '../text-detection/dictionary/dictionar
 import { LineGroupingService } from '../text-detection/line-grouping.service';
 import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
+import { Detection, GroupedTextLine } from '../text-detection/types';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -41,6 +43,51 @@ export class PipelineService {
   readonly stageMetrics = computed(() => this._state().stageMetrics);
   readonly cropsCount = computed(() => this.detections().filter((d) => !!d.crop).length);
   readonly hasDetections = computed(() => this.detections().length > 0);
+
+  readonly groupedLines = computed<GroupedTextLine[]>(() => {
+    const dets = this.detections();
+    const groupsMap = new Map<number, Detection[]>();
+
+    for (const d of dets) {
+      if (d.line && d.line.id !== undefined && d.line.id !== null) {
+        if (!groupsMap.has(d.line.id)) {
+          groupsMap.set(d.line.id, []);
+        }
+        groupsMap.get(d.line.id)!.push(d);
+      }
+    }
+
+    const result: GroupedTextLine[] = [];
+    for (const [lineId, lineDetections] of groupsMap.entries()) {
+      const sorted = [...lineDetections].sort((a, b) => a.boundingBox.x - b.boundingBox.x);
+      const combinedText = sorted
+        .map((d) => d.canonicalText || d.rawText || d.price || '')
+        .filter((t) => t.length > 0)
+        .join(' ');
+
+      const minX = Math.min(...sorted.map((d) => d.boundingBox.x));
+      const minY = Math.min(...sorted.map((d) => d.boundingBox.y));
+      const maxX = Math.max(...sorted.map((d) => d.boundingBox.x + d.boundingBox.width));
+      const maxY = Math.max(...sorted.map((d) => d.boundingBox.y + d.boundingBox.height));
+      const score = Math.max(...sorted.map((d) => d.line?.score ?? 0));
+
+      result.push({
+        lineId,
+        score,
+        combinedText,
+        boundingBox: {
+          x: minX,
+          y: minY,
+          width: maxX - minX,
+          height: maxY - minY,
+        },
+        detections: sorted,
+      });
+    }
+
+    return result.sort((a, b) => a.lineId - b.lineId);
+  });
+
 
   private readonly stages: PipelineStage[];
   private worker?: Worker;
