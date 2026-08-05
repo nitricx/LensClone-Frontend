@@ -13,6 +13,7 @@ import { LineGroupingService } from '../text-detection/line-grouping.service';
 import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
 import { Detection, GroupedTextLine } from '../text-detection/types';
+import { hasAllThreeProperties } from '../text-detection/detection-helpers';
 
 @Injectable({
   providedIn: 'root',
@@ -59,6 +60,10 @@ export class PipelineService {
 
     const result: GroupedTextLine[] = [];
     for (const [lineId, lineDetections] of groupsMap.entries()) {
+      if (!hasAllThreeProperties(lineDetections)) {
+        continue;
+      }
+
       const sorted = [...lineDetections].sort((a, b) => a.boundingBox.x - b.boundingBox.x);
       const combinedText = sorted
         .map((d) => d.canonicalText || d.rawText || d.price || '')

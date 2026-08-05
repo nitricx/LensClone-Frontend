@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BoundingBox, Detection, ProductOffer } from '../types';
 import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
+import {
+  isDetectionPrice,
+  isDetectionQuantity,
+  isDetectionProduct,
+} from '../detection-helpers';
 
 @Injectable({
   providedIn: 'root',
@@ -84,7 +89,7 @@ export class OfferExtractorService implements PipelineStage {
     const assigned = new Set<Detection>();
 
     // 1. Identify prices, products, and quantities in cluster
-    const prices = cluster.filter((d) => this.isPrice(d));
+    const prices = cluster.filter((d) => isDetectionPrice(d));
 
     // Sort prices vertically top to bottom
     prices.sort((a, b) => a.boundingBox.y - b.boundingBox.y);
@@ -102,7 +107,7 @@ export class OfferExtractorService implements PipelineStage {
 
       // Search for candidate product detections in cluster that are NOT yet assigned
       const candidateProducts = cluster.filter(
-        (d) => !assigned.has(d) && !this.isPrice(d) && this.isProductCandidate(d),
+        (d) => !assigned.has(d) && !isDetectionPrice(d) && isDetectionProduct(d),
       );
 
       // Find nearest product candidate directly above (or on the same line as) the price anchor
@@ -138,7 +143,7 @@ export class OfferExtractorService implements PipelineStage {
 
       // Search for candidate quantity detections in cluster
       const candidateQuantities = cluster.filter(
-        (d) => !assigned.has(d) && !this.isPrice(d) && (d === bestProduct ? false : this.isQuantity(d)),
+        (d) => !assigned.has(d) && !isDetectionPrice(d) && (d === bestProduct ? false : isDetectionQuantity(d)),
       );
 
       let bestQuantity: Detection | undefined;
@@ -205,42 +210,5 @@ export class OfferExtractorService implements PipelineStage {
     }
 
     return offers;
-  }
-
-  private readonly NON_PRODUCT_HEADERS = new Set([
-    'OFERTAS',
-    'OFERTA',
-    'PRECIOS',
-    'PRECIO',
-    'PROMOCION',
-    'PROMO',
-    'PROMOCIONES',
-    'HAY GAS',
-    'ALMACEN',
-    'VERDULERIA',
-    'FRUTERIA',
-  ]);
-
-  private isPrice(d: Detection): boolean {
-    if (d.price) return true;
-    if (!d.rawText) return false;
-    return /^\$?\s*\d+([.,]\d+)?$/i.test(d.rawText.trim());
-  }
-
-  private isQuantity(d: Detection): boolean {
-    if (d.quantity) return true;
-    if (!d.rawText) return false;
-    const text = d.rawText.trim();
-    return /\b(\d+(\/\d+)?\s*(kg|g|un|x|pote|paquete)|x\s*[a-zA-Z]+|[a-zA-Z]+\s*x|x\s*\d+|\d+\s*x)\b/i.test(text);
-  }
-
-  private isProductCandidate(d: Detection): boolean {
-    if (d.isHeader) return false;
-    if (d.canonicalText) return true;
-    if (!d.rawText) return false;
-    if (this.isQuantity(d)) return false;
-    const text = d.rawText.trim().toUpperCase();
-    if (this.NON_PRODUCT_HEADERS.has(text)) return false;
-    return /[a-zA-Z]{3,}/.test(text) && !/^\$?\s*\d+$/i.test(text);
   }
 }

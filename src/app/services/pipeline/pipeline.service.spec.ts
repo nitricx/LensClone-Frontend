@@ -91,24 +91,36 @@ describe('PipelineService', () => {
     expect(service.stageMetrics()?.['detector']).toBeDefined();
   });
 
-  it('should compute groupedLines correctly from detections with line metadata', async () => {
+  it('should compute groupedLines correctly and filter out false positive lines lacking product, quantity, or price', async () => {
     (detectorMock.execute as any).mockImplementation((st: any) => {
       st.detections = [
+        // Line 0: Complete line with Product, Quantity, and Price
         {
           boundingBoxScore: 0.9,
           boundingBox: { x: 10, y: 20, width: 50, height: 20 },
           rawText: 'GALLETITAS',
+          canonicalText: 'GALLETITAS',
           line: { id: 0, score: 0.1 },
         },
         {
           boundingBoxScore: 0.85,
-          boundingBox: { x: 70, y: 20, width: 40, height: 20 },
-          rawText: 'CHOCMAN',
+          boundingBox: { x: 70, y: 20, width: 30, height: 20 },
+          rawText: '500G',
+          quantity: { quantity: 500, unit: 'g' },
           line: { id: 0, score: 0.1 },
         },
         {
           boundingBoxScore: 0.95,
+          boundingBox: { x: 110, y: 20, width: 40, height: 20 },
+          rawText: '$1200',
+          price: '$1200',
+          line: { id: 0, score: 0.1 },
+        },
+        // Line 1: Incomplete line (price only, no product or quantity) -> Should be filtered out
+        {
+          boundingBoxScore: 0.95,
           boundingBox: { x: 10, y: 50, width: 30, height: 20 },
+          rawText: '$500',
           price: '$500',
           line: { id: 1, score: 0.05 },
         },
@@ -119,13 +131,11 @@ describe('PipelineService', () => {
     await service.execute(mockImage);
 
     const grouped = service.groupedLines();
-    expect(grouped.length).toBe(2);
+    expect(grouped.length).toBe(1);
     expect(grouped[0].lineId).toBe(0);
-    expect(grouped[0].combinedText).toBe('GALLETITAS CHOCMAN');
-    expect(grouped[0].detections.length).toBe(2);
-    expect(grouped[0].boundingBox).toEqual({ x: 10, y: 20, width: 100, height: 20 });
-    expect(grouped[1].lineId).toBe(1);
-    expect(grouped[1].combinedText).toBe('$500');
+    expect(grouped[0].combinedText).toBe('GALLETITAS 500G $1200');
+    expect(grouped[0].detections.length).toBe(3);
+    expect(grouped[0].boundingBox).toEqual({ x: 10, y: 20, width: 140, height: 20 });
   });
 
   it('should initialize all pipeline stages sequentially', async () => {
