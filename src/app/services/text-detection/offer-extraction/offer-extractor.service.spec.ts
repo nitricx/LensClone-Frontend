@@ -157,6 +157,77 @@ describe('OfferExtractorService', () => {
     expect(offerCard2?.product).toBe('MORRON');
   });
 
+  it('should handle single-line offer lists with header and footer (billboard_006)', () => {
+    const detections: Detection[] = [
+      // Header: OFERTAS (non-offer)
+      {
+        boundingBoxScore: 0.9,
+        boundingBox: { x: 50, y: 10, width: 200, height: 35 },
+        rawText: 'OFERTAS',
+      },
+      // Line 1: PAPA 3KG 2000
+      {
+        boundingBoxScore: 0.95,
+        boundingBox: { x: 50, y: 60, width: 80, height: 30 },
+        rawText: 'PAPA',
+        canonicalText: 'PAPA',
+      },
+      {
+        boundingBoxScore: 0.9,
+        boundingBox: { x: 140, y: 60, width: 50, height: 30 },
+        rawText: '3KG',
+        quantity: { quantity: 3, unit: 'kg' },
+      },
+      {
+        boundingBoxScore: 0.95,
+        boundingBox: { x: 200, y: 60, width: 60, height: 30 },
+        rawText: '2000',
+        price: '$2000',
+      },
+      // Line 2: LIMON 1KG 2000
+      {
+        boundingBoxScore: 0.95,
+        boundingBox: { x: 50, y: 110, width: 90, height: 30 },
+        rawText: 'LIMON',
+        canonicalText: 'LIMON',
+      },
+      {
+        boundingBoxScore: 0.9,
+        boundingBox: { x: 150, y: 110, width: 50, height: 30 },
+        rawText: '1KG',
+        quantity: { quantity: 1, unit: 'kg' },
+      },
+      {
+        boundingBoxScore: 0.95,
+        boundingBox: { x: 210, y: 110, width: 60, height: 30 },
+        rawText: '2000',
+        price: '$2000',
+      },
+      // Footer: HAY GAS (non-offer)
+      {
+        boundingBoxScore: 0.88,
+        boundingBox: { x: 50, y: 200, width: 180, height: 40 },
+        rawText: 'HAY GAS',
+      },
+    ];
+
+    const state: PipelineState = {
+      detections,
+      processingTimeMs: 0,
+    };
+
+    service.execute(state);
+
+    expect(state.offers?.length).toBe(2);
+    expect(state.offers![0].product).toBe('PAPA');
+    expect(state.offers![0].quantity).toEqual({ quantity: 3, unit: 'kg' });
+    expect(state.offers![0].price).toBe('$2000');
+
+    expect(state.offers![1].product).toBe('LIMON');
+    expect(state.offers![1].quantity).toEqual({ quantity: 1, unit: 'kg' });
+    expect(state.offers![1].price).toBe('$2000');
+  });
+
   it('should handle empty detections gracefully', () => {
     const state: PipelineState = {
       detections: [],

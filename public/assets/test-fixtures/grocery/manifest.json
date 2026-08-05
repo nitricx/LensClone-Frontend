@@ -112,6 +112,22 @@
         { "product": "MANDARINA MURCO", "quantity": "2 kg", "price": "$2500" },
         { "product": "MANDARINA ENCORE", "quantity": "2 kg", "price": "$3000" }
       ]
+    },
+    {
+      "imageId": "billboard_006",
+      "category": "chalkboard-single-line-list",
+      "imagePath": "/assets/test-fixtures/grocery/billboard_006.png",
+      "expectedOffers": [
+        { "product": "PAPA", "quantity": "3KG", "price": "2000" },
+        { "product": "CEBOLLA", "quantity": null, "price": null },
+        { "product": "ZANAHORIA", "quantity": "2KG", "price": "2500" },
+        { "product": "ZAPALLITO", "quantity": "1KG", "price": "2000" },
+        { "product": "ANCO", "quantity": "1KG", "price": "1000" },
+        { "product": "LIMON", "quantity": "1KG", "price": "2000" },
+        { "product": "NARANJA", "quantity": "2KG", "price": "2500" },
+        { "product": "POMELO", "quantity": "1KG", "price": "1500" },
+        { "product": "RUCULA", "quantity": "3x", "price": "1500" }
+      ]
     }
   ]
 }

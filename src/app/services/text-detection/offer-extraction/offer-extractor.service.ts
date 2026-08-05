@@ -113,17 +113,17 @@ export class OfferExtractorService implements PipelineStage {
         const prodBox = prodDet.boundingBox;
         const prodCenterX = prodBox.x + prodBox.width / 2;
 
+        const isSameLine = Math.abs(priceBox.y - prodBox.y) <= Math.max(priceBox.height, prodBox.height) * 1.5;
         const horizDist = Math.abs(prodCenterX - priceCenterX);
-        const maxHorizMargin = Math.max(priceBox.width, prodBox.width, prodBox.height * 4.5);
+        const maxHorizMargin = isSameLine
+          ? Math.max(priceBox.width * 8.0, prodBox.width * 8.0, prodBox.height * 12.0)
+          : Math.max(priceBox.width, prodBox.width, prodBox.height * 4.5);
 
         if (horizDist > maxHorizMargin) continue;
-
-        // Vertical distance: product should be above or same line (prod.y <= price.y + price.height)
         const dy = priceBox.y - (prodBox.y + prodBox.height);
 
-        // Allow same line or vertical distance up to 5.0x line height above
-        if (dy >= -prodBox.height * 0.8 && dy <= prodBox.height * 5.0) {
-          const score = dy < 0 ? Math.abs(dy) * 0.5 : dy + horizDist * 0.5;
+        if (isSameLine || (dy >= 0 && dy <= prodBox.height * 5.0)) {
+          const score = isSameLine ? horizDist : dy + horizDist * 0.5;
           if (score < minDistance) {
             minDistance = score;
             bestProduct = prodDet;
@@ -148,8 +148,11 @@ export class OfferExtractorService implements PipelineStage {
         const qtyBox = qtyDet.boundingBox;
         const qtyCenterX = qtyBox.x + qtyBox.width / 2;
 
+        const isSameLine = Math.abs(priceBox.y - qtyBox.y) <= Math.max(priceBox.height, qtyBox.height) * 1.5;
         const horizDist = Math.abs(qtyCenterX - priceCenterX);
-        const maxHorizMargin = Math.max(priceBox.width, qtyBox.width, qtyBox.height * 4.0);
+        const maxHorizMargin = isSameLine
+          ? Math.max(priceBox.width * 8.0, qtyBox.width * 8.0, qtyBox.height * 12.0)
+          : Math.max(priceBox.width, qtyBox.width, qtyBox.height * 4.0);
 
         if (horizDist > maxHorizMargin) continue;
 
@@ -204,6 +207,20 @@ export class OfferExtractorService implements PipelineStage {
     return offers;
   }
 
+  private readonly NON_PRODUCT_HEADERS = new Set([
+    'OFERTAS',
+    'OFERTA',
+    'PRECIOS',
+    'PRECIO',
+    'PROMOCION',
+    'PROMO',
+    'PROMOCIONES',
+    'HAY GAS',
+    'ALMACEN',
+    'VERDULERIA',
+    'FRUTERIA',
+  ]);
+
   private isPrice(d: Detection): boolean {
     if (d.price) return true;
     if (!d.rawText) return false;
@@ -221,7 +238,8 @@ export class OfferExtractorService implements PipelineStage {
     if (d.canonicalText) return true;
     if (!d.rawText) return false;
     if (this.isQuantity(d)) return false;
-    const text = d.rawText.trim();
+    const text = d.rawText.trim().toUpperCase();
+    if (this.NON_PRODUCT_HEADERS.has(text)) return false;
     return /[a-zA-Z]{3,}/.test(text) && !/^\$?\s*\d+$/i.test(text);
   }
 }
