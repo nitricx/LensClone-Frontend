@@ -1,17 +1,17 @@
 # Lens Feature Component
 
-The `Lens` feature manages the live viewport, feeds video frames from the camera service into the detection canvas, and runs the main request-response loops.
+The `Lens` feature manages the main live camera viewport, captures video frame images, drives the vision pipeline detection loop, and renders user interface controls.
 
 ## Primary Files
-- [lens.component.ts](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.ts) - Camera preview synchronization, raw frame capture, and coordination.
-- [lens.component.html](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.html) - Video element overlay layout.
-- [lens.component.css](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.css) - Styling rules for full-screen camera alignment and overlay layers.
+- [lens.component.ts](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.ts) - Camera synchronization, frame capture scheduling, torch toggling, and capture history integration.
+- [lens.component.html](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.html) - Video viewport markup, floating overlay layer (`<app-overlay>`), debug diagnostics drawer (`<app-debug>`), top action bar, and scan history controls.
+- [lens.component.css](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/lens.component.css) - Styling rules for full-screen camera alignment, glassmorphism UI overlays, control panels, and drawer animations.
 
-## Implementation details
-- **Frame Retrieval**: Raw frames are read from `<video>` elements using an offscreen canvas context configured with `willReadFrequently: true`.
-- **Loop Scheduling**: The loop is scheduled using `requestAnimationFrame` and guarded by `detectionInProgress` flag to prevent frame stacking.
-- **Canvases & Resizing**: The offscreen canvas is resized when the video stream load/metadata events fire (`resizeCanvases` method).
-
-## Guidelines for Changes
-- When modifying layouts, preserve standalone Angular components structure and keep components modular.
-- Do not introduce RxJS subscription streams for loop scheduling; keep utilizing signals (`videoWidth`, `videoHeight`) for reactive metadata updates.
+## Implementation Details
+- **Frame Capture**: Reads raw pixel frames from the `<video>` element using an offscreen canvas configured with `{ willReadFrequently: true }`.
+- **Loop Guarding**: Scheduled via `requestAnimationFrame` and protected by `detectionInProgress` flag to prevent frame stacking and main-thread lag.
+- **Service Integration**:
+  - `CameraService`: Starts/stops WebRTC video stream and controls flashlight (torch).
+  - `PipelineService`: Receives captured `ImageData` frames for processing.
+  - `HistoryService`: Saves snapshot captures with detection counts and text snippets.
+  - `AuthService`: Displays user profile state and authentication actions.

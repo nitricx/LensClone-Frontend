@@ -1,59 +1,98 @@
-# LensClone
+# LensClone 🔍
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.7.
+> A Proof-of-Concept (PoC) web application inspired by **Google Lens**. It runs real-time computer vision, text detection (DBNet), character recognition (CRNN/OCR), line grouping, and offer extraction directly inside the browser using **Angular 22**, **ONNX Runtime Web (WASM)**, and Web Workers.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🌟 Key Features
 
-```bash
-ng serve
+- 📹 **Real-Time Camera Viewport**: High-performance WebRTC camera feed processing with `requestAnimationFrame` loop guarding and hardware torch control.
+- 🎯 **DBNet Text Detection**: ONNX WASM neural network for detecting multi-oriented text bounding boxes in live video frames.
+- 🔤 **CRNN Text Recognition (OCR)**: Convolutional Recurrent Neural Network for character recognition with CTC greedy decoding.
+- 🏷️ **Line Grouping & Offer Structuring**: Merges horizontal text bounding boxes into reading lines and structured product offers.
+- ⚡ **Web Worker & Buffer Pooling**: Offloads heavy ONNX WASM model inference to background Web Workers ([pipeline.worker.ts](file:///d:/Repositories/PoC-LensClone/src/app/services/pipeline/pipeline.worker.ts)) and uses Float32Array buffer pooling ([TensorBufferPoolService](file:///d:/Repositories/PoC-LensClone/src/app/services/text-detection/tensor-buffer-pool/tensor-buffer-pool.service.ts)) to eliminate Garbage Collection lag.
+- 🛠️ **Interactive Debug Diagnostics**: Built-in diagnostics drawer for inspecting sub-canvas crop previews, toggling visual overlay stages, monitoring FPS, and measuring stage latency.
+- 💾 **Local Scan History**: Tracks snapshot captures, detection counts, and recognized text snippets with offline `localStorage` persistence.
+- 🔐 **Google Auth Session**: Simulated Google OAuth user profile management with Angular Signals state.
+
+---
+
+## 🏗️ Architecture & Codebase Structure
+
+The project follows a modular co-located documentation structure where features and service suites maintain localized `README.md` files:
+
+```text
+src/
+├── app/
+│   ├── app.ts                  # Root standalone component
+│   ├── app.config.ts           # Application config (providers, routing)
+│   ├── app.routes.ts           # Application routes
+│   ├── features/               # Feature Components
+│   │   ├── debug/              # Diagnostics panel & crop sub-canvases (README.md)
+│   │   ├── lens/               # Main camera feed & pipeline loop view (README.md)
+│   │   └── overlay/            # Canvas overlay for detected text & lines (README.md)
+│   └── services/               # Core Services & Vision Pipeline
+│       ├── auth/               # User auth state & persistence (README.md)
+│       ├── camera/             # WebRTC camera access & torch control (README.md)
+│       ├── history/            # Scan history tracking & local storage (README.md)
+│       ├── pipeline/           # Vision pipeline orchestrator & Web Worker (README.md)
+│       ├── text-detection/     # ML models (DBNet/CRNN), cropping, tracking, OCR, line grouping (README.md)
+│       └── visualization/      # 2D Canvas rendering for bounding boxes & lines (README.md)
+public/                         # Static assets and ONNX WASM model files
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+---
 
-## Code scaffolding
+## 💻 Technical Stack
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- **Framework**: [Angular 22](https://angular.dev/) (Standalone Components, Signals, New Control Flow)
+- **Language**: [TypeScript ~6.0](https://www.typescriptlang.org/)
+- **ML / Vision Inference Engine**: [`onnxruntime-web`](https://onnxruntime.ai/) (WebAssembly & WebGPU backend)
+- **Testing**: [Vitest](https://vitest.dev/) with `jsdom` via `ng test`
+- **Formatting & Style**: Prettier, Vanilla CSS / Angular Scoped CSS
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🚀 Quick Start
 
-```bash
-ng generate --help
-```
+### Prerequisites
+- Node.js `^20.0.0` or higher
+- npm `^10.0.0` or higher
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### Installation & Development
 
 ```bash
-ng test
+# Install dependencies
+npm install
+
+# Start local dev server
+npm start
 ```
 
-## Running end-to-end tests
+Navigate to `http://localhost:4200/` in your browser and allow camera access when prompted.
 
-For end-to-end (e2e) testing, run:
+---
 
-```bash
-ng e2e
-```
+## 🧪 Commands Reference
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+| Command | Action | Description |
+| :--- | :--- | :--- |
+| `npm start` or `ng serve` | **Start Dev Server** | Runs local server at `http://localhost:4200/` |
+| `npm test` or `ng test` | **Run Unit Tests** | Executes Vitest test suite |
+| `npm run build` or `ng build` | **Production Build** | Compiles optimized production bundle to `dist/` |
+| `npm run watch` | **Watch Build** | Builds continuously in watch mode |
 
-## Additional Resources
+---
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## 📚 Modular Documentation Links
+
+For deeper architectural context on individual modules, consult the co-located documentation:
+- [Lens Feature Component](file:///d:/Repositories/PoC-LensClone/src/app/features/lens/README.md)
+- [Debug Diagnostics Feature](file:///d:/Repositories/PoC-LensClone/src/app/features/debug/README.md)
+- [Overlay Canvas Feature](file:///d:/Repositories/PoC-LensClone/src/app/features/overlay/README.md)
+- [Vision Processing Pipeline](file:///d:/Repositories/PoC-LensClone/src/app/services/pipeline/README.md)
+- [Text Detection & OCR Suite](file:///d:/Repositories/PoC-LensClone/src/app/services/text-detection/README.md)
+- [Camera Service](file:///d:/Repositories/PoC-LensClone/src/app/services/camera/README.md)
+- [Visualization Renderer](file:///d:/Repositories/PoC-LensClone/src/app/services/visualization/README.md)
+- [Scan History Service](file:///d:/Repositories/PoC-LensClone/src/app/services/history/README.md)
+- [Auth Service](file:///d:/Repositories/PoC-LensClone/src/app/services/auth/README.md)
