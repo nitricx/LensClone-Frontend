@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { DetectorCropperService } from './cropper.service';
-import { PipelineState } from '../pipeline/pipeline-state';
+import { PipelineState } from '../../pipeline/pipeline-state';
 
 describe('DetectorCropperService', () => {
   let service: DetectorCropperService;

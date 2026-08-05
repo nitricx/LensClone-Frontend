@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugComponent } from './debug.component';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
-import { CameraService } from '../../services/camera.service';
+import { CameraService } from '../../services/camera/camera.service';
 import { computed, signal } from '@angular/core';
 
 describe('DebugComponent', () => {

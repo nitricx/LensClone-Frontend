@@ -3,7 +3,7 @@ import { BoundingBox, Detection, Quantity, LineGrouping } from '../types';
 import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG, TrackingConfig } from '../../pipeline/pipeline-config.types';
 
-import { hasAllThreeProperties } from '../detection-helpers';
+import { hasAllThreeProperties } from '../detection-helper/detection-helpers';
 
 export interface TrackedBox {
   id: string;

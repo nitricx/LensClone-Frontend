@@ -10,10 +10,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CameraService } from '../../services/camera.service';
+import { CameraService } from '../../services/camera/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
-import { HistoryService, HistoryItem } from '../../services/history.service';
-import { AuthService } from '../../services/auth.service';
+import { HistoryService, HistoryItem } from '../../services/history/history.service';
+import { AuthService } from '../../services/auth/auth.service';
 import { OverlayComponent } from '../overlay/overlay.component';
 
 export type ModalType =
@@ -67,7 +67,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     private readonly pipelineService: PipelineService,
     readonly historyService: HistoryService,
     readonly authService: AuthService,
-  ) {}
+  ) { }
 
   async ngAfterViewInit(): Promise<void> {
     this.isDestroyed = false;

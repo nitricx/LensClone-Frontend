@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { App } from './app';
-import { CameraService } from './services/camera.service';
+import { CameraService } from './services/camera/camera.service';
 import { PipelineService } from './services/pipeline/pipeline.service';
 import { computed, signal } from '@angular/core';
 

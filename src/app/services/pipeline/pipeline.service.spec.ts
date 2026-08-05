@@ -4,10 +4,10 @@ import { PipelineService } from './pipeline.service';
 import { DetectorService } from '../text-detection/detector/detector.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
 import { TrackerService } from '../text-detection/tracking/tracker.service';
-import { DetectorCropperService } from '../text-detection/cropper.service';
+import { DetectorCropperService } from '../text-detection/cropper/cropper.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
-import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { LineGroupingService } from '../text-detection/line-grouping/line-grouping.service';
 import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
 
 if (typeof globalThis.ImageData === 'undefined') {

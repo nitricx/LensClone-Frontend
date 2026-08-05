@@ -5,7 +5,7 @@ import {
   isDetectionPrice,
   isDetectionQuantity,
   isDetectionProduct,
-} from '../detection-helpers';
+} from '../detection-helper/detection-helpers';
 
 @Injectable({
   providedIn: 'root',

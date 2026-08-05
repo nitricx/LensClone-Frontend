@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BoundingBox, Detection } from './types';
-import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
-import { DEFAULT_PIPELINE_CONFIG, LineGroupingConfig } from '../pipeline/pipeline-config.types';
+import { BoundingBox, Detection } from '../types';
+import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG, LineGroupingConfig } from '../../pipeline/pipeline-config.types';
 
 interface TextLine {
   id: number;

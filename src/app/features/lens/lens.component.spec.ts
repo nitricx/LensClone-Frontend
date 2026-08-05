@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LensComponent } from './lens.component';
-import { CameraService } from '../../services/camera.service';
+import { CameraService } from '../../services/camera/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
-import { HistoryService } from '../../services/history.service';
-import { AuthService } from '../../services/auth.service';
+import { HistoryService } from '../../services/history/history.service';
+import { AuthService } from '../../services/auth/auth.service';
 import { computed, signal } from '@angular/core';
 
 if (typeof globalThis.ImageData === 'undefined') {
