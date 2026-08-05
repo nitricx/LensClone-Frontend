@@ -114,8 +114,9 @@ export class DictionaryMatcherService implements PipelineStage {
     const cleanedText = rawText
       .toUpperCase()
       .replace(/\$\s*\d+([.,]\d+)?/g, '')
-      .replace(/\b\d+([.,]\d+)?\s*(KG|K6|G|6|UN|PACK|PAQUETE|POTE)\b/gi, '')
-      .replace(/\b\d{3,5}\b/g, '');
+      .replace(/(\d+(\/\d+|\.\d+)?)\s*(KG|K6|G|6|UN|PACK|PAQUETE|POTE)/gi, '')
+      .replace(/\d+/g, '')
+      .trim();
 
     const normalizedText = this.normalize(cleanedText);
     if (normalizedText.length < 2) {
@@ -129,7 +130,7 @@ export class DictionaryMatcherService implements PipelineStage {
       for (const alias of aliases) {
         const normAlias = this.normalize(alias);
         if (normalizedText.includes(normAlias) || normAlias.includes(normalizedText)) {
-          const score = normAlias.length / Math.max(normalizedText.length, normAlias.length);
+          const score = Math.min(normalizedText.length, normAlias.length) / Math.max(normalizedText.length, normAlias.length);
           if (score > bestScore) {
             bestScore = score;
             bestCanonical = canonical;
@@ -145,7 +146,16 @@ export class DictionaryMatcherService implements PipelineStage {
       }
     }
 
-    return bestScore >= config.similarityThreshold ? bestCanonical : undefined;
+    if (bestScore >= config.similarityThreshold && bestCanonical) {
+      return bestCanonical;
+    }
+
+    // Fallback: If no dictionary match was high enough, but cleanedText is an alphabetic word >= 3 letters, return cleanedText
+    if (/^[A-Z]{3,}$/.test(normalizedText)) {
+      return normalizedText;
+    }
+
+    return undefined;
   }
 
   private matchHeader(normalizedText: string, config: DictionaryConfig): boolean {

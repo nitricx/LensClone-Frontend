@@ -53,13 +53,18 @@ describe('DictionaryMatcherService', () => {
     expect(state.detections[1].price).toBe('$1500');
   });
 
-  it('should parse concatenated rawText like TOMATE2K6$3000 and 1K6$1500 correctly', () => {
+  it('should parse concatenated rawText like TOMATE2K6$3000, TOMATE2KG$3000, and 1K6$1500 correctly', () => {
     const state: PipelineState = {
       detections: [
         {
           boundingBoxScore: 0.9,
           boundingBox: { x: 0, y: 0, width: 10, height: 10 },
           rawText: 'TOMATE2K6$3000',
+        },
+        {
+          boundingBoxScore: 0.9,
+          boundingBox: { x: 0, y: 0, width: 10, height: 10 },
+          rawText: 'TOMATE2KG$3000',
         },
         {
           boundingBoxScore: 0.9,
@@ -76,8 +81,12 @@ describe('DictionaryMatcherService', () => {
     expect(state.detections[0].quantity).toEqual({ quantity: 2, unit: 'kg' });
     expect(state.detections[0].price).toBe('$3000');
 
-    expect(state.detections[1].quantity).toEqual({ quantity: 1, unit: 'kg' });
-    expect(state.detections[1].price).toBe('$1500');
+    expect(state.detections[1].canonicalText).toBe('TOMATE');
+    expect(state.detections[1].quantity).toEqual({ quantity: 2, unit: 'kg' });
+    expect(state.detections[1].price).toBe('$3000');
+
+    expect(state.detections[2].quantity).toEqual({ quantity: 1, unit: 'kg' });
+    expect(state.detections[2].price).toBe('$1500');
   });
 
   it('should skip detections without rawText', () => {
