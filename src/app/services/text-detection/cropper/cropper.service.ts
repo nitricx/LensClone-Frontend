@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Detection } from './types';
-import { PipelineStage, PipelineState } from '../pipeline/pipeline-state';
-import { DEFAULT_PIPELINE_CONFIG, CropperConfig } from '../pipeline/pipeline-config.types';
+import { Detection } from '../types';
+import { PipelineStage, PipelineState } from '../../pipeline/pipeline-state';
+import { DEFAULT_PIPELINE_CONFIG, CropperConfig } from '../../pipeline/pipeline-config.types';
 
 @Injectable({
   providedIn: 'root',

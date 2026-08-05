@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
-import { TensorBufferPoolService } from '../tensor-buffer-pool.service';
+import { TensorBufferPoolService } from '../tensor-buffer-pool/tensor-buffer-pool.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +14,7 @@ export class DetectorPreprocessorService {
   private dstCanvas?: HTMLCanvasElement | OffscreenCanvas;
   private dstContext?: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
 
-  constructor(private readonly bufferPool: TensorBufferPoolService) {}
+  constructor(private readonly bufferPool: TensorBufferPoolService) { }
 
   toTensor(image: ImageData, maxSide?: number, scaleFactor?: number): ort.Tensor {
     if (
@@ -78,11 +78,11 @@ export class DetectorPreprocessorService {
         typeof OffscreenCanvas !== 'undefined'
           ? new OffscreenCanvas(srcW, srcH)
           : (() => {
-              const c = document.createElement('canvas');
-              c.width = srcW;
-              c.height = srcH;
-              return c;
-            })();
+            const c = document.createElement('canvas');
+            c.width = srcW;
+            c.height = srcH;
+            return c;
+          })();
       this.srcContext = this.srcCanvas.getContext('2d', { willReadFrequently: true }) as any;
     } else if (this.srcCanvas.width !== srcW || this.srcCanvas.height !== srcH) {
       this.srcCanvas.width = srcW;
@@ -94,11 +94,11 @@ export class DetectorPreprocessorService {
         typeof OffscreenCanvas !== 'undefined'
           ? new OffscreenCanvas(dstW, dstH)
           : (() => {
-              const c = document.createElement('canvas');
-              c.width = dstW;
-              c.height = dstH;
-              return c;
-            })();
+            const c = document.createElement('canvas');
+            c.width = dstW;
+            c.height = dstH;
+            return c;
+          })();
       this.dstContext = this.dstCanvas.getContext('2d', { willReadFrequently: true }) as any;
     } else if (this.dstCanvas.width !== dstW || this.dstCanvas.height !== dstH) {
       this.dstCanvas.width = dstW;

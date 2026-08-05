@@ -6,15 +6,15 @@ import { DetectorPostprocessorService } from '../text-detection/detector/detecto
 import { DetectorService } from '../text-detection/detector/detector.service';
 import { DetectorFilterService } from '../text-detection/detector/detector-filter.service';
 import { TrackerService } from '../text-detection/tracking/tracker.service';
-import { DetectorCropperService } from '../text-detection/cropper.service';
+import { DetectorCropperService } from '../text-detection/cropper/cropper.service';
 import { RecognitionPreprocessorService } from '../text-detection/recognition/recognition-preprocessor.service';
 import { RecognitionPostprocessorService } from '../text-detection/recognition/recognition-postprocessor.service';
 import { RecognitionService } from '../text-detection/recognition/recognition.service';
 import { WeightedLevenshteinService } from '../text-detection/dictionary/weighted-levenshtein.service';
 import { DictionaryMatcherService } from '../text-detection/dictionary/dictionary-matcher.service';
-import { LineGroupingService } from '../text-detection/line-grouping.service';
+import { LineGroupingService } from '../text-detection/line-grouping/line-grouping.service';
 import { OfferExtractorService } from '../text-detection/offer-extraction/offer-extractor.service';
-import { TensorBufferPoolService } from '../text-detection/tensor-buffer-pool.service';
+import { TensorBufferPoolService } from '../text-detection/tensor-buffer-pool/tensor-buffer-pool.service';
 import { PipelineState, PipelineStage } from './pipeline-state';
 import { DEFAULT_PIPELINE_CONFIG } from './pipeline-config.types';
 

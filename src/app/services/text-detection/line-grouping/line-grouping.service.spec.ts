@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { LineGroupingService } from './line-grouping.service';
-import { PipelineState } from '../pipeline/pipeline-state';
+import { PipelineState } from '../../pipeline/pipeline-state';
 
 describe('LineGroupingService', () => {
   let service: LineGroupingService;

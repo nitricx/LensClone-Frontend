@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as ort from 'onnxruntime-web';
-import { TensorBufferPoolService } from '../tensor-buffer-pool.service';
+import { TensorBufferPoolService } from '../tensor-buffer-pool/tensor-buffer-pool.service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,7 +18,7 @@ export class RecognitionPreprocessorService {
   private floatData?: Float32Array;
   private tensor?: ort.Tensor;
 
-  constructor(private readonly bufferPool: TensorBufferPoolService) {}
+  constructor(private readonly bufferPool: TensorBufferPoolService) { }
 
   initialize(inputHeight: number): void {
     this.inputHeight = inputHeight;
@@ -43,11 +43,11 @@ export class RecognitionPreprocessorService {
         typeof OffscreenCanvas !== 'undefined'
           ? new OffscreenCanvas(width, height)
           : (() => {
-              const c = document.createElement('canvas');
-              c.width = width;
-              c.height = height;
-              return c;
-            })();
+            const c = document.createElement('canvas');
+            c.width = width;
+            c.height = height;
+            return c;
+          })();
       this.sourceContext = this.sourceCanvas.getContext('2d', {
         willReadFrequently: true,
       }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
@@ -63,11 +63,11 @@ export class RecognitionPreprocessorService {
         typeof OffscreenCanvas !== 'undefined'
           ? new OffscreenCanvas(width, this.inputHeight)
           : (() => {
-              const c = document.createElement('canvas');
-              c.width = width;
-              c.height = this.inputHeight;
-              return c;
-            })();
+            const c = document.createElement('canvas');
+            c.width = width;
+            c.height = this.inputHeight;
+            return c;
+          })();
       this.targetContext = this.targetCanvas.getContext('2d', {
         willReadFrequently: true,
       }) as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;

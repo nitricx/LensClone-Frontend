@@ -1,4 +1,4 @@
-import { Detection } from './types';
+import { Detection } from '../types';
 
 const NON_PRODUCT_HEADERS = new Set([
   'OFERTAS',

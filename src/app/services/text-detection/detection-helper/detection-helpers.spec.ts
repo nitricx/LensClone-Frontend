@@ -5,7 +5,7 @@ import {
   isDetectionProduct,
   hasAllThreeProperties,
 } from './detection-helpers';
-import { Detection } from './types';
+import { Detection } from '../types';
 
 describe('detection-helpers', () => {
   it('should correctly identify price detections', () => {
