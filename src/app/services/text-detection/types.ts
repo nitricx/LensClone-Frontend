@@ -17,6 +17,7 @@ export interface ProductOffer {
   boundingBox: BoundingBox;
   detections: Detection[];
   coordinates?: GpsCoordinates;
+  priceRating?: number;
 }
 
 export interface Detection {

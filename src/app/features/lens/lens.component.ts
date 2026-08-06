@@ -15,6 +15,9 @@ import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { HistoryService, HistoryItem } from '../../services/history/history.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { OverlayComponent } from '../overlay/overlay.component';
+import { SettingsComponent } from '../settings/settings.component';
+import { PriceApiService } from '../../services/backend/price-api.service';
+import { isOfferComplete } from '../../services/text-detection/detection-helper/detection-helpers';
 
 export type ModalType =
   | 'none'
@@ -29,7 +32,7 @@ export type ModalType =
 @Component({
   selector: 'app-lens',
   standalone: true,
-  imports: [CommonModule, FormsModule, OverlayComponent],
+  imports: [CommonModule, FormsModule, OverlayComponent, SettingsComponent],
   templateUrl: './lens.component.html',
   styleUrl: './lens.component.css',
 })
@@ -62,9 +65,14 @@ export class LensComponent implements AfterViewInit, OnDestroy {
   private animationFrameId?: number;
   private isDestroyed = false;
 
+  // Fingerprint cooldown map: <fingerprint, timestampMs> (5-minute cooldown)
+  private readonly submittedFingerprints = new Map<string, number>();
+  private readonly SUBMISSION_COOLDOWN_MS = 5 * 60 * 1000;
+
   constructor(
     private readonly cameraService: CameraService,
     private readonly pipelineService: PipelineService,
+    private readonly priceApiService: PriceApiService,
     readonly historyService: HistoryService,
     readonly authService: AuthService,
   ) { }
@@ -125,7 +133,6 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     const video = this.videoElement.nativeElement;
 
     if (!this.isFrozen()) {
-      // Capture static frame before pausing camera feed
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
         this.captureContext.drawImage(
           video,
@@ -142,21 +149,51 @@ export class LensComponent implements AfterViewInit, OnDestroy {
         );
       }
 
-      // Freeze frame state
       this.cameraService.pause(video);
       this.isFrozen.set(true);
       this.frozenRefinementCount = 0;
       this.frozenConverged = false;
 
-      // Save initial frame capture to history
       this.saveHistoryCapture();
+      this.processCompleteOffersBackend();
     } else {
-      // Resume live state
       await this.cameraService.resume(video);
       this.isFrozen.set(false);
       this.frozenImageData = null;
       this.frozenRefinementCount = 0;
       this.frozenConverged = false;
+    }
+  }
+
+  private processCompleteOffersBackend(): void {
+    const offers = this.pipelineService.offers() || [];
+    const coords = this.pipelineService.state().coordinates;
+    const now = Date.now();
+
+    for (const offer of offers) {
+      if (isOfferComplete(offer) && offer.product && offer.price && coords) {
+        const rawPriceNum = Number.parseFloat(offer.price.replace(/[^0-9.]/g, ''));
+        if (!Number.isNaN(rawPriceNum)) {
+          // Always query real-time price comparison rating from Backend
+          this.priceApiService.comparePrice(offer.product, rawPriceNum, coords).subscribe((res) => {
+            if (res) {
+              offer.priceRating = res.rating;
+            }
+          });
+
+          // Generate unique product offer fingerprint (product + unit + price + rounded lat/lng)
+          const latKey = coords.latitude.toFixed(3);
+          const lngKey = coords.longitude.toFixed(3);
+          const qtyKey = offer.quantity ? `${offer.quantity.quantity}_${offer.quantity.unit}` : 'none';
+          const fingerprint = `${offer.product.toUpperCase().trim()}_${qtyKey}_${rawPriceNum}_${latKey}_${lngKey}`;
+
+          const lastSubmitted = this.submittedFingerprints.get(fingerprint);
+          if (!lastSubmitted || now - lastSubmitted >= this.SUBMISSION_COOLDOWN_MS) {
+            this.submittedFingerprints.set(fingerprint, now);
+            this.priceApiService.submitPrice(offer, coords).subscribe();
+          }
+        }
+      }
     }
   }
 
@@ -241,7 +278,6 @@ export class LensComponent implements AfterViewInit, OnDestroy {
 
     if (!this.detectionInProgress) {
       if (!this.isFrozen()) {
-        // LIVE FEED MODE: capture & execute live frame
         this.detectionInProgress = true;
         try {
           if (this.videoElement?.nativeElement?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -260,6 +296,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
               this.captureCanvas.height,
             );
             await this.pipelineService.execute(image);
+            this.processCompleteOffersBackend();
           }
         } catch (err) {
           console.warn('Error in detection loop execution:', err);
@@ -267,11 +304,11 @@ export class LensComponent implements AfterViewInit, OnDestroy {
           this.detectionInProgress = false;
         }
       } else if (!this.frozenConverged && this.frozenImageData) {
-        // FROZEN FRAME MODE: refine static image until convergence or max passes
         this.detectionInProgress = true;
         try {
           await this.pipelineService.execute(this.frozenImageData);
           this.frozenRefinementCount++;
+          this.processCompleteOffersBackend();
 
           const detections = this.pipelineService.detections() || [];
           const allSatisfied =
