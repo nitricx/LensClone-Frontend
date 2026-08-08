@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SettingsService } from '../../services/settings/settings.service';
@@ -11,9 +11,12 @@ import { SettingsService } from '../../services/settings/settings.service';
   styleUrl: './settings.component.css',
 })
 export class SettingsComponent {
+  @Input() inline = false;
+
   readonly settingsService = inject(SettingsService);
 
   readonly isOpen = signal(false);
+  readonly savedNotification = signal(false);
 
   // Form model values
   timeWindowDays = this.settingsService.timeWindowDays();
@@ -41,5 +44,7 @@ export class SettingsComponent {
       backendApiUrl: this.backendApiUrl,
     });
     this.closeModal();
+    this.savedNotification.set(true);
+    setTimeout(() => this.savedNotification.set(false), 3000);
   }
 }

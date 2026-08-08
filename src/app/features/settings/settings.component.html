@@ -1,74 +1,143 @@
-<!-- Cog Wheel Button Trigger -->
-<button class="settings-trigger-btn" (click)="openModal()" title="App Settings">
-  ⚙️
-</button>
+@if (inline) {
+  <div class="inline-settings-card">
+    <div class="settings-header">
+      <h2>⚙️ LensClone System Settings</h2>
+      <p class="settings-subtitle">Configure search parameters, historical time windows, and API connections.</p>
+    </div>
 
-<!-- Settings Modal Overlay -->
-@if (isOpen()) {
-  <div class="modal-backdrop" (click)="closeModal()">
-    <div class="modal-card" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>⚙️ LensClone Settings</h2>
-        <button class="close-btn" (click)="closeModal()">✕</button>
+    <div class="settings-body">
+      <!-- Time Window Option -->
+      <div class="form-group">
+        <label for="inline-timeWindow">Historical Time Window (Days)</label>
+        <select id="inline-timeWindow" [(ngModel)]="timeWindowDays">
+          <option [value]="7">7 Days</option>
+          <option [value]="14">14 Days</option>
+          <option [value]="30">30 Days</option>
+          <option [value]="90">90 Days</option>
+        </select>
+        <p class="field-hint">Compares scanned prices against submissions within this recent time period.</p>
       </div>
 
-      <div class="modal-body">
-        <!-- Time Window Option -->
-        <div class="form-group">
-          <label for="timeWindow">Historical Time Window (Days)</label>
-          <select id="timeWindow" [(ngModel)]="timeWindowDays">
-            <option [value]="7">7 Days</option>
-            <option [value]="14">14 Days</option>
-            <option [value]="30">30 Days</option>
-            <option [value]="90">90 Days</option>
-          </select>
-          <p class="field-hint">Compares scanned prices against submissions within this recent time period.</p>
-        </div>
-
-        <!-- Search Radius Option -->
-        <div class="form-group">
-          <label for="searchRadius">Geographic Radius (Km): {{ radiusKm }} km</label>
-          <input
-            type="range"
-            id="searchRadius"
-            min="1"
-            max="50"
-            step="1"
-            [(ngModel)]="radiusKm"
-          />
-          <p class="field-hint">Defines the search radius around your current location for price comparison.</p>
-        </div>
-
-        <!-- Price Tolerance Option -->
-        <div class="form-group">
-          <label for="tolerance">Price Rating Tolerance (%): ±{{ tolerancePercent }}%</label>
-          <input
-            type="range"
-            id="tolerance"
-            min="1"
-            max="25"
-            step="1"
-            [(ngModel)]="tolerancePercent"
-          />
-          <p class="field-hint">Prices within ±{{ tolerancePercent }}% of regional average are marked as Average.</p>
-        </div>
-
-        <!-- Backend API URL -->
-        <div class="form-group">
-          <label for="apiUrl">Backend API Base URL</label>
-          <input
-            type="text"
-            id="apiUrl"
-            [(ngModel)]="backendApiUrl"
-            placeholder="http://localhost:5000/api/v1/prices"
-          />
-        </div>
+      <!-- Search Radius Option -->
+      <div class="form-group">
+        <label for="inline-searchRadius">Geographic Radius (Km): {{ radiusKm }} km</label>
+        <input
+          type="range"
+          id="inline-searchRadius"
+          min="1"
+          max="50"
+          step="1"
+          [(ngModel)]="radiusKm"
+        />
+        <p class="field-hint">Defines the search radius around your current location for price comparison.</p>
       </div>
 
-      <div class="modal-footer">
-        <button class="cancel-btn" (click)="closeModal()">Cancel</button>
-        <button class="save-btn" (click)="saveSettings()">Save Preferences</button>
+      <!-- Price Tolerance Option -->
+      <div class="form-group">
+        <label for="inline-tolerance">Price Rating Tolerance (%): ±{{ tolerancePercent }}%</label>
+        <input
+          type="range"
+          id="inline-tolerance"
+          min="1"
+          max="25"
+          step="1"
+          [(ngModel)]="tolerancePercent"
+        />
+        <p class="field-hint">Prices within ±{{ tolerancePercent }}% of regional average are marked as Average.</p>
+      </div>
+
+      <!-- Backend API URL -->
+      <div class="form-group">
+        <label for="inline-apiUrl">Backend API Base URL</label>
+        <input
+          type="text"
+          id="inline-apiUrl"
+          [(ngModel)]="backendApiUrl"
+          placeholder="http://localhost:5000/api/v1/prices"
+        />
       </div>
     </div>
+
+    <div class="settings-footer">
+      @if (savedNotification()) {
+        <span class="saved-badge">✓ Preferences Saved</span>
+      }
+      <button class="save-btn" (click)="saveSettings()">Save Preferences</button>
+    </div>
   </div>
+} @else {
+  <!-- Cog Wheel Button Trigger -->
+  <button class="settings-trigger-btn" (click)="openModal()" title="App Settings">
+    ⚙️
+  </button>
+
+  <!-- Settings Modal Overlay -->
+  @if (isOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>⚙️ LensClone Settings</h2>
+          <button class="close-btn" (click)="closeModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Time Window Option -->
+          <div class="form-group">
+            <label for="timeWindow">Historical Time Window (Days)</label>
+            <select id="timeWindow" [(ngModel)]="timeWindowDays">
+              <option [value]="7">7 Days</option>
+              <option [value]="14">14 Days</option>
+              <option [value]="30">30 Days</option>
+              <option [value]="90">90 Days</option>
+            </select>
+            <p class="field-hint">Compares scanned prices against submissions within this recent time period.</p>
+          </div>
+
+          <!-- Search Radius Option -->
+          <div class="form-group">
+            <label for="searchRadius">Geographic Radius (Km): {{ radiusKm }} km</label>
+            <input
+              type="range"
+              id="searchRadius"
+              min="1"
+              max="50"
+              step="1"
+              [(ngModel)]="radiusKm"
+            />
+            <p class="field-hint">Defines the search radius around your current location for price comparison.</p>
+          </div>
+
+          <!-- Price Tolerance Option -->
+          <div class="form-group">
+            <label for="tolerance">Price Rating Tolerance (%): ±{{ tolerancePercent }}%</label>
+            <input
+              type="range"
+              id="tolerance"
+              min="1"
+              max="25"
+              step="1"
+              [(ngModel)]="tolerancePercent"
+            />
+            <p class="field-hint">Prices within ±{{ tolerancePercent }}% of regional average are marked as Average.</p>
+          </div>
+
+          <!-- Backend API URL -->
+          <div class="form-group">
+            <label for="apiUrl">Backend API Base URL</label>
+            <input
+              type="text"
+              id="apiUrl"
+              [(ngModel)]="backendApiUrl"
+              placeholder="http://localhost:5000/api/v1/prices"
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="cancel-btn" (click)="closeModal()">Cancel</button>
+          <button class="save-btn" (click)="saveSettings()">Save Preferences</button>
+        </div>
+      </div>
+    </div>
+  }
 }
