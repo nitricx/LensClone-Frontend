@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DebugComponent } from '../debug/debug.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { ShoppingListComponent } from '../shopping-list/shopping-list.component';
+import { PriceHeatmapComponent } from './price-heatmap/price-heatmap.component';
 import { DeviceService } from '../../services/device/device.service';
 
 export type DesktopTab = 'management' | 'shoppingList' | 'debug' | 'settings';
@@ -10,7 +11,7 @@ export type DesktopTab = 'management' | 'shoppingList' | 'debug' | 'settings';
 @Component({
   selector: 'app-desktop-dashboard',
   standalone: true,
-  imports: [CommonModule, DebugComponent, SettingsComponent, ShoppingListComponent],
+  imports: [CommonModule, DebugComponent, SettingsComponent, ShoppingListComponent, PriceHeatmapComponent],
   templateUrl: './desktop-dashboard.component.html',
   styleUrl: './desktop-dashboard.component.css',
 })
