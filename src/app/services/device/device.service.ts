@@ -6,9 +6,10 @@ export type DeviceMode = 'auto' | 'mobile' | 'desktop';
   providedIn: 'root',
 })
 export class DeviceService {
-  private readonly isMobileQuery = typeof window !== 'undefined'
-    ? window.matchMedia('(max-width: 768px)')
-    : null;
+  private readonly isMobileQuery =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 768px)')
+      : null;
 
   private readonly systemIsMobile = signal<boolean>(
     this.isMobileQuery ? this.isMobileQuery.matches : false
