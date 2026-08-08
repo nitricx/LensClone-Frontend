@@ -1,16 +1,12 @@
-@if (tab() === 'lens') {
-  <app-lens (openDebug)="showDebug()" />
+@if (deviceService.isMobile()) {
+  <!-- Mobile Viewport: Camera Feed & Mobile Settings -->
+  <main class="mobile-viewport">
+    <app-lens />
+  </main>
 } @else {
-  <div class="debug-container">
-    <header class="debug-header">
-      <button type="button" class="back-btn" (click)="showLens()">
-        <span class="material-symbols-rounded">arrow_back</span>
-        <span>Back to Lens</span>
-      </button>
-      <h2>Debug Diagnostics</h2>
-    </header>
-    <main class="debug-content">
-      <app-debug />
-    </main>
-  </div>
+  <!-- Desktop Viewport: Workspace, Price Analytics & Debug Diagnostics -->
+  <main class="desktop-viewport">
+    <app-desktop-dashboard />
+  </main>
 }
+
