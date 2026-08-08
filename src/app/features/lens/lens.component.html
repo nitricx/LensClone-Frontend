@@ -103,6 +103,13 @@
           <span>Terms of service</span>
         </button>
         <div class="menu-divider"></div>
+        @if (deviceService.isDesktopSystem()) {
+          <button type="button" class="menu-item" (click)="switchToDesktopView()">
+            <span class="material-symbols-rounded">desktop_windows</span>
+            <span>Switch to Desktop View</span>
+          </button>
+          <div class="menu-divider"></div>
+        }
         <button type="button" class="menu-item debug-item" (click)="triggerDebug()">
           <span class="material-symbols-rounded">bug_report</span>
           <span>Debug Diagnostics</span>

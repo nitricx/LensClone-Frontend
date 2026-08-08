@@ -33,6 +33,7 @@ export class RecognitionService implements PipelineStage {
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['webgpu', 'wasm'],
       graphOptimizationLevel: 'all',
+      logSeverityLevel: 3,
     });
     this.preprocessor.initialize(48);
     this.dictionary = (await fetch('/models/dictionary.txt').then((r) => r.text()))

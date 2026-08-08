@@ -32,6 +32,7 @@ export class DetectorService implements PipelineStage {
     this.session = await ort.InferenceSession.create(buffer, {
       executionProviders: ['webgpu', 'wasm'],
       graphOptimizationLevel: 'all',
+      logSeverityLevel: 3,
     });
   }
 

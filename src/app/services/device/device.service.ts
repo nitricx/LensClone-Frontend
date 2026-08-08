@@ -25,6 +25,7 @@ export class DeviceService {
   });
 
   readonly isDesktop = computed<boolean>(() => !this.isMobile());
+  readonly isDesktopSystem = computed<boolean>(() => !this.systemIsMobile());
 
   constructor() {
     if (this.isMobileQuery) {

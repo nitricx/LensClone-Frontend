@@ -14,6 +14,7 @@ import { CameraService } from '../../services/camera/camera.service';
 import { PipelineService } from '../../services/pipeline/pipeline.service';
 import { HistoryService, HistoryItem } from '../../services/history/history.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { DeviceService } from '../../services/device/device.service';
 import { OverlayComponent } from '../overlay/overlay.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { ShoppingListComponent } from '../shopping-list/shopping-list.component';
@@ -77,6 +78,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     private readonly priceApiService: PriceApiService,
     readonly historyService: HistoryService,
     readonly authService: AuthService,
+    readonly deviceService: DeviceService,
   ) { }
 
   async ngAfterViewInit(): Promise<void> {
@@ -232,6 +234,11 @@ export class LensComponent implements AfterViewInit, OnDestroy {
     } else {
       this.openModal('menu');
     }
+  }
+
+  switchToDesktopView(): void {
+    this.closeModal();
+    this.deviceService.setForcedMode('auto');
   }
 
   signInGoogle(): void {
