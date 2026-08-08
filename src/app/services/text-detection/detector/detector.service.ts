@@ -19,6 +19,7 @@ export class DetectorService implements PipelineStage {
 
   async initialize?(): Promise<void> {
     if (ort?.env?.wasm) {
+      ort.env.logLevel = 'error';
       ort.env.wasm.proxy = false;
       ort.env.wasm.numThreads =
         typeof navigator !== 'undefined' && navigator.hardwareConcurrency

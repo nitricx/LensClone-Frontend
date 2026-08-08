@@ -57,6 +57,7 @@ addEventListener('message', async (event: MessageEvent) => {
       const concurrency = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4;
       ort.env.wasm.numThreads = Math.min(4, concurrency);
       if (ort?.env?.wasm) {
+        ort.env.logLevel = 'error';
         ort.env.wasm.wasmPaths = '/assets/ort/';
       }
 
