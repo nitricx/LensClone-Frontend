@@ -51,6 +51,7 @@ describe('LensComponent', () => {
       execute: vi.fn(),
       state: stateSignal,
       detections: computed(() => stateSignal().detections),
+      offers: computed(() => stateSignal().offers ?? []),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

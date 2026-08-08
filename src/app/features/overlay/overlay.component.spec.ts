@@ -36,6 +36,7 @@ describe('OverlayComponent', () => {
       cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
       hasDetections: computed(() => (stateSignal().detections || []).length > 0),
       groupedLines: computed(() => []),
+      offers: computed(() => stateSignal().offers ?? []),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,

@@ -24,6 +24,7 @@ describe('BoundingBoxRendererService', () => {
       strokeRect: vi.fn(),
       fillRect: vi.fn(),
       fillText: vi.fn(),
+      setLineDash: vi.fn(),
       measureText: vi.fn().mockReturnValue({ width: 50 }),
       lineWidth: 0,
       strokeStyle: '',

@@ -18,6 +18,7 @@ describe('DebugComponent', () => {
       strokeRect: vi.fn(),
       fillRect: vi.fn(),
       fillText: vi.fn(),
+      setLineDash: vi.fn(),
       measureText: vi.fn().mockReturnValue({ width: 50 }),
       drawImage: vi.fn(),
       getImageData: vi.fn(),
@@ -40,6 +41,7 @@ describe('DebugComponent', () => {
       cropsCount: computed(() => (stateSignal().detections || []).filter((d: any) => !!d.crop).length),
       hasDetections: computed(() => (stateSignal().detections || []).length > 0),
       groupedLines: computed(() => []),
+      offers: computed(() => stateSignal().offers ?? []),
       debugSettings: signal({
         croppedRegions: true,
         boundingBoxes: true,
