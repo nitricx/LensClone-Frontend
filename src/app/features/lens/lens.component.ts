@@ -16,6 +16,7 @@ import { HistoryService, HistoryItem } from '../../services/history/history.serv
 import { AuthService } from '../../services/auth/auth.service';
 import { OverlayComponent } from '../overlay/overlay.component';
 import { SettingsComponent } from '../settings/settings.component';
+import { ShoppingListComponent } from '../shopping-list/shopping-list.component';
 import { PriceApiService } from '../../services/backend/price-api.service';
 import { isOfferComplete } from '../../services/text-detection/detection-helper/detection-helpers';
 
@@ -23,6 +24,7 @@ export type ModalType =
   | 'none'
   | 'menu'
   | 'history'
+  | 'shoppingList'
   | 'feedback'
   | 'permissions'
   | 'privacy'
@@ -32,7 +34,7 @@ export type ModalType =
 @Component({
   selector: 'app-lens',
   standalone: true,
-  imports: [CommonModule, FormsModule, OverlayComponent, SettingsComponent],
+  imports: [CommonModule, FormsModule, OverlayComponent, SettingsComponent, ShoppingListComponent],
   templateUrl: './lens.component.html',
   styleUrl: './lens.component.css',
 })

@@ -22,6 +22,15 @@
       <button 
         type="button" 
         class="nav-tab" 
+        [class.active]="activeTab() === 'shoppingList'"
+        (click)="setTab('shoppingList')">
+        <span class="material-symbols-rounded">shopping_bag</span>
+        <span>Shopping List & Budget</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="nav-tab" 
         [class.active]="activeTab() === 'debug'"
         (click)="setTab('debug')">
         <span class="material-symbols-rounded">bug_report</span>
@@ -127,6 +136,12 @@
               <p>Geolocated price heatmap visualization active within 10km radius</p>
             </div>
           </div>
+        </section>
+      }
+
+      @case ('shoppingList') {
+        <section class="tab-panel shopping-list-panel">
+          <app-shopping-list />
         </section>
       }
 

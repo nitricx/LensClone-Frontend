@@ -2,14 +2,15 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DebugComponent } from '../debug/debug.component';
 import { SettingsComponent } from '../settings/settings.component';
+import { ShoppingListComponent } from '../shopping-list/shopping-list.component';
 import { DeviceService } from '../../services/device/device.service';
 
-export type DesktopTab = 'management' | 'debug' | 'settings';
+export type DesktopTab = 'management' | 'shoppingList' | 'debug' | 'settings';
 
 @Component({
   selector: 'app-desktop-dashboard',
   standalone: true,
-  imports: [CommonModule, DebugComponent, SettingsComponent],
+  imports: [CommonModule, DebugComponent, SettingsComponent, ShoppingListComponent],
   templateUrl: './desktop-dashboard.component.html',
   styleUrl: './desktop-dashboard.component.css',
 })

@@ -35,6 +35,17 @@
 
       <!-- Action Controls (Right) -->
       <div class="control-right">
+        <!-- Shopping List Button -->
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="openModal('shoppingList')"
+          aria-label="Shopping List & Budget"
+          title="Shopping List & Budget Estimator"
+        >
+          <span class="material-symbols-rounded">shopping_bag</span>
+        </button>
+
         <!-- Settings Modal Component -->
         <app-settings />
 
@@ -375,6 +386,21 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="primary-modal-btn" (click)="closeModal()">Close</button>
+        </div>
+      </div>
+    }
+
+    <!-- Shopping List & Budget Estimator Modal -->
+    @if (activeModal() === 'shoppingList') {
+      <div class="modal-sheet shopping-list-modal-sheet" role="dialog" aria-label="Shopping List & Budget Estimator">
+        <div class="modal-header">
+          <h2>Shopping List & Budget Estimator</h2>
+          <button type="button" class="close-btn" (click)="closeModal()">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body scrollable-modal-body">
+          <app-shopping-list />
         </div>
       </div>
     }
