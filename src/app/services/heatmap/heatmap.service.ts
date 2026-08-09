@@ -8,6 +8,8 @@ export interface StoreLocation {
   zoneId: string;
   latOffset: number; // Offset relative to center (-0.05 to +0.05)
   lngOffset: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface GeographicZone {
@@ -18,6 +20,9 @@ export interface GeographicZone {
   description: string;
   stores: StoreLocation[];
   priceMultiplier: number; // Regional price index multiplier (e.g. 0.88 = 12% cheaper, 1.15 = 15% pricier)
+  centerLat?: number;
+  centerLng?: number;
+  radiusMeters?: number;
 }
 
 export interface ProductPriceSample {
@@ -44,6 +49,10 @@ export interface ZoneGrocerySummary {
   providedIn: 'root',
 })
 export class HeatmapService {
+  // Center Coordinates: San Isidro / Northern Greater Buenos Aires region (34°29'54.1"S 58°29'51.1"W)
+  readonly CENTER_LAT = -34.498361;
+  readonly CENTER_LNG = -58.497528;
+
   // Pre-configured Monitored Regional Zones
   readonly zones = signal<GeographicZone[]>([
     {
@@ -53,9 +62,12 @@ export class HeatmapService {
       color: '#10b981', // Emerald / Best value default
       description: 'High competition bulk discount retail zone',
       priceMultiplier: 0.88, // 12% cheaper on average
+      centerLat: -34.498361 + 0.038,
+      centerLng: -58.497528 - 0.003,
+      radiusMeters: 3800,
       stores: [
-        { id: 's1', name: 'FreshMarket North', chain: 'FreshMarket', zoneId: 'zone_north', latOffset: 0.035, lngOffset: 0.012 },
-        { id: 's2', name: 'MegaMart Outlet', chain: 'MegaMart', zoneId: 'zone_north', latOffset: 0.042, lngOffset: -0.018 },
+        { id: 's1', name: 'FreshMarket North', chain: 'FreshMarket', zoneId: 'zone_north', latOffset: 0.035, lngOffset: 0.012, lat: -34.498361 + 0.035, lng: -58.497528 + 0.012 },
+        { id: 's2', name: 'MegaMart Outlet', chain: 'MegaMart', zoneId: 'zone_north', latOffset: 0.042, lngOffset: -0.018, lat: -34.498361 + 0.042, lng: -58.497528 - 0.018 },
       ],
     },
     {
@@ -65,9 +77,12 @@ export class HeatmapService {
       color: '#06b6d4', // Cyan / Good value
       description: 'Suburban supermarket district with moderate prices',
       priceMultiplier: 0.94, // 6% cheaper
+      centerLat: -34.498361 - 0.005,
+      centerLng: -58.497528 - 0.040,
+      radiusMeters: 3600,
       stores: [
-        { id: 's3', name: 'DiscountPlaza West', chain: 'DiscountPlaza', zoneId: 'zone_west', latOffset: 0.005, lngOffset: -0.041 },
-        { id: 's4', name: 'ValueFoods Park', chain: 'ValueFoods', zoneId: 'zone_west', latOffset: -0.015, lngOffset: -0.038 },
+        { id: 's3', name: 'DiscountPlaza West', chain: 'DiscountPlaza', zoneId: 'zone_west', latOffset: 0.005, lngOffset: -0.041, lat: -34.498361 + 0.005, lng: -58.497528 - 0.041 },
+        { id: 's4', name: 'ValueFoods Park', chain: 'ValueFoods', zoneId: 'zone_west', latOffset: -0.015, lngOffset: -0.038, lat: -34.498361 - 0.015, lng: -58.497528 - 0.038 },
       ],
     },
     {
@@ -77,9 +92,12 @@ export class HeatmapService {
       color: '#f59e0b', // Amber / Average
       description: 'Convenient downtown grocery hubs',
       priceMultiplier: 1.05, // 5% above average
+      centerLat: -34.498361 - 0.003,
+      centerLng: -58.497528 - 0.001,
+      radiusMeters: 2800,
       stores: [
-        { id: 's5', name: 'MetroGrocer Express', chain: 'MetroGrocer', zoneId: 'zone_central', latOffset: 0.002, lngOffset: 0.003 },
-        { id: 's6', name: 'OrganicCorner Center', chain: 'OrganicCorner', zoneId: 'zone_central', latOffset: -0.008, lngOffset: -0.004 },
+        { id: 's5', name: 'MetroGrocer Express', chain: 'MetroGrocer', zoneId: 'zone_central', latOffset: 0.002, lngOffset: 0.003, lat: -34.498361 + 0.002, lng: -58.497528 + 0.003 },
+        { id: 's6', name: 'OrganicCorner Center', chain: 'OrganicCorner', zoneId: 'zone_central', latOffset: -0.008, lngOffset: -0.004, lat: -34.498361 - 0.008, lng: -58.497528 - 0.004 },
       ],
     },
     {
@@ -89,9 +107,12 @@ export class HeatmapService {
       color: '#ef4444', // Red / Premium prices
       description: 'Premium organic gourmet markets and express stores',
       priceMultiplier: 1.16, // 16% above average
+      centerLat: -34.498361 - 0.041,
+      centerLng: -58.497528 + 0.016,
+      radiusMeters: 3700,
       stores: [
-        { id: 's7', name: 'SuperSave Premium', chain: 'SuperSave', zoneId: 'zone_south', latOffset: -0.038, lngOffset: 0.025 },
-        { id: 's8', name: 'EcoMart South', chain: 'EcoMart', zoneId: 'zone_south', latOffset: -0.045, lngOffset: 0.008 },
+        { id: 's7', name: 'SuperSave Premium', chain: 'SuperSave', zoneId: 'zone_south', latOffset: -0.038, lngOffset: 0.025, lat: -34.498361 - 0.038, lng: -58.497528 + 0.025 },
+        { id: 's8', name: 'EcoMart South', chain: 'EcoMart', zoneId: 'zone_south', latOffset: -0.045, lngOffset: 0.008, lat: -34.498361 - 0.045, lng: -58.497528 + 0.008 },
       ],
     },
   ]);
