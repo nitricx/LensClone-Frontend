@@ -28,8 +28,8 @@ describe('PriceHeatmapComponent', () => {
     expect(component.activeMode()).toBe('categoryFilter');
   });
 
-  it('should calculate zone summaries and identify best zone', () => {
-    const best = component.bestZone();
+  it('should calculate store summaries and identify best store', () => {
+    const best = component.bestStore();
     expect(best).toBeTruthy();
     expect(best?.status).toBe('best');
   });

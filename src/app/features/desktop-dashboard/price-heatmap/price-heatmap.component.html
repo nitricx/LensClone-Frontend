@@ -5,8 +5,8 @@
       <div class="title-group">
         <span class="material-symbols-rounded map-icon">map</span>
         <div>
-          <h3>Regional Price Heatmap & Zone Optimizer</h3>
-          <p class="subtitle">Geolocated price distribution within 10km radius</p>
+          <h3>Geolocated Store Price Heatmap & GPS Optimizer</h3>
+          <p class="subtitle">Real-time store prices associated with exact GPS coordinates</p>
         </div>
       </div>
 
@@ -50,10 +50,10 @@
               <span class="material-symbols-rounded">checklist</span>
               <span>Analyzing <strong>{{ shoppingItems().length }} items</strong> from Active Shopping List</span>
             </span>
-            @if (bestZone(); as best) {
+            @if (bestStore(); as best) {
               <span class="recommendation-pill">
                 <span class="material-symbols-rounded">verified</span>
-                <span>Best Buying Zone: <strong>{{ best.zoneName }}</strong> (Save {{ best.savingsPercentage }}%)</span>
+                <span>Best Buying Store: <strong>{{ best.storeName }}</strong> (Save {{ best.savingsPercentage }}%)</span>
               </span>
             }
           </div>
@@ -94,45 +94,13 @@
     </div>
   </div>
 
-  <!-- Main Grid: SVG Map Visualizer + Zone Breakdown Cards -->
+  <!-- Main Grid: Leaflet Store Map Visualizer + Store Breakdown Cards -->
   <div class="heatmap-body">
     <!-- Interactive Leaflet Map Visualizer -->
     <div class="map-card">
       <div class="map-header">
         <div class="map-title">
-          <h4><span class="material-symbols-rounded">explore</span> Interactive Regional Zone Map</h4>
-          <!-- Tile Provider Switcher -->
-          <div class="tile-switcher-group">
-            <span class="tile-label">Map Style:</span>
-            <button 
-              type="button" 
-              class="tile-btn" 
-              [class.active]="activeTileProvider() === 'googleRoad'"
-              (click)="setTileProvider('googleRoad')">
-              Google Maps
-            </button>
-            <button 
-              type="button" 
-              class="tile-btn" 
-              [class.active]="activeTileProvider() === 'googleSat'"
-              (click)="setTileProvider('googleSat')">
-              Satellite
-            </button>
-            <button 
-              type="button" 
-              class="tile-btn" 
-              [class.active]="activeTileProvider() === 'osm'"
-              (click)="setTileProvider('osm')">
-              OpenStreetMap
-            </button>
-            <button 
-              type="button" 
-              class="tile-btn" 
-              [class.active]="activeTileProvider() === 'cartoDark'"
-              (click)="setTileProvider('cartoDark')">
-              Dark Mode
-            </button>
-          </div>
+          <h4><span class="material-symbols-rounded">explore</span> Interactive Supermarket GPS Map</h4>
         </div>
 
         <div class="legend">
@@ -147,64 +115,67 @@
       </div>
     </div>
 
-    <!-- Zone Analytics & Grocery List Basket Rankings -->
+    <!-- Store Analytics & Grocery List Basket Rankings -->
     <div class="rankings-panel">
       <div class="panel-header">
         <h4>
           <span class="material-symbols-rounded">bar_chart</span>
           @if (activeMode() === 'groceryList') {
-            Grocery List Basket Price by Zone
+            Grocery Basket Total by Store GPS Location
           } @else if (activeMode() === 'productFilter') {
-            Product Price Comparison by Zone
+            Product Price by Store GPS Location
           } @else {
-            Category Price Index by Zone
+            Category Price Index by Store GPS Location
           }
         </h4>
         <span class="sub-text">Sorted by lowest cost</span>
       </div>
 
-      <div class="zones-list">
-        @for (zone of zoneSummaries(); track zone.zoneId) {
+      <div class="stores-list">
+        @for (store of storeSummaries(); track store.storeId) {
           <div 
-            class="zone-card" 
-            [class.highlight]="zone.status === 'best'"
-            [class.selected]="selectedZoneId() === zone.zoneId"
-            (click)="selectZone(zone.zoneId)">
+            class="store-card" 
+            [class.highlight]="store.status === 'best'"
+            [class.selected]="selectedStoreId() === store.storeId"
+            (click)="selectStore(store.storeId)">
             
-            <div class="zone-card-header">
+            <div class="store-card-header">
               <div class="name-badge-group">
-                <span class="status-indicator" [class]="zone.status"></span>
-                <span class="zone-name">{{ zone.zoneName }}</span>
+                <span class="status-indicator" [class]="store.status"></span>
+                <div class="title-sub">
+                  <span class="store-name">{{ store.storeName }}</span>
+                  <span class="store-address">{{ store.address }}</span>
+                </div>
               </div>
               
-              @if (zone.status === 'best') {
-                <span class="best-badge">Best Zone</span>
+              @if (store.status === 'best') {
+                <span class="best-badge">Best Store</span>
               }
             </div>
 
-            <div class="zone-card-body">
+            <div class="store-card-body">
               <div class="metric">
                 <span class="label">
                   @if (activeMode() === 'groceryList') { Estimated Basket Total } @else { Unit / Category Avg }
                 </span>
-                <span class="value">${{ zone.estimatedBasketTotal.toFixed(2) }}</span>
+                <span class="value">${{ store.estimatedBasketTotal.toFixed(2) }}</span>
               </div>
 
               <div class="metric">
                 <span class="label">Price vs City Avg</span>
-                <span class="savings-tag" [class.positive]="zone.savingsPercentage >= 0" [class.negative]="zone.savingsPercentage < 0">
-                  @if (zone.savingsPercentage >= 0) {
-                    -{{ zone.savingsPercentage }}% cheaper
+                <span class="savings-tag" [class.positive]="store.savingsPercentage >= 0" [class.negative]="store.savingsPercentage < 0">
+                  @if (store.savingsPercentage >= 0) {
+                    -{{ store.savingsPercentage }}% cheaper
                   } @else {
-                    +{{ mathAbs(zone.savingsPercentage) }}% higher
+                    +{{ mathAbs(store.savingsPercentage) }}% higher
                   }
                 </span>
               </div>
             </div>
 
-            <div class="stores-footer">
-              <span class="material-symbols-rounded store-icon">storefront</span>
-              <span class="store-count">{{ zone.storesCount }} Monitored Stores</span>
+            <div class="gps-footer">
+              <span class="material-symbols-rounded location-icon">my_location</span>
+              <span class="gps-coords">GPS: {{ store.lat.toFixed(4) }}, {{ store.lng.toFixed(4) }}</span>
             </div>
           </div>
         }

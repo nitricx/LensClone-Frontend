@@ -1,22 +1,34 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DebugComponent } from '../debug/debug.component';
 import { SettingsComponent } from '../settings/settings.component';
 import { ShoppingListComponent } from '../shopping-list/shopping-list.component';
 import { PriceHeatmapComponent } from './price-heatmap/price-heatmap.component';
+import { LocationPermissionModalComponent } from '../location-permission-modal/location-permission-modal.component';
 import { DeviceService } from '../../services/device/device.service';
+import { LocationService } from '../../services/location/location.service';
 
 export type DesktopTab = 'management' | 'shoppingList' | 'debug' | 'settings';
 
 @Component({
   selector: 'app-desktop-dashboard',
   standalone: true,
-  imports: [CommonModule, DebugComponent, SettingsComponent, ShoppingListComponent, PriceHeatmapComponent],
+  imports: [
+    CommonModule,
+    DebugComponent,
+    SettingsComponent,
+    ShoppingListComponent,
+    PriceHeatmapComponent,
+    LocationPermissionModalComponent,
+  ],
   templateUrl: './desktop-dashboard.component.html',
   styleUrl: './desktop-dashboard.component.css',
 })
 export class DesktopDashboardComponent {
   readonly activeTab = signal<DesktopTab>('management');
+  readonly showLocationModal = signal<boolean>(false);
+
+  readonly locationService = inject(LocationService);
 
   // Sample analytics data for PC management view
   readonly recentUploads = signal([
@@ -29,5 +41,13 @@ export class DesktopDashboardComponent {
 
   setTab(tab: DesktopTab): void {
     this.activeTab.set(tab);
+  }
+
+  openLocationModal(): void {
+    this.showLocationModal.set(true);
+  }
+
+  closeLocationModal(): void {
+    this.showLocationModal.set(false);
   }
 }

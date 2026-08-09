@@ -1,6 +1,10 @@
 import { Injectable, OnDestroy, signal } from '@angular/core';
 import { GpsCoordinates } from '../text-detection/types';
 
+export type LocationAccuracyMode = 'precise' | 'approximate';
+
+const STORAGE_KEY_ACCURACY_MODE = 'lensclone_location_accuracy_mode';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -11,18 +15,48 @@ export class LocationService implements OnDestroy {
   private readonly _isTracking = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
   private readonly _permissionStatus = signal<PermissionState | 'unknown'>('unknown');
+  private readonly _accuracyMode = signal<LocationAccuracyMode>('approximate');
+  private readonly _promptDismissed = signal<boolean>(false);
 
   readonly coordinates = this._coordinates.asReadonly();
   readonly isTracking = this._isTracking.asReadonly();
   readonly error = this._error.asReadonly();
   readonly permissionStatus = this._permissionStatus.asReadonly();
+  readonly accuracyMode = this._accuracyMode.asReadonly();
+  readonly promptDismissed = this._promptDismissed.asReadonly();
 
   constructor() {
+    this.loadSavedMode();
     this.checkPermissions();
   }
 
   ngOnDestroy(): void {
     this.stopTracking();
+  }
+
+  private loadSavedMode(): void {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY_ACCURACY_MODE) as LocationAccuracyMode | null;
+      if (saved === 'precise' || saved === 'approximate') {
+        this._accuracyMode.set(saved);
+      }
+    }
+  }
+
+  setAccuracyMode(mode: LocationAccuracyMode): void {
+    this._accuracyMode.set(mode);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_ACCURACY_MODE, mode);
+    }
+
+    if (this._isTracking()) {
+      this.stopTracking();
+      this.startTracking();
+    }
+  }
+
+  setPromptDismissed(dismissed: boolean): void {
+    this._promptDismissed.set(dismissed);
   }
 
   startTracking(options?: PositionOptions): void {
@@ -35,14 +69,13 @@ export class LocationService implements OnDestroy {
       return;
     }
 
+    const currentMode = this._accuracyMode();
     const defaultOptions: PositionOptions = {
-      enableHighAccuracy: false, // Security constraint: approximate location only
+      enableHighAccuracy: currentMode === 'precise',
       timeout: 10000,
-      maximumAge: 30000,
+      maximumAge: currentMode === 'precise' ? 5000 : 30000,
       ...options,
-      // Force enableHighAccuracy to false for security requirement
     };
-    defaultOptions.enableHighAccuracy = false;
 
     this._isTracking.set(true);
     this._error.set(null);
@@ -83,19 +116,31 @@ export class LocationService implements OnDestroy {
   }
 
   private handleSuccess(position: GeolocationPosition): void {
-    const { latitude, longitude } = this.roundToApproximate(
-      position.coords.latitude,
-      position.coords.longitude,
-    );
+    const currentMode = this._accuracyMode();
+    const isPrecise = currentMode === 'precise';
 
-    const approxCoords: GpsCoordinates = {
+    let latitude: number;
+    let longitude: number;
+
+    if (isPrecise) {
+      latitude = position.coords.latitude;
+      longitude = position.coords.longitude;
+    } else {
+      const rounded = this.roundToApproximate(position.coords.latitude, position.coords.longitude);
+      latitude = rounded.latitude;
+      longitude = rounded.longitude;
+    }
+
+    const gpsCoords: GpsCoordinates = {
       latitude,
       longitude,
-      isApproximate: true,
+      isApproximate: !isPrecise,
+      accuracyMode: currentMode,
+      accuracyMeters: Math.round(position.coords.accuracy),
       timestamp: position.timestamp,
     };
 
-    this._coordinates.set(approxCoords);
+    this._coordinates.set(gpsCoords);
     this._error.set(null);
     this._permissionStatus.set('granted');
   }

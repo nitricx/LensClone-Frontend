@@ -5,6 +5,8 @@ export interface GpsCoordinates {
   latitude: number;
   longitude: number;
   isApproximate: boolean;
+  accuracyMode?: 'precise' | 'approximate';
+  accuracyMeters?: number;
   timestamp?: number;
 }
 

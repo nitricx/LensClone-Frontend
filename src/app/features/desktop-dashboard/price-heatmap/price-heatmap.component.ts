@@ -2,11 +2,10 @@ import { Component, signal, computed, ElementRef, ViewChild, AfterViewInit, OnDe
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
-import { HeatmapService, GeographicZone, ZoneGrocerySummary, StoreLocation } from '../../../services/heatmap/heatmap.service';
+import { HeatmapService, StoreGrocerySummary, StoreLocation } from '../../../services/heatmap/heatmap.service';
 import { ShoppingListService, ShoppingListItem } from '../../../services/shopping-list/shopping-list.service';
 
 export type HeatmapMode = 'groceryList' | 'productFilter' | 'categoryFilter';
-export type TileProvider = 'googleRoad' | 'osm' | 'googleSat' | 'cartoDark';
 
 @Component({
   selector: 'app-price-heatmap',
@@ -21,13 +20,10 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
   readonly activeMode = signal<HeatmapMode>('groceryList');
   readonly selectedProductId = signal<string>('p1');
   readonly selectedCategoryName = signal<string>('Dairy');
-  readonly selectedZoneId = signal<string | null>(null);
-  readonly activeTileProvider = signal<TileProvider>('googleRoad');
+  readonly selectedStoreId = signal<string | null>(null);
 
   // Leaflet Map & Layer References
   private map?: L.Map;
-  private currentTileLayer?: L.TileLayer;
-  private zoneOverlayGroup: L.LayerGroup = L.layerGroup();
   private storeMarkersGroup: L.LayerGroup = L.layerGroup();
   private userRadiusGroup: L.LayerGroup = L.layerGroup();
 
@@ -45,12 +41,12 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
     return this.productCatalog().filter((p) => p.category === cat);
   });
 
-  // Calculate zone scores based on active mode
-  readonly zoneSummaries = computed<ZoneGrocerySummary[]>(() => {
+  // Calculate store scores based on active mode
+  readonly storeSummaries = computed<StoreGrocerySummary[]>(() => {
     const mode = this.activeMode();
 
     if (mode === 'groceryList') {
-      return this.heatmapService.calculateListZoneSummaries(this.shoppingItems());
+      return this.heatmapService.calculateStoreSummaries(this.shoppingItems());
     }
 
     if (mode === 'productFilter') {
@@ -63,7 +59,7 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
           estimatedUnitPrice: prod.basePrice,
         },
       ];
-      return this.heatmapService.calculateListZoneSummaries(syntheticItems);
+      return this.heatmapService.calculateStoreSummaries(syntheticItems);
     }
 
     // Category Filter Mode
@@ -75,11 +71,11 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
       estimatedUnitPrice: p.basePrice,
     }));
 
-    return this.heatmapService.calculateListZoneSummaries(categorySyntheticItems);
+    return this.heatmapService.calculateStoreSummaries(categorySyntheticItems);
   });
 
-  readonly bestZone = computed(() => {
-    const sorted = this.zoneSummaries();
+  readonly bestStore = computed(() => {
+    const sorted = this.storeSummaries();
     return sorted.length > 0 ? sorted[0] : null;
   });
 
@@ -89,12 +85,10 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
   ) {
     // Angular signal effect to sync map overlays with state changes
     effect(() => {
-      const summaries = this.zoneSummaries();
-      const selectedId = this.selectedZoneId();
-      const tileProvider = this.activeTileProvider();
+      const summaries = this.storeSummaries();
+      const selectedId = this.selectedStoreId();
 
       if (this.map) {
-        this.updateTileLayer(tileProvider);
         this.renderMapLayers(summaries, selectedId);
       }
     });
@@ -124,55 +118,23 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
       attributionControl: false,
     });
 
+    // Google Maps Tile Layer
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 19,
+    }).addTo(this.map);
+
     // Add layer groups to map
-    this.zoneOverlayGroup.addTo(this.map);
     this.storeMarkersGroup.addTo(this.map);
     this.userRadiusGroup.addTo(this.map);
 
-    // Initial tile layer setup & layer render
-    this.updateTileLayer(this.activeTileProvider());
+    // Initial layer render
     this.renderUserLocationAndRadius(centerLat, centerLng);
-    this.renderMapLayers(this.zoneSummaries(), this.selectedZoneId());
+    this.renderMapLayers(this.storeSummaries(), this.selectedStoreId());
 
     // Invalidate size after init to ensure full canvas fit
     setTimeout(() => {
       this.map?.invalidateSize();
     }, 200);
-  }
-
-  setTileProvider(provider: TileProvider): void {
-    this.activeTileProvider.set(provider);
-  }
-
-  private updateTileLayer(provider: TileProvider): void {
-    if (!this.map) return;
-
-    if (this.currentTileLayer) {
-      this.map.removeLayer(this.currentTileLayer);
-    }
-
-    let tileUrl = '';
-    let maxZoom = 19;
-
-    switch (provider) {
-      case 'googleRoad':
-        tileUrl = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-        break;
-      case 'googleSat':
-        tileUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
-        break;
-      case 'osm':
-        tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-        break;
-      case 'cartoDark':
-        tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-        break;
-    }
-
-    this.currentTileLayer = L.tileLayer(tileUrl, {
-      maxZoom,
-      subdomains: ['a', 'b', 'c'],
-    }).addTo(this.map);
   }
 
   private renderUserLocationAndRadius(lat: number, lng: number): void {
@@ -213,91 +175,55 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
     this.userRadiusGroup.addLayer(userMarker);
   }
 
-  private renderMapLayers(summaries: ZoneGrocerySummary[], selectedId: string | null): void {
+  private renderMapLayers(summaries: StoreGrocerySummary[], selectedId: string | null): void {
     if (!this.map) return;
 
-    this.zoneOverlayGroup.clearLayers();
     this.storeMarkersGroup.clearLayers();
 
-    const zones = this.heatmapService.zones();
+    for (const summary of summaries) {
+      const isSelected = selectedId === summary.storeId;
+      const color = this.getStoreColor(summary.storeId);
 
-    for (const zone of zones) {
-      const summary = summaries.find((s) => s.zoneId === zone.id);
-      const color = this.getZoneColor(zone.id);
-      const isSelected = selectedId === zone.id;
+      const icon = L.divIcon({
+        className: 'store-pin-wrapper',
+        html: `
+          <div class="store-pin-badge ${summary.status} ${isSelected ? 'selected' : ''}" style="background-color: ${color}">
+            <span class="store-code">${summary.storeId.toUpperCase()}</span>
+          </div>
+        `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
 
-      if (zone.centerLat && zone.centerLng && zone.radiusMeters) {
-        // Render Zone Heat Circle
-        const circle = L.circle([zone.centerLat, zone.centerLng], {
-          radius: zone.radiusMeters,
-          color: color,
-          weight: isSelected ? 4 : 2,
-          fillColor: color,
-          fillOpacity: isSelected ? 0.35 : 0.18,
-          className: `zone-heat-circle ${isSelected ? 'selected' : ''}`,
-        });
+      const marker = L.marker([summary.lat, summary.lng], { icon });
 
-        circle.on('click', () => {
-          this.selectZone(zone.id);
-        });
+      const popupContent = `
+        <div class="map-popup-card">
+          <div class="popup-header" style="border-left: 4px solid ${color}">
+            <h5>${summary.storeName}</h5>
+            <span class="chain-tag">${summary.chain}</span>
+          </div>
+          <div class="popup-body">
+            <p class="address-text"><span class="material-symbols-rounded icon-small">location_on</span> ${summary.address}</p>
+            <p class="gps-coords">GPS: ${summary.lat.toFixed(5)}, ${summary.lng.toFixed(5)}</p>
+            <p class="price-line"><strong>Estimated Total:</strong> $${summary.estimatedBasketTotal.toFixed(2)}</p>
+            <p class="savings-text"><strong>Vs City Avg:</strong> ${summary.savingsPercentage >= 0 ? '-' + summary.savingsPercentage + '% cheaper' : '+' + Math.abs(summary.savingsPercentage) + '% higher'}</p>
+          </div>
+        </div>
+      `;
 
-        const tooltipText = summary
-          ? `<strong>${zone.name}</strong><br/>Basket Total: $${summary.estimatedBasketTotal.toFixed(2)}`
-          : zone.name;
+      marker.bindPopup(popupContent, { className: 'custom-leaflet-popup' });
+      marker.on('click', () => {
+        this.selectStore(summary.storeId);
+      });
 
-        circle.bindTooltip(tooltipText, {
-          permanent: false,
-          direction: 'center',
-          className: 'custom-tooltip zone-tooltip',
-        });
-
-        this.zoneOverlayGroup.addLayer(circle);
-      }
-
-      // Render Store Markers in Zone
-      for (const store of zone.stores) {
-        if (store.lat && store.lng) {
-          const icon = L.divIcon({
-            className: 'store-pin-wrapper',
-            html: `
-              <div class="store-pin-badge ${zone.code} ${isSelected ? 'selected' : ''}" style="background-color: ${color}">
-                <span class="store-code">${store.id.toUpperCase()}</span>
-              </div>
-            `,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          });
-
-          const marker = L.marker([store.lat, store.lng], { icon });
-
-          const popupContent = `
-            <div class="map-popup-card">
-              <div class="popup-header" style="border-left: 4px solid ${color}">
-                <h5>${store.name}</h5>
-                <span class="chain-tag">${store.chain}</span>
-              </div>
-              <div class="popup-body">
-                <p><strong>Zone:</strong> ${zone.name}</p>
-                ${summary ? `<p><strong>Zone Total:</strong> $${summary.estimatedBasketTotal.toFixed(2)}</p>` : ''}
-                ${summary ? `<p class="savings-text"><strong>Vs City Avg:</strong> ${summary.savingsPercentage >= 0 ? '-' + summary.savingsPercentage + '% cheaper' : '+' + Math.abs(summary.savingsPercentage) + '% higher'}</p>` : ''}
-              </div>
-            </div>
-          `;
-
-          marker.bindPopup(popupContent, { className: 'custom-leaflet-popup' });
-          marker.on('click', () => {
-            this.selectZone(zone.id);
-          });
-
-          this.storeMarkersGroup.addLayer(marker);
-        }
-      }
+      this.storeMarkersGroup.addLayer(marker);
     }
   }
 
   setMode(mode: HeatmapMode): void {
     this.activeMode.set(mode);
-    this.selectedZoneId.set(null);
+    this.selectedStoreId.set(null);
   }
 
   selectProduct(productId: string): void {
@@ -308,26 +234,26 @@ export class PriceHeatmapComponent implements AfterViewInit, OnDestroy {
     this.selectedCategoryName.set(category);
   }
 
-  selectZone(zoneId: string): void {
-    if (this.selectedZoneId() === zoneId) {
-      this.selectedZoneId.set(null);
+  selectStore(storeId: string): void {
+    if (this.selectedStoreId() === storeId) {
+      this.selectedStoreId.set(null);
     } else {
-      this.selectedZoneId.set(zoneId);
+      this.selectedStoreId.set(storeId);
 
-      // Pan map to selected zone center if available
-      const zone = this.heatmapService.zones().find((z) => z.id === zoneId);
-      if (zone && zone.centerLat && zone.centerLng && this.map) {
-        this.map.flyTo([zone.centerLat, zone.centerLng], 13, { duration: 0.8 });
+      // Pan map to selected store GPS location if available
+      const store = this.storeSummaries().find((s) => s.storeId === storeId);
+      if (store && this.map) {
+        this.map.flyTo([store.lat, store.lng], 14, { duration: 0.8 });
       }
     }
   }
 
-  getZoneSummary(zoneId: string): ZoneGrocerySummary | undefined {
-    return this.zoneSummaries().find((s) => s.zoneId === zoneId);
+  getStoreSummary(storeId: string): StoreGrocerySummary | undefined {
+    return this.storeSummaries().find((s) => s.storeId === storeId);
   }
 
-  getZoneColor(zoneId: string): string {
-    const summary = this.getZoneSummary(zoneId);
+  getStoreColor(storeId: string): string {
+    const summary = this.getStoreSummary(storeId);
     if (!summary) return '#94a3b8';
 
     if (summary.status === 'best') return '#10b981'; // Emerald

@@ -2,10 +2,20 @@
   <div class="inline-settings-card">
     <div class="settings-header">
       <h2>⚙️ LensClone System Settings</h2>
-      <p class="settings-subtitle">Configure search parameters, historical time windows, and API connections.</p>
+      <p class="settings-subtitle">Configure search parameters, historical time windows, and location GPS precision modes.</p>
     </div>
 
     <div class="settings-body">
+      <!-- Location Accuracy Mode Option -->
+      <div class="form-group">
+        <label for="inline-locationAccuracy">Location Accuracy Mode</label>
+        <select id="inline-locationAccuracy" [(ngModel)]="locationAccuracyMode">
+          <option value="precise">Precise (Exact unrounded GPS coordinates)</option>
+          <option value="approximate">Approximate (Coarse ~1.1km grid for privacy)</option>
+        </select>
+        <p class="field-hint">Flag: Uploaded coordinates will be tagged with <strong>isApproximate = {{ locationAccuracyMode === 'approximate' }}</strong>.</p>
+      </div>
+
       <!-- Time Window Option -->
       <div class="form-group">
         <label for="inline-timeWindow">Historical Time Window (Days)</label>
@@ -81,6 +91,16 @@
         </div>
 
         <div class="modal-body">
+          <!-- Location Accuracy Mode Option -->
+          <div class="form-group">
+            <label for="locationAccuracy">Location Accuracy Mode</label>
+            <select id="locationAccuracy" [(ngModel)]="locationAccuracyMode">
+              <option value="precise">Precise (Exact unrounded GPS coordinates)</option>
+              <option value="approximate">Approximate (Coarse ~1.1km grid for privacy)</option>
+            </select>
+            <p class="field-hint">Flag: Uploaded coordinates will be tagged with <strong>isApproximate = {{ locationAccuracyMode === 'approximate' }}</strong>.</p>
+          </div>
+
           <!-- Time Window Option -->
           <div class="form-group">
             <label for="timeWindow">Historical Time Window (Days)</label>

@@ -19,14 +19,14 @@ describe('LocationService', () => {
 
   it('should round coordinates to 2 decimal places for approximate location', () => {
     const result = service.roundToApproximate(-34.603722, -58.381592);
-    expect(result.latitude).toBe(-34.6)
+    expect(result.latitude).toBe(-34.6);
     expect(result.longitude).toBe(-58.38);
   });
 
-  it('should set coordinates with isApproximate true when geolocation returns position', () => {
+  it('should set coordinates with isApproximate true when in approximate accuracy mode', () => {
     const mockWatchPosition = vi.fn((success) => {
       success({
-        coords: { latitude: -34.6037, longitude: -58.3815, accuracy: 10 },
+        coords: { latitude: -34.603722, longitude: -58.381592, accuracy: 120 },
         timestamp: 123456789,
       } as GeolocationPosition);
       return 1;
@@ -39,6 +39,7 @@ describe('LocationService', () => {
       },
     });
 
+    service.setAccuracyMode('approximate');
     service.startTracking();
 
     expect(service.isTracking()).toBe(true);
@@ -47,7 +48,38 @@ describe('LocationService', () => {
     expect(coords?.latitude).toBe(-34.6);
     expect(coords?.longitude).toBe(-58.38);
     expect(coords?.isApproximate).toBe(true);
-    expect(coords?.timestamp).toBe(123456789);
+    expect(coords?.accuracyMode).toBe('approximate');
+    expect(coords?.accuracyMeters).toBe(120);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('should set exact unrounded coordinates with isApproximate false when in precise accuracy mode', () => {
+    const mockWatchPosition = vi.fn((success) => {
+      success({
+        coords: { latitude: -34.603722, longitude: -58.381592, accuracy: 5 },
+        timestamp: 123456789,
+      } as GeolocationPosition);
+      return 1;
+    });
+
+    vi.stubGlobal('navigator', {
+      geolocation: {
+        watchPosition: mockWatchPosition,
+        clearWatch: vi.fn(),
+      },
+    });
+
+    service.setAccuracyMode('precise');
+    service.startTracking();
+
+    const coords = service.coordinates();
+    expect(coords).not.toBeNull();
+    expect(coords?.latitude).toBe(-34.603722);
+    expect(coords?.longitude).toBe(-58.381592);
+    expect(coords?.isApproximate).toBe(false);
+    expect(coords?.accuracyMode).toBe('precise');
+    expect(coords?.accuracyMeters).toBe(5);
 
     vi.unstubAllGlobals();
   });

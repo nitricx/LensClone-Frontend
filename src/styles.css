@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 :root {
   --color-bg: #000000;
   --color-surface: #1e1e1e;

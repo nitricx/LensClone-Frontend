@@ -508,12 +508,14 @@
   color: #94a3b8;
 }
 
+.stores-list,
 .zones-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
+.store-card,
 .zone-card {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -526,21 +528,25 @@
   transition: all 0.2s ease;
 }
 
+.store-card:hover,
 .zone-card:hover {
   border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
 }
 
+.store-card.highlight,
 .zone-card.highlight {
   border-color: rgba(16, 185, 129, 0.4);
   background: rgba(16, 185, 129, 0.06);
 }
 
+.store-card.selected,
 .zone-card.selected {
   border-color: #38bdf8;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
 }
 
+.store-card-header,
 .zone-card-header {
   display: flex;
   align-items: center;
@@ -553,21 +559,33 @@
   gap: 0.5rem;
 }
 
-.status-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.title-sub {
+  display: flex;
+  flex-direction: column;
 }
 
-.status-indicator.best { background: #10b981; box-shadow: 0 0 8px #10b981; }
-.status-indicator.average { background: #f59e0b; }
-.status-indicator.expensive { background: #ef4444; }
-
+.store-name,
 .zone-name {
   font-size: 0.88rem;
   font-weight: 600;
   color: #f1f5f9;
 }
+
+.store-address {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-indicator.best { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.status-indicator.average { background: #f59e0b; }
+.status-indicator.expensive { background: #ef4444; }
 
 .best-badge {
   background: #10b981;
@@ -579,6 +597,7 @@
   text-transform: uppercase;
 }
 
+.store-card-body,
 .zone-card-body {
   display: flex;
   align-items: center;
@@ -618,6 +637,7 @@
   background: rgba(248, 113, 113, 0.1);
 }
 
+.gps-footer,
 .stores-footer {
   display: flex;
   align-items: center;
@@ -626,8 +646,16 @@
   color: #64748b;
   border-top: 1px dashed rgba(255, 255, 255, 0.05);
   padding-top: 0.4rem;
+}
 
-  .store-icon {
-    font-size: 0.95rem;
-  }
+.gps-footer .location-icon,
+.stores-footer .store-icon {
+  font-size: 0.95rem;
+  color: #38bdf8;
+}
+
+.gps-coords {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: #94a3b8;
 }

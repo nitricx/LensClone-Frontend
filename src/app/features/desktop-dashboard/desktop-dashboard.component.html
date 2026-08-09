@@ -50,6 +50,18 @@
     <div class="header-actions">
       <button 
         type="button" 
+        class="location-badge-btn" 
+        [class.precise]="locationService.accuracyMode() === 'precise'"
+        (click)="openLocationModal()"
+        title="Configure GPS Location Accuracy Mode">
+        <span class="material-symbols-rounded">
+          {{ locationService.accuracyMode() === 'precise' ? 'target' : 'location_city' }}
+        </span>
+        <span>GPS: {{ locationService.accuracyMode() === 'precise' ? 'Precise' : 'Approximate' }}</span>
+      </button>
+
+      <button 
+        type="button" 
         class="sim-btn" 
         title="Simulate Mobile Camera View"
         (click)="deviceService.setForcedMode('mobile')">
@@ -63,70 +75,47 @@
   <main class="dashboard-content">
     @switch (activeTab()) {
       @case ('management') {
+        <!-- Top Metrics Cards -->
+        <section class="metrics-grid">
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="material-symbols-rounded metric-icon blue">analytics</span>
+              <span class="metric-title">Scanned Products</span>
+            </div>
+            <div class="metric-value">1,482</div>
+            <div class="metric-sub text-positive">+12% vs last week</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="material-symbols-rounded metric-icon green">check_circle</span>
+              <span class="metric-title">Price Confidence</span>
+            </div>
+            <div class="metric-value">94.8%</div>
+            <div class="metric-sub">Across 8 monitored categories</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="material-symbols-rounded metric-icon purple">speed</span>
+              <span class="metric-title">Avg Latency</span>
+            </div>
+            <div class="metric-value">42 ms</div>
+            <div class="metric-sub">ONNX WASM execution time</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-header">
+              <span class="material-symbols-rounded metric-icon amber">store</span>
+              <span class="metric-title">Monitored Stores</span>
+            </div>
+            <div class="metric-value">6</div>
+            <div class="metric-sub">Geolocated GPS locations</div>
+          </div>
+        </section>
+
+        <!-- Main Dashboard View: Leaflet Price Heatmap & Analytics -->
         <section class="management-grid">
-          <!-- Summary Metrics Cards -->
-          <div class="metrics-row">
-            <div class="metric-card">
-              <span class="material-symbols-rounded metric-icon">qr_code_scanner</span>
-              <div class="metric-info">
-                <span class="metric-value">1,248</span>
-                <span class="metric-label">Total Price Scans</span>
-              </div>
-            </div>
-
-            <div class="metric-card">
-              <span class="material-symbols-rounded metric-icon">verified</span>
-              <div class="metric-info">
-                <span class="metric-value">94.2%</span>
-                <span class="metric-label">High Confidence Rate</span>
-              </div>
-            </div>
-
-            <div class="metric-card">
-              <span class="material-symbols-rounded metric-icon">storefront</span>
-              <div class="metric-info">
-                <span class="metric-value">18</span>
-                <span class="metric-label">Monitored Locations</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Price Capture Table -->
-          <div class="card data-card">
-            <div class="card-header">
-              <h2><span class="material-symbols-rounded">receipt_long</span> Uploaded Prices & Recognition Success</h2>
-              <span class="card-subtitle">Recent mobile OCR captures filtered by confidence rating</span>
-            </div>
-
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Extracted Price</th>
-                  <th>OCR Confidence</th>
-                  <th>Store Location</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of recentUploads(); track item.id) {
-                  <tr>
-                    <td class="font-medium">{{ item.product }}</td>
-                    <td class="price-cell">{{ item.price }}</td>
-                    <td>
-                      <span class="confidence-badge" [class.high]="item.confidence >= 0.9">
-                        {{ (item.confidence * 100).toFixed(0) }}%
-                      </span>
-                    </td>
-                    <td>{{ item.location }}</td>
-                    <td class="text-muted">{{ item.timestamp }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Regional Price & Grocery List Optimizer Heatmap -->
           <div class="card analytics-card">
             <app-price-heatmap />
           </div>
@@ -152,4 +141,12 @@
       }
     }
   </main>
+
+  <!-- Google-Style Location Permission Modal -->
+  @if (showLocationModal()) {
+    <app-location-permission-modal
+      (permissionGranted)="closeLocationModal()"
+      (permissionDenied)="closeLocationModal()">
+    </app-location-permission-modal>
+  }
 </div>

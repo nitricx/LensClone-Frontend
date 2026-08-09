@@ -5,24 +5,10 @@ export interface StoreLocation {
   id: string;
   name: string;
   chain: string;
-  zoneId: string;
-  latOffset: number; // Offset relative to center (-0.05 to +0.05)
-  lngOffset: number;
-  lat?: number;
-  lng?: number;
-}
-
-export interface GeographicZone {
-  id: string;
-  name: string;
-  code: 'north' | 'central' | 'west' | 'south';
-  color: string;
-  description: string;
-  stores: StoreLocation[];
-  priceMultiplier: number; // Regional price index multiplier (e.g. 0.88 = 12% cheaper, 1.15 = 15% pricier)
-  centerLat?: number;
-  centerLng?: number;
-  radiusMeters?: number;
+  address: string;
+  lat: number;
+  lng: number;
+  priceMultiplier: number; // Store-specific price index multiplier (e.g. 0.88 = 12% cheaper, 1.15 = 15% pricier)
 }
 
 export interface ProductPriceSample {
@@ -32,17 +18,19 @@ export interface ProductPriceSample {
   basePrice: number;
 }
 
-export interface ZoneGrocerySummary {
-  zoneId: string;
-  zoneName: string;
-  zoneCode: 'north' | 'central' | 'west' | 'south';
+export interface StoreGrocerySummary {
+  storeId: string;
+  storeName: string;
+  chain: string;
+  address: string;
+  lat: number;
+  lng: number;
   estimatedBasketTotal: number;
   averageItemPrice: number;
   savingsPercentage: number; // positive = savings %, negative = markup %
   priceIndexScore: number; // 0 (cheapest/green) to 1 (most expensive/red)
   status: 'best' | 'average' | 'expensive';
   itemCount: number;
-  storesCount: number;
 }
 
 @Injectable({
@@ -53,67 +41,61 @@ export class HeatmapService {
   readonly CENTER_LAT = -34.498361;
   readonly CENTER_LNG = -58.497528;
 
-  // Pre-configured Monitored Regional Zones
-  readonly zones = signal<GeographicZone[]>([
+  // Monitored Supermarket Store Locations with explicit GPS Coordinates
+  readonly stores = signal<StoreLocation[]>([
     {
-      id: 'zone_north',
-      name: 'North Commercial Hub',
-      code: 'north',
-      color: '#10b981', // Emerald / Best value default
-      description: 'High competition bulk discount retail zone',
+      id: 's1',
+      name: 'FreshMarket North',
+      chain: 'FreshMarket',
+      address: 'Av. Santa Fe 1840, San Isidro',
+      lat: -34.498361 + 0.035,
+      lng: -58.497528 + 0.012,
       priceMultiplier: 0.88, // 12% cheaper on average
-      centerLat: -34.498361 + 0.038,
-      centerLng: -58.497528 - 0.003,
-      radiusMeters: 3800,
-      stores: [
-        { id: 's1', name: 'FreshMarket North', chain: 'FreshMarket', zoneId: 'zone_north', latOffset: 0.035, lngOffset: 0.012, lat: -34.498361 + 0.035, lng: -58.497528 + 0.012 },
-        { id: 's2', name: 'MegaMart Outlet', chain: 'MegaMart', zoneId: 'zone_north', latOffset: 0.042, lngOffset: -0.018, lat: -34.498361 + 0.042, lng: -58.497528 - 0.018 },
-      ],
     },
     {
-      id: 'zone_west',
-      name: 'Westside Outskirts',
-      code: 'west',
-      color: '#06b6d4', // Cyan / Good value
-      description: 'Suburban supermarket district with moderate prices',
+      id: 's2',
+      name: 'MegaMart Outlet',
+      chain: 'MegaMart',
+      address: 'Calle Centenario 450, San Isidro',
+      lat: -34.498361 + 0.042,
+      lng: -58.497528 - 0.018,
+      priceMultiplier: 0.91, // 9% cheaper
+    },
+    {
+      id: 's3',
+      name: 'DiscountPlaza West',
+      chain: 'DiscountPlaza',
+      address: 'Av. Avelino Rolón 2100, Boulogne',
+      lat: -34.498361 + 0.005,
+      lng: -58.497528 - 0.041,
       priceMultiplier: 0.94, // 6% cheaper
-      centerLat: -34.498361 - 0.005,
-      centerLng: -58.497528 - 0.040,
-      radiusMeters: 3600,
-      stores: [
-        { id: 's3', name: 'DiscountPlaza West', chain: 'DiscountPlaza', zoneId: 'zone_west', latOffset: 0.005, lngOffset: -0.041, lat: -34.498361 + 0.005, lng: -58.497528 - 0.041 },
-        { id: 's4', name: 'ValueFoods Park', chain: 'ValueFoods', zoneId: 'zone_west', latOffset: -0.015, lngOffset: -0.038, lat: -34.498361 - 0.015, lng: -58.497528 - 0.038 },
-      ],
     },
     {
-      id: 'zone_central',
-      name: 'Central City District',
-      code: 'central',
-      color: '#f59e0b', // Amber / Average
-      description: 'Convenient downtown grocery hubs',
+      id: 's4',
+      name: 'ValueFoods Park',
+      chain: 'ValueFoods',
+      address: 'Calle Blanco Encalada 1200, San Isidro',
+      lat: -34.498361 - 0.015,
+      lng: -58.497528 - 0.038,
+      priceMultiplier: 0.98, // 2% cheaper
+    },
+    {
+      id: 's5',
+      name: 'MetroGrocer Express',
+      chain: 'MetroGrocer',
+      address: 'Av. del Libertador 14200, Martínez',
+      lat: -34.498361 + 0.002,
+      lng: -58.497528 + 0.003,
       priceMultiplier: 1.05, // 5% above average
-      centerLat: -34.498361 - 0.003,
-      centerLng: -58.497528 - 0.001,
-      radiusMeters: 2800,
-      stores: [
-        { id: 's5', name: 'MetroGrocer Express', chain: 'MetroGrocer', zoneId: 'zone_central', latOffset: 0.002, lngOffset: 0.003, lat: -34.498361 + 0.002, lng: -58.497528 + 0.003 },
-        { id: 's6', name: 'OrganicCorner Center', chain: 'OrganicCorner', zoneId: 'zone_central', latOffset: -0.008, lngOffset: -0.004, lat: -34.498361 - 0.008, lng: -58.497528 - 0.004 },
-      ],
     },
     {
-      id: 'zone_south',
-      name: 'South Financial Quarter',
-      code: 'south',
-      color: '#ef4444', // Red / Premium prices
-      description: 'Premium organic gourmet markets and express stores',
-      priceMultiplier: 1.16, // 16% above average
-      centerLat: -34.498361 - 0.041,
-      centerLng: -58.497528 + 0.016,
-      radiusMeters: 3700,
-      stores: [
-        { id: 's7', name: 'SuperSave Premium', chain: 'SuperSave', zoneId: 'zone_south', latOffset: -0.038, lngOffset: 0.025, lat: -34.498361 - 0.038, lng: -58.497528 + 0.025 },
-        { id: 's8', name: 'EcoMart South', chain: 'EcoMart', zoneId: 'zone_south', latOffset: -0.045, lngOffset: 0.008, lat: -34.498361 - 0.045, lng: -58.497528 + 0.008 },
-      ],
+      id: 's6',
+      name: 'OrganicCorner Center',
+      chain: 'OrganicCorner',
+      address: 'Calle General Belgrano 320, San Isidro',
+      lat: -34.498361 - 0.008,
+      lng: -58.497528 - 0.004,
+      priceMultiplier: 1.12, // 12% above average
     },
   ]);
 
@@ -142,11 +124,11 @@ export class HeatmapService {
   });
 
   /**
-   * Calculates estimated item price for a specific product in a specific zone.
+   * Calculates estimated item price for a specific product at a specific store location.
    */
-  getProductPriceInZone(productName: string, zoneId: string): number {
-    const zone = this.zones().find((z) => z.id === zoneId);
-    const multiplier = zone ? zone.priceMultiplier : 1.0;
+  getProductPriceAtStore(productName: string, storeId: string): number {
+    const store = this.stores().find((s) => s.id === storeId);
+    const multiplier = store ? store.priceMultiplier : 1.0;
 
     const catalogItem = this.productCatalog().find(
       (p) => p.productName.toLowerCase() === productName.toLowerCase()
@@ -157,23 +139,25 @@ export class HeatmapService {
   }
 
   /**
-   * Calculates zone summaries and basket totals for a list of grocery items.
+   * Calculates store summaries and basket totals for a list of grocery items.
    */
-  calculateListZoneSummaries(items: ShoppingListItem[]): ZoneGrocerySummary[] {
-    const zonesList = this.zones();
+  calculateStoreSummaries(items: ShoppingListItem[]): StoreGrocerySummary[] {
+    const storesList = this.stores();
 
     if (items.length === 0) {
-      return zonesList.map((z) => ({
-        zoneId: z.id,
-        zoneName: z.name,
-        zoneCode: z.code,
+      return storesList.map((s) => ({
+        storeId: s.id,
+        storeName: s.name,
+        chain: s.chain,
+        address: s.address,
+        lat: s.lat,
+        lng: s.lng,
         estimatedBasketTotal: 0,
         averageItemPrice: 0,
-        savingsPercentage: (1 - z.priceMultiplier) * 100,
-        priceIndexScore: (z.priceMultiplier - 0.85) / (1.20 - 0.85),
-        status: z.priceMultiplier < 0.95 ? 'best' : z.priceMultiplier <= 1.08 ? 'average' : 'expensive',
+        savingsPercentage: Math.round((1 - s.priceMultiplier) * 100),
+        priceIndexScore: Math.max(0, Math.min(1, (s.priceMultiplier - 0.85) / 0.35)),
+        status: s.priceMultiplier < 0.95 ? 'best' : s.priceMultiplier <= 1.08 ? 'average' : 'expensive',
         itemCount: 0,
-        storesCount: z.stores.length,
       }));
     }
 
@@ -184,24 +168,23 @@ export class HeatmapService {
       totalReferenceSum += activePrice * item.quantity;
     }
 
-    const summaries: ZoneGrocerySummary[] = zonesList.map((z) => {
-      let zoneBasketTotal = 0;
+    const summaries: StoreGrocerySummary[] = storesList.map((s) => {
+      let storeBasketTotal = 0;
       let totalQty = 0;
 
       for (const item of items) {
-        const itemZonePrice = this.getProductPriceInZone(item.name, z.id);
-        zoneBasketTotal += itemZonePrice * item.quantity;
+        const itemStorePrice = this.getProductPriceAtStore(item.name, s.id);
+        storeBasketTotal += itemStorePrice * item.quantity;
         totalQty += item.quantity;
       }
 
-      zoneBasketTotal = Math.round(zoneBasketTotal * 100) / 100;
-      const averageItemPrice = Math.round((zoneBasketTotal / (totalQty || 1)) * 100) / 100;
+      storeBasketTotal = Math.round(storeBasketTotal * 100) / 100;
+      const averageItemPrice = Math.round((storeBasketTotal / (totalQty || 1)) * 100) / 100;
 
-      const diffVsReference = totalReferenceSum - zoneBasketTotal;
+      const diffVsReference = totalReferenceSum - storeBasketTotal;
       const savingsPercentage = Math.round((diffVsReference / (totalReferenceSum || 1)) * 100);
 
-      // Score normalized from 0 (best/cheapest) to 1 (highest cost)
-      const priceIndexScore = Math.max(0, Math.min(1, (z.priceMultiplier - 0.85) / 0.35));
+      const priceIndexScore = Math.max(0, Math.min(1, (s.priceMultiplier - 0.85) / 0.35));
 
       let status: 'best' | 'average' | 'expensive' = 'average';
       if (savingsPercentage > 5) {
@@ -211,16 +194,18 @@ export class HeatmapService {
       }
 
       return {
-        zoneId: z.id,
-        zoneName: z.name,
-        zoneCode: z.code,
-        estimatedBasketTotal: zoneBasketTotal,
+        storeId: s.id,
+        storeName: s.name,
+        chain: s.chain,
+        address: s.address,
+        lat: s.lat,
+        lng: s.lng,
+        estimatedBasketTotal: storeBasketTotal,
         averageItemPrice,
         savingsPercentage,
         priceIndexScore,
         status,
         itemCount: items.length,
-        storesCount: z.stores.length,
       };
     });
 

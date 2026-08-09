@@ -1,9 +1,9 @@
 # Price Heatmap Component
 
-The `PriceHeatmapComponent` visualizes geolocated regional supermarket prices within a 10km radius using an interactive SVG map and zone breakdown cards.
+The `PriceHeatmapComponent` visualizes geolocated supermarket prices associated directly with exact GPS coordinates (`latitude`, `longitude`) using an interactive Leaflet map and store location breakdown cards.
 
 ## Features
-- **Grocery List Optimizer Mode**: Integrates with `ShoppingListService` to calculate total list basket cost across 4 regional supermarket zones (North Hub, Westside Outskirts, Central District, South Financial Quarter) and highlights the cheapest overall zone.
-- **Product Filter Mode**: Visualizes price distribution across geographic zones for specific scanned or catalog products.
-- **Category Aggregation Mode**: Aggregates average item price index by product category ('Dairy', 'Bakery', 'Produce', etc.).
-- **Interactive SVG Map**: Color-coded geographic zone heatmap overlays with animated store pin locations.
+- **Grocery List Optimizer Mode**: Integrates with `ShoppingListService` to calculate total list basket cost across monitored supermarket GPS locations and highlights the cheapest store location for your list.
+- **Product Filter Mode**: Visualizes price distribution across store GPS markers for specific scanned or catalog products.
+- **Category Aggregation Mode**: Aggregates average item price index by product category across store locations.
+- **Interactive Supermarket GPS Map**: Interactive store pins displayed at exact GPS coordinates with popups showing address, coordinates, and basket savings.
