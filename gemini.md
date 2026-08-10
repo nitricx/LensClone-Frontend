@@ -57,7 +57,9 @@ public/                         # Static assets and ONNX model files
 - **Explicit Error Handling**: Throw explicit errors for invalid or unexpected input values and configuration parameters (e.g. out-of-range scale factors) rather than silently ignoring invalid values or swallowing errors with hardcoded fallbacks.
 - **Prettier**: Code should adhere to formatting defined in `.prettierrc`.
 
-### 4. Modular Co-located Documentation
+### 4. Modular Co-located Documentation & Guidelines
+- **Detailed Agent Code Style**: Refer to [CODESTYLE.md](file:///d:/Repositories/lensClone/PoC-LensClone/CODESTYLE.md) for full style guidelines, component rules, and WASM performance guidelines.
+- **Agent Workspace Rules**: Refer to [.agents/AGENTS.md](file:///d:/Repositories/lensClone/PoC-LensClone/.agents/AGENTS.md) for explicit agent enforcement rules.
 - **Co-located `README.md` Files**: Maintain co-located `README.md` files inside feature components (`src/app/features/*/README.md`) and service modules (`src/app/services/*/README.md`).
 - **Targeted Context Retrieval**: Agents and developers should use module `README.md` files for quick architectural reference, Signal state definitions, and public API contracts without ingesting all implementation source code.
 
@@ -71,3 +73,4 @@ public/                         # Static assets and ONNX model files
 | **Run Unit Tests** | `npm test` or `ng test` | Runs tests using Vitest |
 | **Build Production** | `npm run build` or `ng build` | Compiles application output to `dist/` |
 | **Watch Build** | `npm run watch` | Builds in watch mode with development config |
+

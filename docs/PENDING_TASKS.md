@@ -1,4 +1,5 @@
 ## 📖 Documentation
+- [Production Readiness Audit & Implementation Plan](file:///d:/Repositories/lensClone/PoC-LensClone/docs/PRODUCTION_READINESS_AUDIT.md)
 
 ---
 
