@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, of } from 'rxjs';
+import { Observable, catchError, of, tap, firstValueFrom } from 'rxjs';
 import { SettingsService } from '../settings/settings.service';
 import { GpsCoordinates, ProductOffer } from '../text-detection/types';
+import { IndexedDbService } from '../storage/indexed-db.service';
 
 export enum PriceRating {
   NewSubmission = 0,
@@ -30,12 +31,24 @@ export interface PriceSubmissionResponse {
   submissionId: string;
 }
 
+export interface QueuedSubmission {
+  id: string;
+  url: string;
+  payload: Record<string, unknown>;
+  queuedAt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class PriceApiService {
   private readonly http = inject(HttpClient);
   private readonly settings = inject(SettingsService);
+  private readonly idb = inject(IndexedDbService);
+
+  constructor() {
+    this.registerOnlineListener();
+  }
 
   comparePrice(productName: string, price: number, coords?: GpsCoordinates): Observable<PriceComparisonResponse | null> {
     if (!productName || !price || !coords) {
@@ -73,15 +86,62 @@ export class PriceApiService {
       productName: offer.product,
       quantityOrUnit: offer.quantity ? `${offer.quantity.quantity} ${offer.quantity.unit}` : undefined,
       price: parsedPrice,
-      currency: 'USD',
+      currency: 'ARS',
       latitude: coords.latitude,
       longitude: coords.longitude,
       deviceId: this.getOrCreateDeviceId(),
     };
 
     return this.http.post<PriceSubmissionResponse>(url, payload).pipe(
-      catchError(() => of(null))
+      catchError(async () => {
+        await this.enqueueOfflineSubmission(url, payload);
+        return {
+          success: true,
+          message: 'Saved offline. Submission queued for background sync.',
+          submissionId: 'offline_queued',
+        };
+      })
     );
+  }
+
+  private async enqueueOfflineSubmission(url: string, payload: Record<string, unknown>): Promise<void> {
+    try {
+      const item: QueuedSubmission = {
+        id: `queued_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        url,
+        payload,
+        queuedAt: new Date().toISOString(),
+      };
+      await this.idb.put('offline_queue', item);
+    } catch (e) {
+      console.warn('Failed to queue offline submission:', e);
+    }
+  }
+
+  async flushOfflineQueue(): Promise<void> {
+    try {
+      const queued = await this.idb.getAll<QueuedSubmission>('offline_queue');
+      if (!queued || queued.length === 0) return;
+
+      for (const item of queued) {
+        try {
+          await firstValueFrom(this.http.post(item.url, item.payload));
+          await this.idb.delete('offline_queue', item.id);
+        } catch {
+          // Keep item in queue if still failing
+        }
+      }
+    } catch (e) {
+      console.warn('Error flushing offline queue:', e);
+    }
+  }
+
+  private registerOnlineListener(): void {
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('online', () => {
+        this.flushOfflineQueue();
+      });
+    }
   }
 
   private getOrCreateDeviceId(): string {

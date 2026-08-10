@@ -1,5 +1,8 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError, of } from 'rxjs';
 import { ShoppingListItem } from '../shopping-list/shopping-list.service';
+import { SettingsService } from '../settings/settings.service';
 
 export interface StoreLocation {
   id: string;
@@ -8,7 +11,7 @@ export interface StoreLocation {
   address: string;
   lat: number;
   lng: number;
-  priceMultiplier: number; // Store-specific price index multiplier (e.g. 0.88 = 12% cheaper, 1.15 = 15% pricier)
+  priceMultiplier: number;
 }
 
 export interface ProductPriceSample {
@@ -27,8 +30,8 @@ export interface StoreGrocerySummary {
   lng: number;
   estimatedBasketTotal: number;
   averageItemPrice: number;
-  savingsPercentage: number; // positive = savings %, negative = markup %
-  priceIndexScore: number; // 0 (cheapest/green) to 1 (most expensive/red)
+  savingsPercentage: number;
+  priceIndexScore: number;
   status: 'best' | 'average' | 'expensive';
   itemCount: number;
 }
@@ -37,83 +40,83 @@ export interface StoreGrocerySummary {
   providedIn: 'root',
 })
 export class HeatmapService {
-  // Center Coordinates: San Isidro / Northern Greater Buenos Aires region (34°29'54.1"S 58°29'51.1"W)
+  private readonly http = inject(HttpClient);
+  private readonly settings = inject(SettingsService);
+
   readonly CENTER_LAT = -34.498361;
   readonly CENTER_LNG = -58.497528;
 
-  // Monitored Supermarket Store Locations with explicit GPS Coordinates
+  // Local neighborhood grocery stores default signal
   readonly stores = signal<StoreLocation[]>([
     {
       id: 's1',
-      name: 'FreshMarket North',
-      chain: 'FreshMarket',
+      name: 'Almacén Don Pedro',
+      chain: 'Local Grocery',
       address: 'Av. Santa Fe 1840, San Isidro',
       lat: -34.498361 + 0.035,
       lng: -58.497528 + 0.012,
-      priceMultiplier: 0.88, // 12% cheaper on average
+      priceMultiplier: 0.88,
     },
     {
       id: 's2',
-      name: 'MegaMart Outlet',
-      chain: 'MegaMart',
+      name: 'Minimercado Los Amigos',
+      chain: 'Local Grocery',
       address: 'Calle Centenario 450, San Isidro',
       lat: -34.498361 + 0.042,
       lng: -58.497528 - 0.018,
-      priceMultiplier: 0.91, // 9% cheaper
+      priceMultiplier: 0.91,
     },
     {
       id: 's3',
-      name: 'DiscountPlaza West',
-      chain: 'DiscountPlaza',
+      name: 'Despensa Santa Rosa',
+      chain: 'Local Grocery',
       address: 'Av. Avelino Rolón 2100, Boulogne',
       lat: -34.498361 + 0.005,
       lng: -58.497528 - 0.041,
-      priceMultiplier: 0.94, // 6% cheaper
+      priceMultiplier: 0.94,
     },
     {
       id: 's4',
-      name: 'ValueFoods Park',
-      chain: 'ValueFoods',
+      name: 'Verdulería San José',
+      chain: 'Local Grocery',
       address: 'Calle Blanco Encalada 1200, San Isidro',
       lat: -34.498361 - 0.015,
       lng: -58.497528 - 0.038,
-      priceMultiplier: 0.98, // 2% cheaper
+      priceMultiplier: 0.98,
     },
     {
       id: 's5',
-      name: 'MetroGrocer Express',
-      chain: 'MetroGrocer',
+      name: 'Granja El Sol',
+      chain: 'Local Grocery',
       address: 'Av. del Libertador 14200, Martínez',
       lat: -34.498361 + 0.002,
       lng: -58.497528 + 0.003,
-      priceMultiplier: 1.05, // 5% above average
+      priceMultiplier: 1.05,
     },
     {
       id: 's6',
-      name: 'OrganicCorner Center',
-      chain: 'OrganicCorner',
+      name: 'Mercadito Don Mateo',
+      chain: 'Local Grocery',
       address: 'Calle General Belgrano 320, San Isidro',
       lat: -34.498361 - 0.008,
       lng: -58.497528 - 0.004,
-      priceMultiplier: 1.12, // 12% above average
+      priceMultiplier: 1.12,
     },
   ]);
 
-  // Catalog of tracked sample products & categories
   readonly productCatalog = signal<ProductPriceSample[]>([
-    { id: 'p1', productName: 'Organic Whole Milk 1L', category: 'Dairy', basePrice: 3.49 },
-    { id: 'p2', productName: 'Large Brown Eggs 12-pack', category: 'Dairy', basePrice: 3.99 },
-    { id: 'p3', productName: 'Whole Wheat Bread', category: 'Bakery', basePrice: 2.80 },
-    { id: 'p4', productName: 'Ground Coffee 250g', category: 'Beverages', basePrice: 7.50 },
-    { id: 'p5', productName: 'Avocado 2-pack', category: 'Produce', basePrice: 4.20 },
-    { id: 'p6', productName: 'Bananas 1kg', category: 'Produce', basePrice: 1.89 },
-    { id: 'p7', productName: 'Pasta 500g', category: 'Pantry', basePrice: 1.79 },
-    { id: 'p8', productName: 'Extra Virgin Olive Oil 500ml', category: 'Pantry', basePrice: 8.49 },
+    { id: 'p1', productName: 'Organic Whole Milk 1L', category: 'Dairy', basePrice: 1250 },
+    { id: 'p2', productName: 'Large Brown Eggs 12-pack', category: 'Dairy', basePrice: 2800 },
+    { id: 'p3', productName: 'French Bread 1kg', category: 'Bakery', basePrice: 2200 },
+    { id: 'p4', productName: 'Ground Coffee 250g', category: 'Beverages', basePrice: 3800 },
+    { id: 'p5', productName: 'Tomatoes 1kg', category: 'Produce', basePrice: 1800 },
+    { id: 'p6', productName: 'Bananas 1kg', category: 'Produce', basePrice: 1400 },
+    { id: 'p7', productName: 'Pasta 500g', category: 'Pantry', basePrice: 1150 },
+    { id: 'p8', productName: 'Sunflower Oil 900ml', category: 'Pantry', basePrice: 1950 },
   ]);
 
-  // Active filters
-  readonly selectedProduct = signal<string>('ALL'); // 'ALL' or productName
-  readonly selectedCategory = signal<string>('ALL'); // 'ALL' or Category name
+  readonly selectedProduct = signal<string>('ALL');
+  readonly selectedCategory = signal<string>('ALL');
 
   readonly categories = computed(() => {
     const set = new Set<string>();
@@ -123,9 +126,27 @@ export class HeatmapService {
     return Array.from(set);
   });
 
-  /**
-   * Calculates estimated item price for a specific product at a specific store location.
-   */
+  fetchSpatialHeatmap(lat = this.CENTER_LAT, lng = this.CENTER_LNG, radiusKm = 10.0): void {
+    const url = `${this.settings.backendApiUrl()}/../stores/heatmap?lat=${lat}&lon=${lng}&radiusKm=${radiusKm}`;
+    this.http
+      .get<StoreGrocerySummary[]>(url)
+      .pipe(catchError(() => of([])))
+      .subscribe((data) => {
+        if (data && data.length > 0) {
+          const mapped: StoreLocation[] = data.map((d) => ({
+            id: d.storeId,
+            name: d.storeName,
+            chain: d.chain,
+            address: d.address,
+            lat: d.lat,
+            lng: d.lng,
+            priceMultiplier: Math.round((1 - d.savingsPercentage / 100) * 100) / 100,
+          }));
+          this.stores.set(mapped);
+        }
+      });
+  }
+
   getProductPriceAtStore(productName: string, storeId: string): number {
     const store = this.stores().find((s) => s.id === storeId);
     const multiplier = store ? store.priceMultiplier : 1.0;
@@ -134,13 +155,10 @@ export class HeatmapService {
       (p) => p.productName.toLowerCase() === productName.toLowerCase()
     );
 
-    const base = catalogItem ? catalogItem.basePrice : 3.5;
+    const base = catalogItem ? catalogItem.basePrice : 1800;
     return Math.round(base * multiplier * 100) / 100;
   }
 
-  /**
-   * Calculates store summaries and basket totals for a list of grocery items.
-   */
   calculateStoreSummaries(items: ShoppingListItem[]): StoreGrocerySummary[] {
     const storesList = this.stores();
 
@@ -161,13 +179,6 @@ export class HeatmapService {
       }));
     }
 
-    // Calculate reference average total
-    let totalReferenceSum = 0;
-    for (const item of items) {
-      const activePrice = item.manualUnitPrice ?? item.estimatedUnitPrice;
-      totalReferenceSum += activePrice * item.quantity;
-    }
-
     const summaries: StoreGrocerySummary[] = storesList.map((s) => {
       let storeBasketTotal = 0;
       let totalQty = 0;
@@ -180,10 +191,7 @@ export class HeatmapService {
 
       storeBasketTotal = Math.round(storeBasketTotal * 100) / 100;
       const averageItemPrice = Math.round((storeBasketTotal / (totalQty || 1)) * 100) / 100;
-
-      const diffVsReference = totalReferenceSum - storeBasketTotal;
-      const savingsPercentage = Math.round((diffVsReference / (totalReferenceSum || 1)) * 100);
-
+      const savingsPercentage = Math.round((1 - s.priceMultiplier) * 100);
       const priceIndexScore = Math.max(0, Math.min(1, (s.priceMultiplier - 0.85) / 0.35));
 
       let status: 'best' | 'average' | 'expensive' = 'average';
@@ -209,7 +217,6 @@ export class HeatmapService {
       };
     });
 
-    // Sort by cheapest basket total first
     return summaries.sort((a, b) => a.estimatedBasketTotal - b.estimatedBasketTotal);
   }
 }

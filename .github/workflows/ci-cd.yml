@@ -1,0 +1,54 @@
+name: LensClone CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-test-and-build:
+    name: Backend Build & Test (.NET 9)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore Backend Dependencies
+        run: dotnet restore LensClone-Backend/LensClone.Api/LensClone.Api.csproj
+
+      - name: Build Backend Web API
+        run: dotnet build LensClone-Backend/LensClone.Api/LensClone.Api.csproj --no-restore --configuration Release
+
+      - name: Run Backend Unit Tests
+        run: dotnet test LensClone-Backend/LensClone.Tests/LensClone.Tests.csproj --configuration Release
+
+  frontend-test-and-build:
+    name: Frontend Build & Test (Angular 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: 'PoC-LensClone/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd PoC-LensClone
+          npm ci
+
+      - name: Run Vitest Unit Tests
+        run: |
+          cd PoC-LensClone
+          npm test -- --watch=false --run
+
+      - name: Production Angular Build
+        run: |
+          cd PoC-LensClone
+          npm run build

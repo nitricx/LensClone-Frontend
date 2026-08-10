@@ -1,5 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { GpsCoordinates } from '../text-detection/types';
+import { IndexedDbService } from '../storage/indexed-db.service';
 
 export interface HistoryItem {
   id: string;
@@ -17,10 +18,40 @@ const MAX_HISTORY_ITEMS = 20;
   providedIn: 'root',
 })
 export class HistoryService {
-  private readonly _items = signal<HistoryItem[]>(this.loadFromStorage());
+  private readonly idb: IndexedDbService | null;
+  private readonly _items = signal<HistoryItem[]>([]);
 
   readonly items = computed(() => this._items());
   readonly count = computed(() => this._items().length);
+
+  constructor(idb?: IndexedDbService) {
+    if (idb) {
+      this.idb = idb;
+    } else {
+      try {
+        this.idb = inject(IndexedDbService, { optional: true });
+      } catch {
+        this.idb = null;
+      }
+    }
+    this.initStorage();
+  }
+
+  private async initStorage(): Promise<void> {
+    try {
+      if (this.idb) {
+        const items = await this.idb.getAll<HistoryItem>('scan_history');
+        if (items && items.length > 0) {
+          items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          this._items.set(items.slice(0, MAX_HISTORY_ITEMS));
+          return;
+        }
+      }
+      this._items.set(this.loadFromLocalStorage());
+    } catch {
+      this._items.set(this.loadFromLocalStorage());
+    }
+  }
 
   addCapture(
     dataUrl: string,
@@ -39,22 +70,39 @@ export class HistoryService {
 
     const updated = [newItem, ...this._items()].slice(0, MAX_HISTORY_ITEMS);
     this._items.set(updated);
-    this.saveToStorage(updated);
+    this.saveToIndexedDb(newItem);
+    this.saveToLocalStorage(updated);
     return newItem;
   }
 
   deleteItem(id: string): void {
     const updated = this._items().filter((item) => item.id !== id);
     this._items.set(updated);
-    this.saveToStorage(updated);
+    if (this.idb) {
+      this.idb.delete('scan_history', id).catch(() => {});
+    }
+    this.saveToLocalStorage(updated);
   }
 
   clearHistory(): void {
     this._items.set([]);
-    this.saveToStorage([]);
+    if (this.idb) {
+      this.idb.clear('scan_history').catch(() => {});
+    }
+    this.saveToLocalStorage([]);
   }
 
-  private loadFromStorage(): HistoryItem[] {
+  private async saveToIndexedDb(item: HistoryItem): Promise<void> {
+    try {
+      if (this.idb) {
+        await this.idb.put('scan_history', item);
+      }
+    } catch (e) {
+      console.warn('Failed to save history item to IndexedDB:', e);
+    }
+  }
+
+  private loadFromLocalStorage(): HistoryItem[] {
     try {
       if (typeof localStorage === 'undefined' || !localStorage.getItem) {
         return [];
@@ -68,14 +116,14 @@ export class HistoryService {
     }
   }
 
-  private saveToStorage(items: HistoryItem[]): void {
+  private saveToLocalStorage(items: HistoryItem[]): void {
     try {
       if (typeof localStorage === 'undefined' || !localStorage.setItem) {
         return;
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {
-      console.warn('Failed to save history to localStorage:', e);
+    } catch {
+      // Ignore fallback quota errors
     }
   }
 }
