@@ -8,6 +8,8 @@ import { LocationPermissionModalComponent } from '../location-permission-modal/l
 import { DeviceService } from '../../services/device/device.service';
 import { LocationService } from '../../services/location/location.service';
 
+import { AuthService } from '../../services/auth/auth.service';
+
 export type DesktopTab = 'management' | 'shoppingList' | 'debug' | 'settings';
 
 @Component({
@@ -29,6 +31,7 @@ export class DesktopDashboardComponent {
   readonly showLocationModal = signal<boolean>(false);
 
   readonly locationService = inject(LocationService);
+  readonly authService = inject(AuthService);
 
   // Sample analytics data for PC management view
   readonly recentUploads = signal([

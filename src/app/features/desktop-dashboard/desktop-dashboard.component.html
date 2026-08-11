@@ -1,14 +1,17 @@
 <div class="dashboard-container">
-  <!-- Desktop Header Navbar -->
+  <!-- Google Desktop Header Navbar -->
   <header class="dashboard-header">
     <div class="brand">
-      <span class="material-symbols-rounded brand-icon">desktop_windows</span>
+      <div class="lens-logo-badge">
+        <span class="material-symbols-rounded brand-icon">center_focus_strong</span>
+      </div>
       <div class="brand-text">
-        <h1>LensClone <span class="badge">Desktop Management</span></h1>
-        <p class="subtitle">Price Analytics, Model Diagnostics & Workspace</p>
+        <h1>Google Lens <span class="badge">Workspace</span></h1>
+        <p class="subtitle">Price Analytics & Regional Vision Pipeline</p>
       </div>
     </div>
 
+    <!-- M3 Navigation Segmented Pills -->
     <nav class="nav-tabs">
       <button 
         type="button" 
@@ -16,7 +19,7 @@
         [class.active]="activeTab() === 'management'"
         (click)="setTab('management')">
         <span class="material-symbols-rounded">analytics</span>
-        <span>Management & Prices</span>
+        <span>Analytics & Heatmap</span>
       </button>
 
       <button 
@@ -25,7 +28,7 @@
         [class.active]="activeTab() === 'shoppingList'"
         (click)="setTab('shoppingList')">
         <span class="material-symbols-rounded">shopping_bag</span>
-        <span>Shopping List & Budget</span>
+        <span>Shopping Budget</span>
       </button>
 
       <button 
@@ -34,7 +37,7 @@
         [class.active]="activeTab() === 'debug'"
         (click)="setTab('debug')">
         <span class="material-symbols-rounded">bug_report</span>
-        <span>Debug & Diagnostics</span>
+        <span>Diagnostics</span>
       </button>
 
       <button 
@@ -43,10 +46,11 @@
         [class.active]="activeTab() === 'settings'"
         (click)="setTab('settings')">
         <span class="material-symbols-rounded">settings</span>
-        <span>Settings</span>
+        <span>Preferences</span>
       </button>
     </nav>
 
+    <!-- Header Right Action Tools & Profile Avatar -->
     <div class="header-actions">
       <button 
         type="button" 
@@ -63,11 +67,25 @@
       <button 
         type="button" 
         class="sim-btn" 
-        title="Simulate Mobile Camera View"
+        title="Switch to Mobile Camera Viewport"
         (click)="deviceService.setForcedMode('mobile')">
         <span class="material-symbols-rounded">smartphone</span>
-        <span>Mobile View</span>
+        <span>Mobile Feed</span>
       </button>
+
+      <div class="profile-avatar-btn" [title]="authService.isAuthenticated() ? authService.currentUser()?.name : 'Google Account'">
+        <div class="google-avatar-ring">
+          @if (authService.currentUser(); as user) {
+            @if (user.avatarUrl) {
+              <img [src]="user.avatarUrl" [alt]="user.name" class="avatar-img" />
+            } @else {
+              <span class="avatar-initial">{{ user.name.charAt(0) }}</span>
+            }
+          } @else {
+            <span class="material-symbols-rounded">account_circle</span>
+          }
+        </div>
+      </div>
     </div>
   </header>
 

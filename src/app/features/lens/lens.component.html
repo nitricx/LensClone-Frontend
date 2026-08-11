@@ -2,8 +2,24 @@
   <!-- Full-screen Camera Stream -->
   <video #video autoplay muted playsinline class="camera-video"></video>
 
+  <!-- Viewfinder Corner Brackets -->
+  <div class="viewfinder-frame" [class.frozen]="isFrozen()">
+    <div class="viewfinder-corner top-left"></div>
+    <div class="viewfinder-corner top-right"></div>
+    <div class="viewfinder-corner bottom-left"></div>
+    <div class="viewfinder-corner bottom-right"></div>
+  </div>
+
   <!-- Bounding Box Canvas Overlay -->
   <app-overlay [width]="videoWidth()" [height]="videoHeight()"></app-overlay>
+
+  <!-- Notification Toast Pill -->
+  @if (actionNotification(); as msg) {
+    <div class="action-toast-pill" role="status" aria-live="polite">
+      <span class="material-symbols-rounded toast-icon">check_circle</span>
+      <span>{{ msg }}</span>
+    </div>
+  }
 
   <!-- Top Application Bar Overlay -->
   <header class="top-app-bar">
@@ -30,8 +46,11 @@
         }
       </div>
 
-      <!-- Centered Application Title -->
-      <h1 class="app-title">Lens Clone</h1>
+      <!-- Centered Application Title Lockup -->
+      <div class="app-title-lockup">
+        <span class="material-symbols-rounded lens-logo">center_focus_strong</span>
+        <h1 class="app-title">Google Lens</h1>
+      </div>
 
       <!-- Action Controls (Right) -->
       <div class="control-right">
@@ -49,7 +68,7 @@
         <!-- Settings Modal Component -->
         <app-settings />
 
-        <!-- Profile Avatar Button -->
+        <!-- Profile Avatar Button with Google Color Ring -->
         <button
           type="button"
           class="profile-btn"
@@ -58,15 +77,17 @@
           aria-label="Google Account Profile"
           [attr.title]="authService.isAuthenticated() ? authService.currentUser()?.name : 'Sign In with Google'"
         >
-          @if (authService.currentUser(); as user) {
-            @if (user.avatarUrl) {
-              <img [src]="user.avatarUrl" [alt]="user.name" class="avatar-img" />
+          <div class="google-avatar-ring">
+            @if (authService.currentUser(); as user) {
+              @if (user.avatarUrl) {
+                <img [src]="user.avatarUrl" [alt]="user.name" class="avatar-img" />
+              } @else {
+                <span class="avatar-initial">{{ user.name.charAt(0) }}</span>
+              }
             } @else {
-              <span class="avatar-initial">{{ user.name.charAt(0) }}</span>
+              <span class="material-symbols-rounded">account_circle</span>
             }
-          } @else {
-            <span class="material-symbols-rounded">account_circle</span>
-          }
+          </div>
         </button>
 
         <!-- Overflow Menu Button -->
@@ -118,12 +139,80 @@
     }
   </header>
 
-  <!-- Bottom Primary Action Area -->
+  <!-- M3 Interactive Bottom Sheet Drawer (Results & Action Chips) -->
+  @if (isFrozen()) {
+    <div class="m3-bottom-sheet" [class]="'snap-' + sheetSnap()" role="region" aria-label="Lens Search Results">
+      <div class="sheet-drag-handle-bar" (click)="toggleSheetSnap()">
+        <div class="drag-handle-pill"></div>
+      </div>
+
+      <!-- Action Chips Horizontal Scroll Bar -->
+      <div class="action-chips-container">
+        <button type="button" class="m3-action-chip" (click)="executeActionChip('copy')">
+          <span class="material-symbols-rounded chip-icon">content_copy</span>
+          <span>Copy text</span>
+        </button>
+        <button type="button" class="m3-action-chip" (click)="executeActionChip('translate')">
+          <span class="material-symbols-rounded chip-icon">translate</span>
+          <span>Translate</span>
+        </button>
+        <button type="button" class="m3-action-chip" (click)="executeActionChip('search_web')">
+          <span class="material-symbols-rounded chip-icon">language</span>
+          <span>Search Web</span>
+        </button>
+        <button type="button" class="m3-action-chip" (click)="executeActionChip('listen')">
+          <span class="material-symbols-rounded chip-icon">volume_up</span>
+          <span>Listen</span>
+        </button>
+      </div>
+
+      <!-- Detection Results Card List -->
+      <div class="sheet-content-scroll">
+        <div class="sheet-section-header">
+          <h2>Visual Matches & Prices</h2>
+          <button type="button" class="text-btn" (click)="togglePrimaryAction()">Resume Camera</button>
+        </div>
+
+        @if (pipelineService.offers().length > 0) {
+          <div class="offers-grid">
+            @for (offer of pipelineService.offers(); track offer.id) {
+              <div class="m3-result-card">
+                <div class="card-badge" [class.good]="offer.priceRating === 1" [class.average]="offer.priceRating === 2" [class.high]="offer.priceRating === 3">
+                  {{ offer.priceRating === 1 ? 'Great Price' : offer.priceRating === 3 ? 'High Price' : 'Average Price' }}
+                </div>
+                <h3 class="card-title">{{ offer.product || 'Detected Product' }}</h3>
+                <div class="card-price-row">
+                  <span class="price-val">{{ offer.price }}</span>
+                  @if (offer.quantity) {
+                    <span class="qty-unit">/ {{ offer.quantity.quantity }} {{ offer.quantity.unit }}</span>
+                  }
+                </div>
+                @if (offer.coordinates) {
+                  <div class="store-row">
+                    <span class="material-symbols-rounded store-icon">location_on</span>
+                    <span>GPS Tracked ({{ offer.coordinates.latitude.toFixed(2) }}, {{ offer.coordinates.longitude.toFixed(2) }})</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-search-state">
+            <span class="material-symbols-rounded state-icon">pageview</span>
+            <p>Tap detected bounding boxes or text regions above to view instant price comparisons.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Bottom Primary Controls Area -->
   <footer class="bottom-action-bar">
     <div class="bar-gradient-bottom"></div>
 
+    <!-- Main Shutter Control Bar -->
     <div class="bottom-controls">
-      <!-- Bottom Left: History Frame Capture Thumbnail Gallery Button -->
+      <!-- Bottom Left: Captured Frames History Button -->
       <button
         type="button"
         class="history-thumb-btn"
@@ -141,24 +230,37 @@
         }
       </button>
 
-      <!-- Bottom Center: Primary 72px Circular Action Button -->
+      <!-- Bottom Center: Iconic Double-Ring Shutter Button -->
       <div class="primary-btn-container">
         <button
           type="button"
-          class="primary-action-btn"
+          class="double-ring-shutter"
           [class.frozen]="isFrozen()"
           (click)="togglePrimaryAction()"
           [attr.aria-label]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
           [attr.title]="isFrozen() ? 'Resume Live Camera' : 'Freeze & Search Frame'"
         >
-          <span class="material-symbols-rounded btn-icon">
-            {{ isFrozen() ? 'play_arrow' : 'search' }}
-          </span>
+          <div class="shutter-outer-ring"></div>
+          <div class="shutter-inner-core">
+            <span class="material-symbols-rounded btn-icon">
+              {{ isFrozen() ? 'play_arrow' : 'search' }}
+            </span>
+          </div>
         </button>
       </div>
 
-      <!-- Bottom Right: Spacer for symmetric centering -->
-      <div class="bottom-right-spacer"></div>
+      <!-- Bottom Right: Gallery Picker / Spacer -->
+      <div class="bottom-right-spacer">
+        <button
+          type="button"
+          class="icon-btn gallery-btn"
+          (click)="openModal('history')"
+          aria-label="Image Gallery"
+          title="Image Gallery"
+        >
+          <span class="material-symbols-rounded">image</span>
+        </button>
+      </div>
     </div>
   </footer>
 

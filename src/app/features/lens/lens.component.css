@@ -87,22 +87,136 @@ app-overlay {
   height: var(--top-bar-btn-size);
 }
 
-/* Centered Title */
-.app-title {
+/* Centered Title Lockup */
+.app-title-lockup {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  margin: 0;
-  font-size: 20px;
-  font-weight: 500;
-  color: #ffffff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Icon Buttons */
+.lens-logo {
+  font-size: 22px;
+  color: #8ab4f8;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+}
+
+.app-title {
+  margin: 0;
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+  font-size: 19px;
+  font-weight: 500;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+/* Viewfinder Frame & Corner Reticles */
+.viewfinder-frame {
+  position: absolute;
+  top: calc(80px + env(safe-area-inset-top, 0px));
+  left: 32px;
+  right: 32px;
+  bottom: 180px;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+
+.viewfinder-frame.frozen {
+  opacity: 0.4;
+}
+
+.viewfinder-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 255, 255, 0.85);
+  border-style: solid;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+.viewfinder-corner.top-left {
+  top: 0;
+  left: 0;
+  border-width: 3.5px 0 0 3.5px;
+  border-top-left-radius: 14px;
+}
+
+.viewfinder-corner.top-right {
+  top: 0;
+  right: 0;
+  border-width: 3.5px 3.5px 0 0;
+  border-top-right-radius: 14px;
+}
+
+.viewfinder-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 3.5px 3.5px;
+  border-bottom-left-radius: 14px;
+}
+
+.viewfinder-corner.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-width: 0 3.5px 3.5px 0;
+  border-bottom-right-radius: 14px;
+}
+
+/* Action Toast Notification Pill */
+.action-toast-pill {
+  position: fixed;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(30, 31, 34, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  z-index: 35;
+  animation: toastPop 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes toastPop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.toast-icon {
+  font-size: 18px;
+  color: #34a853;
+}
+
+/* Google Avatar Ring Styling */
+.google-avatar-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(#4285f4 0% 25%, #ea4335 25% 50%, #fbbc05 50% 75%, #34a853 75% 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .icon-btn {
   position: relative;
   width: var(--top-bar-btn-size);
@@ -495,10 +609,287 @@ app-overlay {
   height: 52px;
 }
 
-.primary-btn-container {
+/* Iconic Double-Ring Shutter Button */
+.double-ring-shutter {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.double-ring-shutter:hover {
+  transform: scale(1.05);
+}
+
+.double-ring-shutter:active {
+  transform: scale(0.92);
+}
+
+.shutter-outer-ring {
+  position: absolute;
+  inset: 0;
+  border: 4px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+
+.double-ring-shutter.frozen .shutter-outer-ring {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 20px rgba(138, 180, 248, 0.6);
+}
+
+.shutter-inner-core {
+  position: absolute;
+  inset: 6px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease;
+}
+
+.double-ring-shutter.frozen .shutter-inner-core {
+  background: #8ab4f8;
+}
+
+.double-ring-shutter .btn-icon {
+  font-size: 32px;
+  color: #1f1f1f;
+}
+
+.double-ring-shutter.frozen .btn-icon {
+  color: #040c1a;
+}
+
+/* Gallery Button in Bottom Right */
+.gallery-btn {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* M3 Bottom Sheet Drawer (Results & Chips) */
+.m3-bottom-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  background: #1e1f22;
+  color: #e3e2e6;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  transition: height 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+}
+
+.m3-bottom-sheet.snap-peek {
+  height: 230px;
+}
+
+.m3-bottom-sheet.snap-half {
+  height: 52vh;
+}
+
+.m3-bottom-sheet.snap-full {
+  height: 88vh;
+}
+
+.sheet-drag-handle-bar {
+  width: 100%;
+  padding: 12px 0 6px;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.drag-handle-pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Action Chips Bar */
+.action-chips-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 16px 12px;
+  scrollbar-width: none;
+}
+
+.action-chips-container::-webkit-scrollbar {
+  display: none;
+}
+
+.m3-action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #282a2d;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #8ab4f8;
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.m3-action-chip:hover {
+  background: #3c4043;
+  color: #ffffff;
+}
+
+.chip-icon {
+  font-size: 18px;
+}
+
+.sheet-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 24px;
+}
+
+.sheet-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sheet-section-header h2 {
+  margin: 0;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.text-btn {
+  background: transparent;
+  border: none;
+  color: #8ab4f8;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.offers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.m3-result-card {
+  background: #0f0f11;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-badge {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.card-badge.good {
+  background: rgba(52, 168, 83, 0.2);
+  color: #34a853;
+  border: 1px solid rgba(52, 168, 83, 0.3);
+}
+
+.card-badge.average {
+  background: rgba(251, 188, 5, 0.2);
+  color: #fbbc05;
+  border: 1px solid rgba(251, 188, 5, 0.3);
+}
+
+.card-badge.high {
+  background: rgba(234, 67, 53, 0.2);
+  color: #ea4335;
+  border: 1px solid rgba(234, 67, 53, 0.3);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #8ab4f8;
+}
+
+.qty-unit {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.store-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+}
+
+.store-icon {
+  font-size: 16px;
+}
+
+.empty-search-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 16px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.state-icon {
+  font-size: 44px;
+  margin-bottom: 8px;
+  color: #8ab4f8;
 }
 
 /* Floating 72px Action Button */

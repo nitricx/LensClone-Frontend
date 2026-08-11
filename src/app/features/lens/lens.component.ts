@@ -55,6 +55,9 @@ export class LensComponent implements AfterViewInit, OnDestroy {
   readonly activeModal = signal<ModalType>('none');
   readonly selectedHistoryItem = signal<HistoryItem | null>(null);
 
+  readonly sheetSnap = signal<'collapsed' | 'peek' | 'half' | 'full'>('peek');
+  readonly actionNotification = signal<string | null>(null);
+
   readonly feedbackText = signal('');
   readonly feedbackRating = signal(5);
   readonly feedbackSubmitted = signal(false);
@@ -74,7 +77,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private readonly cameraService: CameraService,
-    private readonly pipelineService: PipelineService,
+    readonly pipelineService: PipelineService,
     private readonly priceApiService: PriceApiService,
     readonly historyService: HistoryService,
     readonly authService: AuthService,
@@ -133,8 +136,79 @@ export class LensComponent implements AfterViewInit, OnDestroy {
   private frozenConverged = false;
   private readonly MAX_FROZEN_REFINEMENT_PASSES = 6;
 
+  triggerHaptic(durationMs = 12): void {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(durationMs);
+      } catch {
+        // Safe fallback if vibration is blocked
+      }
+    }
+  }
+
+  setSheetSnap(snap: 'collapsed' | 'peek' | 'half' | 'full'): void {
+    this.sheetSnap.set(snap);
+    this.triggerHaptic(8);
+  }
+
+  toggleSheetSnap(): void {
+    const current = this.sheetSnap();
+    if (current === 'collapsed' || current === 'peek') {
+      this.setSheetSnap('half');
+    } else if (current === 'half') {
+      this.setSheetSnap('full');
+    } else {
+      this.setSheetSnap('peek');
+    }
+  }
+
+  executeActionChip(action: 'copy' | 'translate' | 'search_web' | 'listen'): void {
+    this.triggerHaptic(15);
+    const detections = this.pipelineService.detections() || [];
+    const textSnippet = detections
+      .map((d) => d.canonicalText || d.rawText || '')
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    if (action === 'copy') {
+      if (textSnippet && navigator.clipboard) {
+        navigator.clipboard.writeText(textSnippet);
+        this.showNotification('Text copied to clipboard');
+      } else {
+        this.showNotification('No text detected to copy');
+      }
+    } else if (action === 'translate') {
+      const query = encodeURIComponent(textSnippet || '');
+      window.open(`https://translate.google.com/?sl=auto&tl=en&text=${query}`, '_blank');
+      this.showNotification('Opening Google Translate');
+    } else if (action === 'search_web') {
+      const query = encodeURIComponent(textSnippet || 'Lens search');
+      window.open(`https://www.google.com/search?q=${query}`, '_blank');
+    } else if (action === 'listen') {
+      if (textSnippet && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(textSnippet);
+        window.speechSynthesis.speak(utterance);
+        this.showNotification('Reading text aloud');
+      } else {
+        this.showNotification('Text-to-speech unavailable');
+      }
+    }
+  }
+
+  private showNotification(msg: string): void {
+    this.actionNotification.set(msg);
+    setTimeout(() => {
+      if (this.actionNotification() === msg) {
+        this.actionNotification.set(null);
+      }
+    }, 2500);
+  }
+
   async togglePrimaryAction(): Promise<void> {
     const video = this.videoElement.nativeElement;
+    this.triggerHaptic(18);
 
     if (!this.isFrozen()) {
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -157,6 +231,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
       this.isFrozen.set(true);
       this.frozenRefinementCount = 0;
       this.frozenConverged = false;
+      this.sheetSnap.set('half');
 
       this.saveHistoryCapture();
       this.processCompleteOffersBackend();
@@ -166,6 +241,7 @@ export class LensComponent implements AfterViewInit, OnDestroy {
       this.frozenImageData = null;
       this.frozenRefinementCount = 0;
       this.frozenConverged = false;
+      this.sheetSnap.set('peek');
     }
   }
 

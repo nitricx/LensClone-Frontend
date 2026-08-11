@@ -8,7 +8,19 @@
   --color-overlay-bg: rgba(0, 0, 0, 0.45);
   --color-overlay-blur: blur(12px);
 
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Material Design 3 Dark Palette Tokens */
+  --md-sys-color-background: #000000;
+  --md-sys-color-surface-container-high: #1e1f22;
+  --md-sys-color-surface-container-lowest: #0f0f11;
+  --md-sys-color-surface-container-medium: #282a2d;
+  --md-sys-color-primary: #8ab4f8;
+  --md-sys-color-on-primary: #040c1a;
+  --md-sys-color-secondary-container: #3c4043;
+  --md-sys-color-on-secondary-container: #e3e2e6;
+  --md-sys-color-scrim-top: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 65%, rgba(0, 0, 0, 0) 100%);
+  --md-sys-color-scrim-bottom: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0) 100%);
+
+  --font-family: 'Google Sans', 'Roboto', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 html,
